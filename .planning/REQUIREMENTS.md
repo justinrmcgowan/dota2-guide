@@ -34,7 +34,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DISP-03**: Each recommended item includes 1-3 sentence analytical reasoning explaining WHY (referencing abilities, matchup dynamics, stats)
 - [ ] **DISP-04**: Situational items display as decision tree cards with conditions (e.g., "if enemy has evasion -> MKB; if magic burst -> BKB")
 - [ ] **DISP-05**: Loading skeleton/spinner displays during Claude API calls (2-10 seconds)
-- [ ] **DISP-06**: Dark theme with spectral cyan (#00d4ff) primary, Radiant teal (#6aff97), Dire red (#ff5555)
+- [x] **DISP-06**: Dark theme with spectral cyan (#00d4ff) primary, Radiant teal (#6aff97), Dire red (#ff5555)
 
 ### Mid-Game Adaptation
 
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISP-03 | Phase 4 | Pending |
 | DISP-04 | Phase 4 | Pending |
 | DISP-05 | Phase 4 | Pending |
-| DISP-06 | Phase 1 | Pending |
+| DISP-06 | Phase 1 | Complete |
 | MIDG-01 | Phase 5 | Pending |
 | MIDG-02 | Phase 5 | Pending |
 | MIDG-03 | Phase 5 | Pending |
