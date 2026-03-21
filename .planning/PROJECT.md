@@ -22,6 +22,10 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - ✓ Radiant/Dire side selection — Phase 2
 - ✓ Lane assignment selection — Phase 2
 
+- ✓ Hybrid recommendation engine (rules + Claude API) — Phase 3
+- ✓ Structured JSON output from Claude API, validated before rendering — Phase 3
+- ✓ Fallback behavior when Claude API fails or times out — Phase 3
+
 ### Active
 - [ ] Phased item timeline output (starting → laning → core → late game)
 - [ ] Analytical reasoning per item recommendation (stats-driven, matchup-specific)
@@ -30,9 +34,6 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - [ ] Mid-game damage profile input via toggles and manual entry
 - [ ] Click-to-mark items as purchased in the timeline
 - [ ] Re-evaluate button regenerates only remaining (unpurchased) items
-- [ ] Hybrid recommendation engine: rules for obvious decisions, Claude API for nuanced reasoning
-- [ ] Structured JSON output from Claude API, validated before rendering
-- [ ] Fallback behavior when Claude API fails or times out
 
 ### Out of Scope
 
@@ -73,4 +74,4 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | Progressive information layers | Matches how information naturally reveals during a Dota game | — Pending |
 
 ---
-*Last updated: 2026-03-21 after Phase 2 completion*
+*Last updated: 2026-03-21 after Phase 3 completion*
