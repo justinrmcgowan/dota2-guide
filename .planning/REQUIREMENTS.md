@@ -29,10 +29,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Output Display
 
-- [ ] **DISP-01**: Item timeline displays recommendations in phases: starting, laning, core, late game
-- [ ] **DISP-02**: Each recommended item shows hero/item portrait from Steam CDN with gold cost
-- [ ] **DISP-03**: Each recommended item includes 1-3 sentence analytical reasoning explaining WHY (referencing abilities, matchup dynamics, stats)
-- [ ] **DISP-04**: Situational items display as decision tree cards with conditions (e.g., "if enemy has evasion -> MKB; if magic burst -> BKB")
+- [x] **DISP-01**: Item timeline displays recommendations in phases: starting, laning, core, late game
+- [x] **DISP-02**: Each recommended item shows hero/item portrait from Steam CDN with gold cost
+- [x] **DISP-03**: Each recommended item includes 1-3 sentence analytical reasoning explaining WHY (referencing abilities, matchup dynamics, stats)
+- [x] **DISP-04**: Situational items display as decision tree cards with conditions (e.g., "if enemy has evasion -> MKB; if magic burst -> BKB")
 - [x] **DISP-05**: Loading skeleton/spinner displays during Claude API calls (2-10 seconds)
 - [x] **DISP-06**: Dark theme with spectral cyan (#00d4ff) primary, Radiant teal (#6aff97), Dire red (#ff5555)
 
@@ -108,10 +108,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENGN-04 | Phase 3 | Complete |
 | ENGN-05 | Phase 3 | Complete |
 | ENGN-06 | Phase 3 | Complete |
-| DISP-01 | Phase 4 | Pending |
-| DISP-02 | Phase 4 | Pending |
-| DISP-03 | Phase 4 | Pending |
-| DISP-04 | Phase 4 | Pending |
+| DISP-01 | Phase 4 | Complete |
+| DISP-02 | Phase 4 | Complete |
+| DISP-03 | Phase 4 | Complete |
+| DISP-04 | Phase 4 | Complete |
 | DISP-05 | Phase 4 | Complete |
 | DISP-06 | Phase 1 | Complete |
 | MIDG-01 | Phase 5 | Pending |

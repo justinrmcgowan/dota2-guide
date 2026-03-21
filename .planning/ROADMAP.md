@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Project scaffolding, Docker deployment, database with seeded data, hero picker, dark theme
 - [x] **Phase 2: Draft Inputs** - Complete draft input sidebar with all selectors wired to state
 - [ ] **Phase 3: Recommendation Engine** - Hybrid rules + Claude API engine with matchup data and fallback
-- [ ] **Phase 4: Item Timeline and End-to-End Flow** - Timeline display with reasoning, loading states, and full draft-to-recommendation loop
+- [x] **Phase 4: Item Timeline and End-to-End Flow** - Timeline display with reasoning, loading states, and full draft-to-recommendation loop
 - [ ] **Phase 5: Mid-Game Adaptation** - Purchased item tracking, game state updates, and re-evaluation
 - [ ] **Phase 6: Data Pipeline and Hardening** - Automated daily data refresh and production reliability
 
@@ -83,8 +83,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Recommendation types, API client extension, Zustand recommendation store, useRecommendation hook, GetBuildButton wiring
-- [ ] 04-02-PLAN.md — Timeline UI components (PhaseCard, ItemCard, DecisionTree, LoadingSkeleton, ErrorBanner), MainPanel integration
+- [x] 04-01-PLAN.md — Recommendation types, API client extension, Zustand recommendation store, useRecommendation hook, GetBuildButton wiring
+- [x] 04-02-PLAN.md — Timeline UI components (PhaseCard, ItemCard, DecisionTree, LoadingSkeleton, ErrorBanner), MainPanel integration
 
 ### Phase 5: Mid-Game Adaptation
 **Goal**: Player can update the game state mid-match (purchased items, lane result, damage profile, enemy items) and get refreshed recommendations for remaining items
@@ -124,6 +124,6 @@ Note: Phase 2 and Phase 3 both depend only on Phase 1 and could execute in eithe
 | 1. Foundation | 3/3 | Complete | 2026-03-21 |
 | 2. Draft Inputs | 2/2 | Complete | 2026-03-21 |
 | 3. Recommendation Engine | 3/3 | Complete | 2026-03-21 |
-| 4. Item Timeline and End-to-End Flow | 0/2 | Not started | - |
+| 4. Item Timeline and End-to-End Flow | 2/2 | Complete | 2026-03-22 |
 | 5. Mid-Game Adaptation | 0/2 | Not started | - |
 | 6. Data Pipeline and Hardening | 0/1 | Not started | - |
