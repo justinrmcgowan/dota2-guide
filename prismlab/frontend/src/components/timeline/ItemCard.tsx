@@ -42,9 +42,15 @@ function ItemCard({ item, phaseKey, isSelected, onSelect }: ItemCardProps) {
         className="w-12 h-12 object-contain rounded"
         loading="lazy"
       />
-      <span className="text-amber-400 text-xs truncate max-w-[56px] text-center">
-        {formatItemName(item.item_name)}
-      </span>
+      {item.gold_cost != null ? (
+        <span className="text-amber-400 text-xs text-center">
+          {item.gold_cost}
+        </span>
+      ) : (
+        <span className="text-amber-400 text-xs truncate max-w-[56px] text-center">
+          {formatItemName(item.item_name)}
+        </span>
+      )}
     </button>
   );
 }

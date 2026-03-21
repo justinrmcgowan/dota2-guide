@@ -6,6 +6,7 @@ export interface ItemRecommendation {
   reasoning: string;
   priority: "core" | "situational" | "luxury";
   conditions: string | null;
+  gold_cost: number | null;
 }
 
 export interface RecommendPhase {
