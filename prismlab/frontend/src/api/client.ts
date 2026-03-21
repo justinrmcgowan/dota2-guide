@@ -27,6 +27,12 @@ async function postJson<TReq, TRes>(url: string, body: TReq): Promise<TRes> {
   return response.json();
 }
 
+export interface DataFreshness {
+  last_refresh: string | null;
+  heroes_updated: number;
+  items_updated: number;
+}
+
 export const api = {
   getHeroes: () => fetchJson<Hero[]>("/heroes"),
   getHero: (id: number) => fetchJson<Hero>(`/heroes/${id}`),
@@ -34,4 +40,5 @@ export const api = {
   getItem: (id: number) => fetchJson<Item>(`/items/${id}`),
   recommend: (req: RecommendRequest) =>
     postJson<RecommendRequest, RecommendResponse>("/recommend", req),
+  getDataFreshness: () => fetchJson<DataFreshness>("/data-freshness"),
 };
