@@ -8,7 +8,9 @@ import SideSelector from "../draft/SideSelector";
 import LaneSelector from "../draft/LaneSelector";
 import LaneOpponentPicker from "../draft/LaneOpponentPicker";
 import GetBuildButton from "../draft/GetBuildButton";
+import GameStatePanel from "../game/GameStatePanel";
 import { useGameStore } from "../../stores/gameStore";
+import { useRecommendationStore } from "../../stores/recommendationStore";
 
 function Sidebar() {
   const selectedHero = useGameStore((s) => s.selectedHero);
@@ -17,6 +19,8 @@ function Sidebar() {
   const allies = useGameStore((s) => s.allies);
   const opponents = useGameStore((s) => s.opponents);
   const role = useGameStore((s) => s.role);
+
+  const hasData = useRecommendationStore((s) => s.data !== null);
 
   const excludedIds = useMemo(() => {
     const ids = new Set<number>();
@@ -92,6 +96,9 @@ function Sidebar() {
           Lane Opponents
         </h2>
         <LaneOpponentPicker />
+
+        {/* Game State -- appears after first recommendation */}
+        {hasData && <GameStatePanel />}
       </div>
 
       {/* CTA Button -- pinned at bottom */}
