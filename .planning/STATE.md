@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-21T22:17:40.769Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-21T22:42:17.045Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 04 — item-timeline-and-end-to-end-flow (COMPLETE)
+**Current focus:** Phase 05 — mid-game-adaptation
 
 ## Current Position
 
-Phase: 04 (item-timeline-and-end-to-end-flow) — COMPLETE
-Plan: 3 of 3 (all plans complete)
+Phase: 05 (mid-game-adaptation) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Plan: 3 of 3 (all plans complete)
 | Phase 04 P01 | 2min | 2 tasks | 5 files |
 | Phase 04 P02 | 5min | 3 tasks | 7 files |
 | Phase 04 P03 | 2min | 2 tasks | 4 files |
+| Phase 05 P01 | 3min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ Recent decisions affecting current work:
 - [Phase 04]: MainPanel priority rendering chain: error > loading > data > empty state
 - [Phase 04]: gold_cost populated via model_copy during _validate_item_ids -- zero additional DB queries
 - [Phase 04]: cost_map dict replaces valid_ids set for dual-purpose ID validation and cost lookup
+- [Phase 05]: clearResults vs clear split: clearResults preserves purchasedItems across re-evaluations for mid-game
+- [Phase 05]: Purchased item filtering runs before item ID validation to avoid unnecessary DB lookups
+- [Phase 05]: ItemCard click toggles both purchase state AND shows reasoning via combined handler
 
 ### Pending Todos
 
@@ -113,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T22:13:00Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-21T22:42:17.043Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None

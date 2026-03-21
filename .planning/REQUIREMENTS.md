@@ -38,11 +38,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Mid-Game Adaptation
 
-- [ ] **MIDG-01**: User can click items in the timeline to mark them as purchased (locked from re-evaluation)
+- [x] **MIDG-01**: User can click items in the timeline to mark them as purchased (locked from re-evaluation)
 - [ ] **MIDG-02**: User can select lane result (Won/Even/Lost) to adjust remaining recommendations
 - [ ] **MIDG-03**: User can input damage profile via toggles ("heavy magic damage", "right-click heavy") and manual percentage entry
 - [ ] **MIDG-04**: User can mark key enemy items spotted (e.g., enemy BKB, enemy Blink Dagger)
-- [ ] **MIDG-05**: User can hit Re-Evaluate to regenerate only unpurchased remaining items with updated game state
+- [x] **MIDG-05**: User can hit Re-Evaluate to regenerate only unpurchased remaining items with updated game state
 
 ### Infrastructure
 
@@ -114,11 +114,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISP-04 | Phase 4 | Complete |
 | DISP-05 | Phase 4 | Complete |
 | DISP-06 | Phase 1 | Complete |
-| MIDG-01 | Phase 5 | Pending |
+| MIDG-01 | Phase 5 | Complete |
 | MIDG-02 | Phase 5 | Pending |
 | MIDG-03 | Phase 5 | Pending |
 | MIDG-04 | Phase 5 | Pending |
-| MIDG-05 | Phase 5 | Pending |
+| MIDG-05 | Phase 5 | Complete |
 | INFR-01 | Phase 1 | Complete |
 | INFR-02 | Phase 6 | Pending |
 | INFR-03 | Phase 1 | Complete |
