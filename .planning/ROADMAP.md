@@ -13,7 +13,7 @@ Prismlab delivers a Dota 2 adaptive item advisor in six phases, following the cr
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Project scaffolding, Docker deployment, database with seeded data, hero picker, dark theme
-- [ ] **Phase 2: Draft Inputs** - Complete draft input sidebar with all selectors wired to state
+- [x] **Phase 2: Draft Inputs** - Complete draft input sidebar with all selectors wired to state
 - [ ] **Phase 3: Recommendation Engine** - Hybrid rules + Claude API engine with matchup data and fallback
 - [ ] **Phase 4: Item Timeline and End-to-End Flow** - Timeline display with reasoning, loading states, and full draft-to-recommendation loop
 - [ ] **Phase 5: Mid-Game Adaptation** - Purchased item tracking, game state updates, and re-evaluation
@@ -50,8 +50,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Zustand store extension with tests, draft option constants, HeroPicker controlled component refactor
-- [ ] 02-02-PLAN.md — All draft selector components (ally/opponent pickers, role, playstyle, side, lane, CTA) wired into Sidebar
+- [x] 02-01-PLAN.md — Zustand store extension with tests, draft option constants, HeroPicker controlled component refactor
+- [x] 02-02-PLAN.md — All draft selector components (ally/opponent pickers, role, playstyle, side, lane, CTA) wired into Sidebar
 
 ### Phase 3: Recommendation Engine
 **Goal**: Backend can receive a draft context and return phased item recommendations with analytical reasoning, using rules for obvious decisions and Claude API for nuanced matchup analysis
@@ -122,7 +122,7 @@ Note: Phase 2 and Phase 3 both depend only on Phase 1 and could execute in eithe
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-21 |
-| 2. Draft Inputs | 0/2 | Not started | - |
+| 2. Draft Inputs | 2/2 | Complete | 2026-03-21 |
 | 3. Recommendation Engine | 0/3 | Not started | - |
 | 4. Item Timeline and End-to-End Flow | 0/2 | Not started | - |
 | 5. Mid-Game Adaptation | 0/2 | Not started | - |
