@@ -1,0 +1,30 @@
+services:
+  prismlab-backend:
+    build: ./backend
+    container_name: prismlab-backend
+    restart: unless-stopped
+    ports:
+      - "8420:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/prismlab.db
+    volumes:
+      - ./data:/app/data
+    networks:
+      - prismlab-net
+
+  prismlab-frontend:
+    build: ./frontend
+    container_name: prismlab-frontend
+    restart: unless-stopped
+    ports:
+      - "8421:80"
+    depends_on:
+      - prismlab-backend
+    networks:
+      - prismlab-net
+
+networks:
+  prismlab-net:
+    driver: bridge
