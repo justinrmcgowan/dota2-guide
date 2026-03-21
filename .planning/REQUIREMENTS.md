@@ -47,7 +47,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Infrastructure
 
 - [x] **INFR-01**: Docker Compose deploys two containers: frontend (Nginx, port 8421) and backend (FastAPI, port 8420)
-- [ ] **INFR-02**: Daily data refresh pipeline updates hero/item matchup data from OpenDota/Stratz APIs
+- [x] **INFR-02**: Daily data refresh pipeline updates hero/item matchup data from OpenDota/Stratz APIs
 - [x] **INFR-03**: Environment variable configuration via .env file (ANTHROPIC_API_KEY required, API keys optional)
 
 ## v2 Requirements
@@ -120,7 +120,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MIDG-04 | Phase 5 | Complete |
 | MIDG-05 | Phase 5 | Complete |
 | INFR-01 | Phase 1 | Complete |
-| INFR-02 | Phase 6 | Pending |
+| INFR-02 | Phase 6 | Complete |
 | INFR-03 | Phase 1 | Complete |
 
 **Coverage:**

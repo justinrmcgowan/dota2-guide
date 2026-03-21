@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-21T22:52:30.523Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-21T23:01:28.796Z"
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
+  completed_phases: 6
+  total_plans: 14
+  completed_plans: 14
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 06 — polish
+**Current focus:** Phase 06 — data-pipeline-and-hardening
 
 ## Current Position
 
-Phase: 05 (mid-game-adaptation) — COMPLETE
-Plan: 2 of 2 (all done)
+Phase: 06 (data-pipeline-and-hardening) — COMPLETE
+Plan: 1 of 1 (DONE)
 
 ## Performance Metrics
 
@@ -60,6 +60,8 @@ Plan: 2 of 2 (all done)
 | Phase 04 P03 | 2min | 2 tasks | 4 files |
 | Phase 05 P01 | 3min | 2 tasks | 9 files |
 | Phase 05 P02 | 2min | 2 tasks | 7 files |
+| Phase 06 P01 | 3min | 2 tasks | 7 files |
+| Phase 06 P01 | 3min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -107,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Independent damage sliders (no auto-normalize to 100) matching Dota death screen reporting
 - [Phase 05]: Game State panel visible only after first recommendation, gated on recommendationStore.data !== null
 - [Phase 05]: 15 counter items chosen for high-impact itemization decisions (BKB, Blink, Force Staff, etc.)
+- [Phase 06]: AsyncIOScheduler for native async job support in FastAPI event loop
+- [Phase 06]: session.merge for upsert pattern matching seed.py field mapping
+- [Phase 06]: Error logging uses separate async session to avoid corrupted session state
 
 ### Pending Todos
 
@@ -121,6 +126,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T22:47:04.659Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-21T23:01:27.503Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
