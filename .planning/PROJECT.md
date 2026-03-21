@@ -12,11 +12,14 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Searchable hero picker (your hero slot) — Phase 1
+- ✓ Dark theme with spectral cyan accent, Radiant/Dire colors — Phase 1
+- ✓ Docker Compose deployment (backend 8420, frontend 8421) — Phase 1
+- ✓ Environment configuration via .env — Phase 1
 
 ### Active
 
-- [ ] Searchable hero picker for all draft positions (your hero, 4 allies, 5 opponents)
+- [ ] Searchable hero picker for all draft positions (4 allies, 5 opponents — your hero done)
 - [ ] Role/position selection (Pos 1-5)
 - [ ] Playstyle selection reflecting personal tendencies (aggressive/passive, fight-seeking, greedy, etc.)
 - [ ] Radiant/Dire side selection
@@ -71,4 +74,4 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | Progressive information layers | Matches how information naturally reveals during a Dota game | — Pending |
 
 ---
-*Last updated: 2026-03-21 after initialization*
+*Last updated: 2026-03-21 after Phase 1 completion*
