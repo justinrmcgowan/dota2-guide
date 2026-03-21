@@ -109,10 +109,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A daily scheduled pipeline fetches updated hero/item matchup data from OpenDota/Stratz and writes it to SQLite without manual intervention
   2. The system displays the data freshness date so the user knows how current the matchup data is
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md — Daily refresh pipeline with APScheduler, admin trigger endpoint, data freshness indicator in Header
 
 ## Progress
 
