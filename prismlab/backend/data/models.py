@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Integer, String, Float, Boolean, Text, JSON, DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -85,3 +85,18 @@ class MatchupData(Base):
     common_starting_items: Mapped[list | None] = mapped_column(JSON)
     bracket: Mapped[str] = mapped_column(String, default="high")
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
+
+
+class DataRefreshLog(Base):
+    """Tracks data refresh pipeline executions for freshness reporting."""
+
+    __tablename__ = "data_refresh_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    refresh_type: Mapped[str] = mapped_column(String, nullable=False)  # "full", "heroes", "items"
+    status: Mapped[str] = mapped_column(String, nullable=False)  # "success" or "failed"
+    heroes_updated: Mapped[int] = mapped_column(Integer, default=0)
+    items_updated: Mapped[int] = mapped_column(Integer, default=0)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
