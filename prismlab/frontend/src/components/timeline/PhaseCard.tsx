@@ -1,4 +1,5 @@
 import type { RecommendPhase } from "../../types/recommendation";
+import { useRecommendationStore } from "../../stores/recommendationStore";
 import ItemCard from "./ItemCard";
 import DecisionTreeCard from "./DecisionTreeCard";
 
@@ -25,6 +26,9 @@ const PHASE_LABELS: Record<string, string> = {
 };
 
 function PhaseCard({ phase, selectedItemId, onSelectItem }: PhaseCardProps) {
+  const purchasedItems = useRecommendationStore((s) => s.purchasedItems);
+  const togglePurchased = useRecommendationStore((s) => s.togglePurchased);
+
   const colorClass = PHASE_COLORS[phase.phase] ?? "text-gray-400";
   const label = PHASE_LABELS[phase.phase] ?? phase.phase.toUpperCase();
 
@@ -66,6 +70,8 @@ function PhaseCard({ phase, selectedItemId, onSelectItem }: PhaseCardProps) {
                 phaseKey={key}
                 isSelected={selectedItemId === key}
                 onSelect={() => onSelectItem(key)}
+                isPurchased={purchasedItems.has(key)}
+                onTogglePurchased={() => togglePurchased(key)}
               />
             );
           })}

@@ -17,8 +17,12 @@ export function useRecommendation() {
 
     if (!game.selectedHero || game.role === null) return;
 
-    store.clear();
+    // Preserve purchasedItems across re-evaluations
+    store.clearResults();
     store.setLoading(true);
+
+    // Get purchased item IDs for filtering
+    const purchasedItemIds = store.getPurchasedItemIds();
 
     const request: RecommendRequest = {
       hero_id: game.selectedHero.id,
@@ -28,6 +32,16 @@ export function useRecommendation() {
       lane: game.lane ?? "safe",
       lane_opponents: game.laneOpponents.map((h) => h.id),
       allies: game.allies.filter(Boolean).map((h) => h!.id),
+
+      // Mid-game adaptation fields (only include when present)
+      lane_result: game.laneResult,
+      damage_profile: game.damageProfile,
+      enemy_items_spotted:
+        game.enemyItemsSpotted.length > 0
+          ? game.enemyItemsSpotted
+          : undefined,
+      purchased_items:
+        purchasedItemIds.length > 0 ? purchasedItemIds : undefined,
     };
 
     try {

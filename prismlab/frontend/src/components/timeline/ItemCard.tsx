@@ -6,6 +6,8 @@ interface ItemCardProps {
   phaseKey: string;
   isSelected: boolean;
   onSelect: () => void;
+  isPurchased: boolean;
+  onTogglePurchased: () => void;
 }
 
 const PRIORITY_BORDER: Record<ItemRecommendation["priority"], string> = {
@@ -20,13 +22,25 @@ function formatItemName(name: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function ItemCard({ item, phaseKey, isSelected, onSelect }: ItemCardProps) {
+function ItemCard({
+  item,
+  phaseKey,
+  isSelected,
+  onSelect,
+  isPurchased,
+  onTogglePurchased,
+}: ItemCardProps) {
   const borderClass = PRIORITY_BORDER[item.priority];
   const imgSrc = itemImageUrl(item.item_name);
 
+  const handleClick = () => {
+    onTogglePurchased();
+    onSelect();
+  };
+
   return (
     <button
-      onClick={onSelect}
+      onClick={handleClick}
       title={formatItemName(item.item_name)}
       className={[
         "flex flex-col items-center gap-1 p-2 rounded-md border-l-2 cursor-pointer transition-all",
@@ -36,12 +50,36 @@ function ItemCard({ item, phaseKey, isSelected, onSelect }: ItemCardProps) {
           : "bg-transparent hover:bg-bg-elevated/30",
       ].join(" ")}
     >
-      <img
-        src={imgSrc}
-        alt={formatItemName(item.item_name)}
-        className="w-12 h-12 object-contain rounded"
-        loading="lazy"
-      />
+      <div className="relative">
+        <img
+          src={imgSrc}
+          alt={formatItemName(item.item_name)}
+          className={[
+            "w-12 h-12 object-contain rounded",
+            isPurchased ? "opacity-60" : "",
+          ].join(" ")}
+          loading="lazy"
+        />
+        {isPurchased && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-radiant rounded-full flex items-center justify-center">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className="text-white"
+            >
+              <path
+                d="M3 6L5 8L9 4"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        )}
+      </div>
       {item.gold_cost != null ? (
         <span className="text-amber-400 text-xs text-center">
           {item.gold_cost}

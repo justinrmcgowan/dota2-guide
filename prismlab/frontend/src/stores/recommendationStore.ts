@@ -6,12 +6,16 @@ interface RecommendationStore {
   isLoading: boolean;
   error: string | null;
   selectedItemId: string | null; // Composite key "phase-itemId" for expanded reasoning
+  purchasedItems: Set<string>; // Set of composite keys "phase-itemId"
 
   setData: (data: RecommendResponse) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string) => void;
   selectItem: (phaseItemKey: string | null) => void;
-  clear: () => void;
+  togglePurchased: (phaseItemKey: string) => void;
+  getPurchasedItemIds: () => number[];
+  clearResults: () => void; // Clears data/error/selection but KEEPS purchasedItems
+  clear: () => void; // Full reset including purchasedItems
 }
 
 export const useRecommendationStore = create<RecommendationStore>()(
@@ -20,6 +24,7 @@ export const useRecommendationStore = create<RecommendationStore>()(
     isLoading: false,
     error: null,
     selectedItemId: null,
+    purchasedItems: new Set<string>(),
 
     setData: (data) => set({ data, error: null, isLoading: false }),
 
@@ -32,7 +37,40 @@ export const useRecommendationStore = create<RecommendationStore>()(
       set({ selectedItemId: current === phaseItemKey ? null : phaseItemKey });
     },
 
+    togglePurchased: (phaseItemKey) => {
+      const next = new Set(get().purchasedItems);
+      if (next.has(phaseItemKey)) {
+        next.delete(phaseItemKey);
+      } else {
+        next.add(phaseItemKey);
+      }
+      set({ purchasedItems: next });
+    },
+
+    getPurchasedItemIds: () => {
+      const keys = get().purchasedItems;
+      const idSet = new Set<number>();
+      for (const key of keys) {
+        const parts = key.split("-");
+        const idStr = parts[parts.length - 1];
+        const id = parseInt(idStr, 10);
+        if (!isNaN(id)) {
+          idSet.add(id);
+        }
+      }
+      return [...idSet];
+    },
+
+    clearResults: () =>
+      set({ data: null, error: null, selectedItemId: null }),
+
     clear: () =>
-      set({ data: null, isLoading: false, error: null, selectedItemId: null }),
+      set({
+        data: null,
+        isLoading: false,
+        error: null,
+        selectedItemId: null,
+        purchasedItems: new Set<string>(),
+      }),
   }),
 );

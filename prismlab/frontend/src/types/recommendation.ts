@@ -32,4 +32,10 @@ export interface RecommendRequest {
   lane: "safe" | "off" | "mid";
   lane_opponents: number[];
   allies: number[];
+
+  // Mid-game adaptation fields (all optional for backward compatibility)
+  lane_result?: "won" | "even" | "lost" | null;
+  damage_profile?: { physical: number; magical: number; pure: number } | null;
+  enemy_items_spotted?: string[];
+  purchased_items?: number[];
 }

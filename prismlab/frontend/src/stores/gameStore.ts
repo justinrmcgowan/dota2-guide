@@ -12,6 +12,11 @@ interface GameStore {
   lane: "safe" | "mid" | "off" | null;
   laneOpponents: Hero[];
 
+  // Mid-game adaptation state
+  laneResult: "won" | "even" | "lost" | null;
+  damageProfile: { physical: number; magical: number; pure: number } | null;
+  enemyItemsSpotted: string[];
+
   selectHero: (hero: Hero) => void;
   clearHero: () => void;
   setAlly: (index: number, hero: Hero) => void;
@@ -24,6 +29,16 @@ interface GameStore {
   setLane: (lane: "safe" | "mid" | "off") => void;
   toggleLaneOpponent: (hero: Hero) => void;
   clearLaneOpponents: () => void;
+
+  // Mid-game adaptation actions
+  setLaneResult: (result: "won" | "even" | "lost") => void;
+  setDamageProfile: (profile: {
+    physical: number;
+    magical: number;
+    pure: number;
+  }) => void;
+  toggleEnemyItem: (itemName: string) => void;
+  clearMidGameState: () => void;
 }
 
 export const useGameStore = create<GameStore>()((set, get) => ({
@@ -35,6 +50,9 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   side: null,
   lane: null,
   laneOpponents: [],
+  laneResult: null,
+  damageProfile: null,
+  enemyItemsSpotted: [],
 
   selectHero: (hero) => set({ selectedHero: hero }),
   clearHero: () => set({ selectedHero: null }),
@@ -101,4 +119,23 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   },
 
   clearLaneOpponents: () => set({ laneOpponents: [] }),
+
+  // Mid-game adaptation actions
+  setLaneResult: (result) => set({ laneResult: result }),
+
+  setDamageProfile: (profile) => set({ damageProfile: profile }),
+
+  toggleEnemyItem: (itemName) => {
+    const { enemyItemsSpotted } = get();
+    if (enemyItemsSpotted.includes(itemName)) {
+      set({
+        enemyItemsSpotted: enemyItemsSpotted.filter((n) => n !== itemName),
+      });
+    } else {
+      set({ enemyItemsSpotted: [...enemyItemsSpotted, itemName] });
+    }
+  },
+
+  clearMidGameState: () =>
+    set({ laneResult: null, damageProfile: null, enemyItemsSpotted: [] }),
 }));
