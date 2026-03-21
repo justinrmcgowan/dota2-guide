@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="prism" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d4ff" />
+      <stop offset="50%" stop-color="#6aff97" />
+      <stop offset="100%" stop-color="#00d4ff" />
+    </linearGradient>
+  </defs>
+  <path d="M16 2 L28 26 L4 26 Z" fill="none" stroke="url(#prism)" stroke-width="2" />
+  <path d="M16 8 L22 22 L10 22 Z" fill="url(#prism)" opacity="0.3" />
+</svg>
