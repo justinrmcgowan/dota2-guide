@@ -180,15 +180,17 @@ class HybridRecommender:
 
         Logs a warning for each filtered-out item. Removes empty phases.
         """
-        result = await db.execute(select(Item.id))
-        valid_ids: set[int] = {row[0] for row in result.fetchall()}
+        result = await db.execute(select(Item.id, Item.cost))
+        cost_map: dict[int, int | None] = {row[0]: row[1] for row in result.fetchall()}
 
         validated_phases: list[RecommendPhase] = []
         for phase in phases:
             valid_items: list[ItemRecommendation] = []
             for item in phase.items:
-                if item.item_id in valid_ids:
-                    valid_items.append(item)
+                if item.item_id in cost_map:
+                    valid_items.append(
+                        item.model_copy(update={"gold_cost": cost_map.get(item.item_id)})
+                    )
                 else:
                     logger.warning(
                         "Filtered invalid item_id %d (%s) from recommendations",

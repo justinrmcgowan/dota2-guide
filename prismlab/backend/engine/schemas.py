@@ -36,6 +36,7 @@ class ItemRecommendation(BaseModel):
     reasoning: str
     priority: str  # "core" | "situational" | "luxury"
     conditions: str | None = None  # For situational decision tree cards
+    gold_cost: int | None = None  # Populated from Item.cost during validation
 
 
 class RecommendPhase(BaseModel):
