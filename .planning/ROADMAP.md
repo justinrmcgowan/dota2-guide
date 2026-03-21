@@ -12,7 +12,7 @@ Prismlab delivers a Dota 2 adaptive item advisor in six phases, following the cr
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Project scaffolding, Docker deployment, database with seeded data, hero picker, dark theme
+- [x] **Phase 1: Foundation** - Project scaffolding, Docker deployment, database with seeded data, hero picker, dark theme
 - [ ] **Phase 2: Draft Inputs** - Complete draft input sidebar with all selectors wired to state
 - [ ] **Phase 3: Recommendation Engine** - Hybrid rules + Claude API engine with matchup data and fallback
 - [ ] **Phase 4: Item Timeline and End-to-End Flow** - Timeline display with reasoning, loading states, and full draft-to-recommendation loop
@@ -34,9 +34,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Backend scaffolding, FastAPI, SQLAlchemy models, OpenDota seeding, Docker Compose
-- [ ] 01-02-PLAN.md — Frontend scaffolding, React + Vite + Tailwind v4 dark theme, layout, types, Nginx
-- [ ] 01-03-PLAN.md — Hero picker with Fuse.js fuzzy search, Steam CDN portraits, Zustand wiring
+- [x] 01-01-PLAN.md — Backend scaffolding, FastAPI, SQLAlchemy models, OpenDota seeding, Docker Compose
+- [x] 01-02-PLAN.md — Frontend scaffolding, React + Vite + Tailwind v4 dark theme, layout, types, Nginx
+- [x] 01-03-PLAN.md — Hero picker with Fuse.js fuzzy search, Steam CDN portraits, Zustand wiring
 
 ### Phase 2: Draft Inputs
 **Goal**: Player can configure their complete draft context -- allies, opponents, role, playstyle, side, and lane -- through a polished input sidebar
@@ -121,7 +121,7 @@ Note: Phase 2 and Phase 3 both depend only on Phase 1 and could execute in eithe
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 3/3 | Complete | 2026-03-21 |
 | 2. Draft Inputs | 0/2 | Not started | - |
 | 3. Recommendation Engine | 0/3 | Not started | - |
 | 4. Item Timeline and End-to-End Flow | 0/2 | Not started | - |

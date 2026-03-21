@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Draft Inputs
 
-- [ ] **DRFT-01**: User can search and select their hero from a searchable dropdown with hero portraits
+- [x] **DRFT-01**: User can search and select their hero from a searchable dropdown with hero portraits
 - [ ] **DRFT-02**: User can search and select 4 allied heroes from searchable dropdowns with portraits
 - [ ] **DRFT-03**: User can search and select 5 opponent heroes from searchable dropdowns with portraits
 - [ ] **DRFT-04**: User can select their role/position (Pos 1-5) via button selector
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRFT-01 | Phase 1 | Pending |
+| DRFT-01 | Phase 1 | Complete |
 | DRFT-02 | Phase 2 | Pending |
 | DRFT-03 | Phase 2 | Pending |
 | DRFT-04 | Phase 2 | Pending |
