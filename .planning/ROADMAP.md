@@ -80,11 +80,12 @@ Plans:
   3. Each recommended item displays 1-3 sentences of analytical reasoning explaining why, referencing specific abilities and matchup dynamics
   4. Situational items appear as decision tree cards showing branching conditions (e.g., "if enemy has evasion -> MKB")
   5. A loading skeleton/spinner is visible during the 2-10 second Claude API call, and errors display gracefully
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 04-01-PLAN.md — Recommendation types, API client extension, Zustand recommendation store, useRecommendation hook, GetBuildButton wiring
 - [x] 04-02-PLAN.md — Timeline UI components (PhaseCard, ItemCard, DecisionTree, LoadingSkeleton, ErrorBanner), MainPanel integration
+- [ ] 04-03-PLAN.md — Gap closure: add per-item gold_cost from DB to backend schema, recommender, frontend type, and ItemCard display
 
 ### Phase 5: Mid-Game Adaptation
 **Goal**: Player can update the game state mid-match (purchased items, lane result, damage profile, enemy items) and get refreshed recommendations for remaining items
@@ -124,6 +125,6 @@ Note: Phase 2 and Phase 3 both depend only on Phase 1 and could execute in eithe
 | 1. Foundation | 3/3 | Complete | 2026-03-21 |
 | 2. Draft Inputs | 2/2 | Complete | 2026-03-21 |
 | 3. Recommendation Engine | 3/3 | Complete | 2026-03-21 |
-| 4. Item Timeline and End-to-End Flow | 2/2 | Complete | 2026-03-22 |
+| 4. Item Timeline and End-to-End Flow | 2/3 | Gap closure | - |
 | 5. Mid-Game Adaptation | 0/2 | Not started | - |
 | 6. Data Pipeline and Hardening | 0/1 | Not started | - |
