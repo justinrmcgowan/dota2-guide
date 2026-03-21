@@ -1,7 +1,7 @@
 # Requirements: Prismlab
 
 **Defined:** 2026-03-21
-**Core Value:** At any point in any game, the player knows exactly what to buy next and why — they never feel lost on itemization.
+**Core Value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
 
 ## v1 Requirements
 
@@ -32,7 +32,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DISP-01**: Item timeline displays recommendations in phases: starting, laning, core, late game
 - [ ] **DISP-02**: Each recommended item shows hero/item portrait from Steam CDN with gold cost
 - [ ] **DISP-03**: Each recommended item includes 1-3 sentence analytical reasoning explaining WHY (referencing abilities, matchup dynamics, stats)
-- [ ] **DISP-04**: Situational items display as decision tree cards with conditions (e.g., "if enemy has evasion → MKB; if magic burst → BKB")
+- [ ] **DISP-04**: Situational items display as decision tree cards with conditions (e.g., "if enemy has evasion -> MKB; if magic burst -> BKB")
 - [ ] **DISP-05**: Loading skeleton/spinner displays during Claude API calls (2-10 seconds)
 - [ ] **DISP-06**: Dark theme with spectral cyan (#00d4ff) primary, Radiant teal (#6aff97), Dire red (#ff5555)
 
@@ -94,40 +94,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRFT-01 | — | Pending |
-| DRFT-02 | — | Pending |
-| DRFT-03 | — | Pending |
-| DRFT-04 | — | Pending |
-| DRFT-05 | — | Pending |
-| DRFT-06 | — | Pending |
-| DRFT-07 | — | Pending |
-| DRFT-08 | — | Pending |
-| ENGN-01 | — | Pending |
-| ENGN-02 | — | Pending |
-| ENGN-03 | — | Pending |
-| ENGN-04 | — | Pending |
-| ENGN-05 | — | Pending |
-| ENGN-06 | — | Pending |
-| DISP-01 | — | Pending |
-| DISP-02 | — | Pending |
-| DISP-03 | — | Pending |
-| DISP-04 | — | Pending |
-| DISP-05 | — | Pending |
-| DISP-06 | — | Pending |
-| MIDG-01 | — | Pending |
-| MIDG-02 | — | Pending |
-| MIDG-03 | — | Pending |
-| MIDG-04 | — | Pending |
-| MIDG-05 | — | Pending |
-| INFR-01 | — | Pending |
-| INFR-02 | — | Pending |
-| INFR-03 | — | Pending |
+| DRFT-01 | Phase 1 | Pending |
+| DRFT-02 | Phase 2 | Pending |
+| DRFT-03 | Phase 2 | Pending |
+| DRFT-04 | Phase 2 | Pending |
+| DRFT-05 | Phase 2 | Pending |
+| DRFT-06 | Phase 2 | Pending |
+| DRFT-07 | Phase 2 | Pending |
+| DRFT-08 | Phase 4 | Pending |
+| ENGN-01 | Phase 3 | Pending |
+| ENGN-02 | Phase 3 | Pending |
+| ENGN-03 | Phase 3 | Pending |
+| ENGN-04 | Phase 3 | Pending |
+| ENGN-05 | Phase 3 | Pending |
+| ENGN-06 | Phase 3 | Pending |
+| DISP-01 | Phase 4 | Pending |
+| DISP-02 | Phase 4 | Pending |
+| DISP-03 | Phase 4 | Pending |
+| DISP-04 | Phase 4 | Pending |
+| DISP-05 | Phase 4 | Pending |
+| DISP-06 | Phase 1 | Pending |
+| MIDG-01 | Phase 5 | Pending |
+| MIDG-02 | Phase 5 | Pending |
+| MIDG-03 | Phase 5 | Pending |
+| MIDG-04 | Phase 5 | Pending |
+| MIDG-05 | Phase 5 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 6 | Pending |
+| INFR-03 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28 ⚠️
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 after roadmap creation*
