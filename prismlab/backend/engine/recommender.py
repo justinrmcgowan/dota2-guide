@@ -86,7 +86,11 @@ class HybridRecommender:
             phases = self._rules_only(rules_items)
             overall_strategy = "Rules-based recommendations only. AI reasoning unavailable."
 
-        # Step 5: Validate all item_ids against DB
+        # Step 5: Filter purchased items (if any)
+        if request.purchased_items:
+            phases = self._filter_purchased(phases, request.purchased_items)
+
+        # Step 6: Validate all item_ids against DB
         phases = await self._validate_item_ids(phases, db)
 
         elapsed_ms = int((time.monotonic() - start) * 1000)
@@ -172,6 +176,31 @@ class HybridRecommender:
             RecommendPhase(phase=phase_name, items=items)
             for phase_name, items in [(name, phase_groups[name]) for name in phase_order]
         ]
+
+    def _filter_purchased(
+        self, phases: list[RecommendPhase], purchased: list[int]
+    ) -> list[RecommendPhase]:
+        """Remove already-purchased items from recommendations.
+
+        Filters out items whose item_id appears in the purchased set.
+        Removes phases that become empty after filtering.
+        """
+        purchased_set = set(purchased)
+        filtered_phases: list[RecommendPhase] = []
+        for phase in phases:
+            remaining = [
+                item for item in phase.items if item.item_id not in purchased_set
+            ]
+            if remaining:
+                filtered_phases.append(
+                    RecommendPhase(
+                        phase=phase.phase,
+                        items=remaining,
+                        timing=phase.timing,
+                        gold_budget=phase.gold_budget,
+                    )
+                )
+        return filtered_phases
 
     async def _validate_item_ids(
         self, phases: list[RecommendPhase], db: AsyncSession

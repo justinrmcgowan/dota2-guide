@@ -74,7 +74,10 @@ class ContextBuilder:
             request.hero_id, db, items
         )
 
-        # 6. Assemble the message
+        # 6. Build mid-game context (if present)
+        midgame_section = self._build_midgame_section(request)
+
+        # 7. Assemble the message
         role_label = f"Pos {request.role}"
         sections = [
             f"## Your Hero\n{hero_name} ({role_label}, {request.playstyle} playstyle, "
@@ -84,6 +87,9 @@ class ContextBuilder:
 
         if opponent_lines:
             sections.append(f"## Lane Opponents\n{opponent_lines}")
+
+        if midgame_section:
+            sections.append(midgame_section)
 
         if rules_lines:
             sections.append(
@@ -100,12 +106,55 @@ class ContextBuilder:
                 f"## Popular Items on This Hero\n{popularity_section}"
             )
 
-        sections.append(
-            "Recommend items for each game phase. Be specific about WHY "
-            "each item is good in THIS matchup."
-        )
+        # Final instruction: adjust for mid-game re-evaluation
+        if request.purchased_items:
+            sections.append(
+                "Recommend items for REMAINING unpurchased slots only. "
+                "Focus reasoning on how the game state changes affect "
+                "remaining item choices."
+            )
+        else:
+            sections.append(
+                "Recommend items for each game phase. Be specific about WHY "
+                "each item is good in THIS matchup."
+            )
 
         return "\n\n".join(sections)
+
+    def _build_midgame_section(self, request: RecommendRequest) -> str:
+        """Build mid-game context section for Claude prompt.
+
+        Returns empty string if no mid-game fields are present, allowing
+        backward compatibility with initial draft-phase requests.
+        """
+        has_midgame = (
+            request.lane_result is not None
+            or request.damage_profile is not None
+            or len(request.enemy_items_spotted) > 0
+        )
+        if not has_midgame:
+            return ""
+
+        lines = ["## Mid-Game Update"]
+
+        if request.lane_result is not None:
+            lines.append(f"Lane Result: {request.lane_result.capitalize()}")
+
+        if request.damage_profile is not None:
+            parts = []
+            for dmg_type, pct in request.damage_profile.items():
+                parts.append(f"{dmg_type.capitalize()} {pct}%")
+            lines.append(f"Damage Taken: {', '.join(parts)}")
+
+        if request.enemy_items_spotted:
+            # Map internal names to display names: replace underscores, title-case
+            display_names = [
+                name.replace("_", " ").title()
+                for name in request.enemy_items_spotted
+            ]
+            lines.append(f"Enemy Items Spotted: {', '.join(display_names)}")
+
+        return "\n".join(lines)
 
     async def _get_hero(self, hero_id: int, db: AsyncSession) -> Hero | None:
         """Look up a hero by ID from the database."""

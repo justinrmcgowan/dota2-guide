@@ -17,6 +17,12 @@ class RecommendRequest(BaseModel):
     lane_opponents: list[int] = Field(default_factory=list, max_length=2)
     allies: list[int] = Field(default_factory=list, max_length=4)
 
+    # Mid-game adaptation fields (all optional for backward compatibility)
+    lane_result: str | None = None  # "won" | "even" | "lost"
+    damage_profile: dict[str, int] | None = None  # e.g. {"physical": 60, "magical": 30, "pure": 10}
+    enemy_items_spotted: list[str] = Field(default_factory=list)  # e.g. ["bkb", "blink"]
+    purchased_items: list[int] = Field(default_factory=list)  # item_ids already purchased
+
 
 class RuleResult(BaseModel):
     """Output of a single deterministic rule evaluation."""
