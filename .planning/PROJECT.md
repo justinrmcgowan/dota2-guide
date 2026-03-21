@@ -16,14 +16,13 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - ✓ Dark theme with spectral cyan accent, Radiant/Dire colors — Phase 1
 - ✓ Docker Compose deployment (backend 8420, frontend 8421) — Phase 1
 - ✓ Environment configuration via .env — Phase 1
+- ✓ Searchable hero picker for all draft positions (4 allies, 5 opponents) — Phase 2
+- ✓ Role/position selection (Pos 1-5) — Phase 2
+- ✓ Playstyle selection (role-dependent options) — Phase 2
+- ✓ Radiant/Dire side selection — Phase 2
+- ✓ Lane assignment selection — Phase 2
 
 ### Active
-
-- [ ] Searchable hero picker for all draft positions (4 allies, 5 opponents — your hero done)
-- [ ] Role/position selection (Pos 1-5)
-- [ ] Playstyle selection reflecting personal tendencies (aggressive/passive, fight-seeking, greedy, etc.)
-- [ ] Radiant/Dire side selection
-- [ ] Lane assignment selection
 - [ ] Phased item timeline output (starting → laning → core → late game)
 - [ ] Analytical reasoning per item recommendation (stats-driven, matchup-specific)
 - [ ] Full 10-hero draft influences item recommendations
@@ -74,4 +73,4 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | Progressive information layers | Matches how information naturally reveals during a Dota game | — Pending |
 
 ---
-*Last updated: 2026-03-21 after Phase 1 completion*
+*Last updated: 2026-03-21 after Phase 2 completion*
