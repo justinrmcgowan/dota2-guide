@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Prismlab is a Dota 2 adaptive item advisor that helps players make better itemization decisions by analyzing the full 10-hero draft, their personal playstyle, lane matchup, and evolving game state. It generates phased item timelines with analytical reasoning — not just what to buy, but why, backed by data and matchup logic.
+Prismlab is a Dota 2 adaptive item advisor that helps players make better itemization decisions by analyzing the full 10-hero draft, their personal playstyle, lane matchup, and evolving game state. It generates phased item timelines with analytical reasoning — not just what to buy, but why, backed by data and matchup logic. Built as a web app with React 19 frontend and FastAPI backend, deployed via Docker Compose.
 
 ## Core Value
 
@@ -12,72 +12,64 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Validated
 
-- ✓ Searchable hero picker (your hero slot) — Phase 1
-- ✓ Dark theme with spectral cyan accent, Radiant/Dire colors — Phase 1
-- ✓ Docker Compose deployment (backend 8420, frontend 8421) — Phase 1
-- ✓ Environment configuration via .env — Phase 1
-- ✓ Searchable hero picker for all draft positions (4 allies, 5 opponents) — Phase 2
-- ✓ Role/position selection (Pos 1-5) — Phase 2
-- ✓ Playstyle selection (role-dependent options) — Phase 2
-- ✓ Radiant/Dire side selection — Phase 2
-- ✓ Lane assignment selection — Phase 2
-
-- ✓ Hybrid recommendation engine (rules + Claude API) — Phase 3
-- ✓ Structured JSON output from Claude API, validated before rendering — Phase 3
-- ✓ Fallback behavior when Claude API fails or times out — Phase 3
-
-- ✓ Phased item timeline output (starting → laning → core → late game) — Phase 4
-- ✓ Analytical reasoning per item recommendation (stats-driven, matchup-specific) — Phase 4
-- ✓ Full 10-hero draft influences item recommendations — Phase 4
-- ✓ Lane opponent selection once game begins — Phase 4
-
-- ✓ Mid-game damage profile input via toggles and manual entry — Phase 5
-- ✓ Click-to-mark items as purchased in the timeline — Phase 5
-- ✓ Re-evaluate button regenerates only remaining (unpurchased) items — Phase 5
-
-- ✓ Daily data refresh pipeline — Phase 6
+- ✓ Searchable hero picker for all 10 draft positions — v1.0
+- ✓ Role/position selection (Pos 1-5) with role-dependent playstyle options — v1.0
+- ✓ Radiant/Dire side and lane assignment selection — v1.0
+- ✓ Hybrid recommendation engine (12 deterministic rules + Claude Sonnet 4.6) — v1.0
+- ✓ Structured JSON output from Claude API, validated against Pydantic schema — v1.0
+- ✓ Fallback to rules-only mode with visible notice on Claude API failure/timeout — v1.0
+- ✓ Phased item timeline (starting → laning → core → late game) with per-item reasoning — v1.0
+- ✓ Situational decision tree cards for conditional item choices — v1.0
+- ✓ Click-to-mark purchased items with green checkmark overlay — v1.0
+- ✓ Mid-game adaptation: lane result, damage profile, enemy items spotted — v1.0
+- ✓ Re-evaluate regenerates only unpurchased remaining items — v1.0
+- ✓ Docker Compose deployment (backend 8420, frontend 8421) with Nginx reverse proxy — v1.0
+- ✓ Daily data refresh pipeline via APScheduler with freshness indicator — v1.0
+- ✓ Dark theme with spectral cyan accent, Radiant teal, Dire red — v1.0
 
 ### Active
 
-(All v1 requirements validated)
+(Planning next milestone)
 
 ### Out of Scope
 
-- Allied team heroes influencing recommendations beyond draft awareness — V1 considers them for draft context but deep synergy analysis is V2
+- Allied team hero deep synergy analysis — V1 accepts allies in draft but doesn't factor them into Claude reasoning (V2)
 - Neutral item recommendations — V2
-- GSI/live game data auto-integration — V2 (V1 uses manual click-to-mark and manual input)
-- Screenshot/scoreboard parsing for mid-game data — V2 (V1 uses toggles and manual entry)
-- Mobile optimization — desktop-first, don't break on mobile but don't optimize
+- GSI/live game data auto-integration — V2
+- Screenshot/scoreboard parsing — V2
+- Mobile optimization — desktop-first
 - Auto gold/net worth tracking — V2
 
 ## Context
 
-- **Player profile:** Aggressive playstyle — seeks fights, willing to take on multiple opponents, wants items that enable that tendency rather than "theoretically optimal" passive builds
-- **Core problem:** Player knows Dota itemization theory but loses track of matchup nuances during live games. This is a memory/decision-support tool, not a learning tool
-- **Success looks like:** Player internalizes reasoning over time but always has the tool as a reliable fallback
-- **Data sources:** OpenDota API and Stratz API for hero stats, win rates, item popularity. Steam CDN for hero/item images
-- **Progressive information flow:** Draft phase (all 10 heroes, role, playstyle, side, lane) → Laning phase (lane opponents confirmed) → Mid-game (damage profiles, items purchased, game state updates) → Late game (re-evaluations with full context)
-- **Re-evaluation model:** Past purchases are locked. Re-evaluate only regenerates the remaining item timeline forward from current state
-- **Item tracking:** Click on item in timeline to mark as purchased (V1). Future: auto-detect via GSI
+- **Shipped:** v1.0 MVP on 2026-03-21
+- **Codebase:** ~1000 source files, React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
+- **Test suite:** 82 tests (56 backend pytest + 26 frontend vitest), zero failures
+- **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
+- **Core problem:** Player knows Dota itemization theory but loses track of matchup nuances during live games
+- **Data sources:** OpenDota API for hero stats, win rates, item popularity. Steam CDN for images
+- **Known tech debt:** allies field accepted but unused in context builder (by V1 design), admin endpoint not proxied, unused frontend item API methods
 
 ## Constraints
 
-- **Tech stack:** React 18 + Vite + TypeScript + Tailwind CSS + Zustand (frontend), Python 3.12 + FastAPI + SQLAlchemy + SQLite (backend), Claude API Sonnet (reasoning engine)
-- **Deployment:** Docker Compose on Unraid — backend port 8420, frontend port 8421, reverse-proxied via Cloudflare Tunnel or Nginx Proxy Manager
-- **API dependency:** Claude API required for reasoning — must have graceful fallback to rules-only mode
+- **Tech stack:** React 19 + Vite 8 + TypeScript + Tailwind v4 + Zustand (frontend), Python 3.13 + FastAPI + SQLAlchemy + SQLite (backend), Claude Sonnet 4.6 (reasoning engine)
+- **Deployment:** Docker Compose on Unraid — backend port 8420, frontend port 8421
+- **API dependency:** Claude API with 10s hard timeout and rules-only fallback
 - **Image hosting:** Hero/item images from Steam CDN, never self-hosted
-- **Theme:** Dark theme with spectral cyan (#00d4ff) primary, Radiant teal (#6aff97), Dire red (#ff5555)
-- **Layout:** Desktop-first — left sidebar for inputs, right main panel for item timeline
+- **Theme:** Dark theme (#0f1419 bg) with spectral cyan (#00d4ff), Radiant teal (#6aff97), Dire red (#ff5555)
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Full 10-hero draft in V1 | User says team composition affects itemization significantly even for lane phase | — Pending |
-| Analytical voice over coach voice | User prefers data-driven reasoning (stats, percentages) over personality-driven advice | — Pending |
-| Toggles + manual entry for mid-game input | Quick enough to use during a live game; screenshot parsing deferred to V2 | — Pending |
-| Click-to-mark purchased items | Simplest interaction during live gameplay; auto-detect via GSI is V2 | — Pending |
-| Progressive information layers | Matches how information naturally reveals during a Dota game | — Pending |
+| Full 10-hero draft in V1 | User says team composition affects itemization significantly | ✓ Good — draft inputs all wired, allies accepted for future use |
+| Analytical voice over coach voice | User prefers data-driven reasoning (stats, percentages) | ✓ Good — system prompt tuned for analytical output |
+| Toggles + manual entry for mid-game input | Quick enough to use during a live game | ✓ Good — preset toggles + fine-tune sliders working |
+| Click-to-mark purchased items | Simplest interaction during live gameplay | ✓ Good — green checkmark overlay, dimmed, stays in position |
+| Progressive information layers | Matches how information naturally reveals during a Dota game | ✓ Good — GameStatePanel appears after first recommendation |
+| Hybrid search (substring + initials + Fuse.js) | Pure Fuse.js too strict for abbreviations like "am" → "Anti-Mage" | ✓ Good — all fuzzy patterns match correctly |
+| Separate recommendationStore from gameStore | Decouple draft state from recommendation state | ✓ Good — clean separation, clearResults preserves purchased |
+| APScheduler for daily refresh | Native async job support in FastAPI event loop | ✓ Good — 24h interval, clean shutdown |
 
 ---
-*Last updated: 2026-03-21 after Phase 6 completion — all v1 phases complete*
+*Last updated: 2026-03-21 after v1.0 milestone*
