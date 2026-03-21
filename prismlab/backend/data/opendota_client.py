@@ -1,0 +1,38 @@
+import httpx
+
+
+class OpenDotaClient:
+    """Async HTTP client for the OpenDota API."""
+
+    BASE_URL = "https://api.opendota.com/api"
+
+    def __init__(self, api_key: str | None = None):
+        self.params: dict[str, str] = {"api_key": api_key} if api_key else {}
+
+    async def fetch_heroes(self) -> dict:
+        """Fetch all hero constants from OpenDota.
+
+        Returns a dict keyed by hero ID strings, e.g. {"1": {...}, "2": {...}}.
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.BASE_URL}/constants/heroes",
+                params=self.params,
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def fetch_items(self) -> dict:
+        """Fetch all item constants from OpenDota.
+
+        Returns a dict keyed by item internal names, e.g. {"blink": {...}, "black_king_bar": {...}}.
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.BASE_URL}/constants/items",
+                params=self.params,
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            return response.json()
