@@ -31,10 +31,13 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - ✓ Full 10-hero draft influences item recommendations — Phase 4
 - ✓ Lane opponent selection once game begins — Phase 4
 
+- ✓ Mid-game damage profile input via toggles and manual entry — Phase 5
+- ✓ Click-to-mark items as purchased in the timeline — Phase 5
+- ✓ Re-evaluate button regenerates only remaining (unpurchased) items — Phase 5
+
 ### Active
-- [ ] Mid-game damage profile input via toggles and manual entry
-- [ ] Click-to-mark items as purchased in the timeline
-- [ ] Re-evaluate button regenerates only remaining (unpurchased) items
+
+(All v1 functional requirements validated — remaining: INFR-02 data pipeline)
 
 ### Out of Scope
 
@@ -75,4 +78,4 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | Progressive information layers | Matches how information naturally reveals during a Dota game | — Pending |
 
 ---
-*Last updated: 2026-03-21 after Phase 4 completion*
+*Last updated: 2026-03-21 after Phase 5 completion*
