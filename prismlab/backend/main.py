@@ -7,6 +7,7 @@ from data.database import engine, Base
 from data.seed import seed_if_empty
 from api.routes.heroes import router as heroes_router
 from api.routes.items import router as items_router
+from api.routes.recommend import router as recommend_router
 
 
 @asynccontextmanager
@@ -37,3 +38,4 @@ async def health_check():
 
 app.include_router(heroes_router, prefix="/api")
 app.include_router(items_router, prefix="/api")
+app.include_router(recommend_router, prefix="/api")
