@@ -31,12 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can type a hero name into a searchable dropdown and select from filtered results showing hero portraits from Steam CDN
   4. Backend serves hero and item data from SQLite (seeded from OpenDota) via API endpoints
   5. Environment configuration works via .env file with ANTHROPIC_API_KEY and optional API keys
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Backend scaffolding, FastAPI, SQLAlchemy models, OpenDota seeding, Docker Compose
+- [ ] 01-02-PLAN.md — Frontend scaffolding, React + Vite + Tailwind v4 dark theme, layout, types, Nginx
+- [ ] 01-03-PLAN.md — Hero picker with Fuse.js fuzzy search, Steam CDN portraits, Zustand wiring
 
 ### Phase 2: Draft Inputs
 **Goal**: Player can configure their complete draft context -- allies, opponents, role, playstyle, side, and lane -- through a polished input sidebar
