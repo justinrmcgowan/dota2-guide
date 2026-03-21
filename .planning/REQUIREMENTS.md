@@ -22,8 +22,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **ENGN-01**: Rules layer fires instantly for obvious item decisions (e.g., Magic Stick vs spell-spamming lane opponents)
 - [x] **ENGN-02**: Claude API generates item recommendations with analytical reasoning referencing specific hero abilities and matchup dynamics
-- [ ] **ENGN-03**: Hybrid orchestrator routes decisions: rules for known patterns, Claude for nuanced reasoning
-- [ ] **ENGN-04**: System falls back to rules-only mode with a visible notice when Claude API fails or times out (10s hard timeout)
+- [x] **ENGN-03**: Hybrid orchestrator routes decisions: rules for known patterns, Claude for nuanced reasoning
+- [x] **ENGN-04**: System falls back to rules-only mode with a visible notice when Claude API fails or times out (10s hard timeout)
 - [x] **ENGN-05**: Claude API returns structured JSON output validated against schema before rendering
 - [x] **ENGN-06**: Matchup data pipeline fetches hero-vs-hero item win rates from OpenDota/Stratz and caches in SQLite
 
@@ -104,8 +104,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DRFT-08 | Phase 4 | Pending |
 | ENGN-01 | Phase 3 | Complete |
 | ENGN-02 | Phase 3 | Complete |
-| ENGN-03 | Phase 3 | Pending |
-| ENGN-04 | Phase 3 | Pending |
+| ENGN-03 | Phase 3 | Complete |
+| ENGN-04 | Phase 3 | Complete |
 | ENGN-05 | Phase 3 | Complete |
 | ENGN-06 | Phase 3 | Complete |
 | DISP-01 | Phase 4 | Pending |
