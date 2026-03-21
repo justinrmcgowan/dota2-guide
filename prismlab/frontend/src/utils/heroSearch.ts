@@ -1,7 +1,7 @@
-import Fuse from "fuse.js";
+import Fuse, { type IFuseOptions } from "fuse.js";
 import type { Hero } from "../types/hero";
 
-const fuseOptions: Fuse.IFuseOptions<Hero> = {
+const fuseOptions: IFuseOptions<Hero> = {
   keys: [
     { name: "localized_name", weight: 2 },
     { name: "name", weight: 1.5 },
@@ -14,8 +14,16 @@ const fuseOptions: Fuse.IFuseOptions<Hero> = {
   findAllMatches: true,
 };
 
-export function createHeroSearcher(heroes: Hero[]): Fuse<Hero> {
-  return new Fuse(heroes, fuseOptions);
+export interface HeroSearcher {
+  fuse: Fuse<Hero>;
+  heroes: Hero[];
+}
+
+export function createHeroSearcher(heroes: Hero[]): HeroSearcher {
+  return {
+    fuse: new Fuse(heroes, fuseOptions),
+    heroes,
+  };
 }
 
 /**
@@ -25,12 +33,12 @@ export function createHeroSearcher(heroes: Hero[]): Fuse<Hero> {
  * 3. Fuse.js fuzzy match (catches typos like "anit" -> "Anti-Mage")
  * Results are deduplicated, with substring/initial matches ranked first.
  */
-export function searchHeroes(fuse: Fuse<Hero>, query: string): Hero[] {
+export function searchHeroes(searcher: HeroSearcher, query: string): Hero[] {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
   const lower = trimmed.toLowerCase();
-  const allHeroes = fuse.getIndex().docs as unknown as Hero[];
+  const allHeroes = searcher.heroes;
 
   // Substring matches on localized_name
   const substringMatches = allHeroes.filter((h) =>
@@ -47,7 +55,7 @@ export function searchHeroes(fuse: Fuse<Hero>, query: string): Hero[] {
   });
 
   // Fuse.js fuzzy matches
-  const fuseMatches = fuse.search(trimmed).map((r) => r.item);
+  const fuseMatches = searcher.fuse.search(trimmed).map((r) => r.item);
 
   // Deduplicate: substring/initials first, then fuse results
   const seen = new Set<number>();

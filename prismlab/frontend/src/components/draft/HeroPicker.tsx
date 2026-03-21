@@ -21,7 +21,7 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fuse = useMemo(() => {
+  const searcher = useMemo(() => {
     if (heroes.length === 0) return null;
     return createHeroSearcher(heroes);
   }, [heroes]);
@@ -42,11 +42,11 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
 
   // Build results list
   const results = useMemo(() => {
-    if (!fuse) return [];
+    if (!searcher) return [];
 
     let matched: Hero[];
     if (query.trim()) {
-      matched = searchHeroes(fuse, query).slice(0, 10);
+      matched = searchHeroes(searcher, query).slice(0, 10);
     } else if (isOpen) {
       // Show all heroes sorted alphabetically when dropdown is open with no query
       matched = [...heroes]
@@ -65,7 +65,7 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
       .sort((a, b) => a.localized_name.localeCompare(b.localized_name));
 
     return [...nonExcluded, ...excluded];
-  }, [fuse, query, isOpen, heroes, excludedHeroIds]);
+  }, [searcher, query, isOpen, heroes, excludedHeroIds]);
 
   function handleSelect(hero: Hero) {
     selectHero(hero);
