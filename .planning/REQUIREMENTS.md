@@ -16,7 +16,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DRFT-05**: User can select a playstyle from role-dependent options (e.g., aggressive, passive, farming, fighting)
 - [x] **DRFT-06**: User can select Radiant or Dire side
 - [x] **DRFT-07**: User can select their lane assignment (Safe/Off/Mid)
-- [ ] **DRFT-08**: User can select 1-2 lane opponents from the already-picked enemy heroes once the game begins
+- [x] **DRFT-08**: User can select 1-2 lane opponents from the already-picked enemy heroes once the game begins
 
 ### Recommendation Engine
 
@@ -33,7 +33,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DISP-02**: Each recommended item shows hero/item portrait from Steam CDN with gold cost
 - [ ] **DISP-03**: Each recommended item includes 1-3 sentence analytical reasoning explaining WHY (referencing abilities, matchup dynamics, stats)
 - [ ] **DISP-04**: Situational items display as decision tree cards with conditions (e.g., "if enemy has evasion -> MKB; if magic burst -> BKB")
-- [ ] **DISP-05**: Loading skeleton/spinner displays during Claude API calls (2-10 seconds)
+- [x] **DISP-05**: Loading skeleton/spinner displays during Claude API calls (2-10 seconds)
 - [x] **DISP-06**: Dark theme with spectral cyan (#00d4ff) primary, Radiant teal (#6aff97), Dire red (#ff5555)
 
 ### Mid-Game Adaptation
@@ -101,7 +101,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DRFT-05 | Phase 2 | Complete |
 | DRFT-06 | Phase 2 | Complete |
 | DRFT-07 | Phase 2 | Complete |
-| DRFT-08 | Phase 4 | Pending |
+| DRFT-08 | Phase 4 | Complete |
 | ENGN-01 | Phase 3 | Complete |
 | ENGN-02 | Phase 3 | Complete |
 | ENGN-03 | Phase 3 | Complete |
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISP-02 | Phase 4 | Pending |
 | DISP-03 | Phase 4 | Pending |
 | DISP-04 | Phase 4 | Pending |
-| DISP-05 | Phase 4 | Pending |
+| DISP-05 | Phase 4 | Complete |
 | DISP-06 | Phase 1 | Complete |
 | MIDG-01 | Phase 5 | Pending |
 | MIDG-02 | Phase 5 | Pending |

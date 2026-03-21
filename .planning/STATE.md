@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-03-PLAN.md (Phase 03 complete)
-last_updated: "2026-03-21T21:18:05.221Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-21T21:35:35.638Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 03 — recommendation-engine
+**Current focus:** Phase 04 — item-timeline-and-end-to-end-flow
 
 ## Current Position
 
-Phase: 03 (recommendation-engine) — COMPLETE
-Plan: 3 of 3 (all complete)
+Phase: 04 (item-timeline-and-end-to-end-flow) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: 3 of 3 (all complete)
 | Phase 03 P01 | 6min | 2 tasks | 8 files |
 | Phase 03 P02 | 4min | 2 tasks | 5 files |
 | Phase 03 P03 | 3min | 2 tasks | 5 files |
+| Phase 04 P01 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Rules items prepended to LLM phases in merge (rules take priority, dedup removes LLM copies)
 - [Phase 03]: Singleton engine instances at module level in recommend route for request reuse
 - [Phase 03]: Item ID validation filters hallucinated IDs against DB, removes empty phases
+- [Phase 04]: useGameStore.getState() for non-reactive read in recommend() to avoid stale closure issues
+- [Phase 04]: Composite key 'phase-itemId' for selectedItemId to uniquely identify items across phases
+- [Phase 04]: Toggle behavior on selectItem: clicking same item deselects it
 
 ### Pending Todos
 
@@ -102,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T21:12:15Z
-Stopped at: Completed 03-03-PLAN.md (Phase 03 complete)
+Last session: 2026-03-21T21:35:35.635Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
