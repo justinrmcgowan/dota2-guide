@@ -35,9 +35,11 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - ✓ Click-to-mark items as purchased in the timeline — Phase 5
 - ✓ Re-evaluate button regenerates only remaining (unpurchased) items — Phase 5
 
+- ✓ Daily data refresh pipeline — Phase 6
+
 ### Active
 
-(All v1 functional requirements validated — remaining: INFR-02 data pipeline)
+(All v1 requirements validated)
 
 ### Out of Scope
 
@@ -78,4 +80,4 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | Progressive information layers | Matches how information naturally reveals during a Dota game | — Pending |
 
 ---
-*Last updated: 2026-03-21 after Phase 5 completion*
+*Last updated: 2026-03-21 after Phase 6 completion — all v1 phases complete*
