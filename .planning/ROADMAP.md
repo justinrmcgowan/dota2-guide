@@ -47,11 +47,11 @@ Plans:
   2. User can select their position (Pos 1-5) and see playstyle options that change based on the selected role
   3. User can select Radiant or Dire side and their lane assignment (Safe/Off/Mid)
   4. All selections persist in the Zustand store and are visible in the sidebar simultaneously
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Zustand store extension with tests, draft option constants, HeroPicker controlled component refactor
+- [ ] 02-02-PLAN.md — All draft selector components (ally/opponent pickers, role, playstyle, side, lane, CTA) wired into Sidebar
 
 ### Phase 3: Recommendation Engine
 **Goal**: Backend can receive a draft context and return phased item recommendations with analytical reasoning, using rules for obvious decisions and Claude API for nuanced matchup analysis
