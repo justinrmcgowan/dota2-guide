@@ -63,12 +63,12 @@ Plans:
   3. Claude API generates matchup-specific reasoning that references actual hero abilities and enemy heroes by name
   4. When Claude API is unavailable or exceeds 10s timeout, the system returns rules-only recommendations with a visible fallback notice
   5. All Claude API responses are validated against a JSON schema before being returned to the frontend
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Schemas, rules engine (10+ deterministic rules), matchup data pipeline with OpenDota caching
+- [ ] 03-02-PLAN.md — System prompt (8K+ MMR coach), context builder, Claude LLM engine with structured output and caching
+- [ ] 03-03-PLAN.md — Hybrid orchestrator (rules+LLM merge, fallback, item validation), POST /api/recommend endpoint
 
 ### Phase 4: Item Timeline and End-to-End Flow
 **Goal**: Player completes the full loop -- fills in draft inputs, hits recommend, and sees a phased item timeline with reasoning explanations and situational branching
