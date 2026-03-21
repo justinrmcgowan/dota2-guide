@@ -1,19 +1,27 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useHeroes } from "../../hooks/useHeroes";
 import { createHeroSearcher, searchHeroes } from "../../utils/heroSearch";
-import { useGameStore } from "../../stores/gameStore";
 import HeroPortrait from "./HeroPortrait";
 import type { Hero } from "../../types/hero";
 
 interface HeroPickerProps {
+  value: Hero | null;
+  onSelect: (hero: Hero) => void;
+  onClear: () => void;
   excludedHeroIds?: Set<number>;
+  placeholder?: string;
+  compact?: boolean;
 }
 
-function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
+function HeroPicker({
+  value,
+  onSelect,
+  onClear,
+  excludedHeroIds = new Set(),
+  placeholder = "Search heroes...",
+  compact = false,
+}: HeroPickerProps) {
   const { heroes, loading, error } = useHeroes();
-  const selectedHero = useGameStore((s) => s.selectedHero);
-  const selectHero = useGameStore((s) => s.selectHero);
-  const clearHero = useGameStore((s) => s.clearHero);
 
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -40,18 +48,21 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, []);
 
+  const searchLimit = compact ? 8 : 10;
+  const browseLimit = compact ? 8 : 20;
+
   // Build results list
   const results = useMemo(() => {
     if (!searcher) return [];
 
     let matched: Hero[];
     if (query.trim()) {
-      matched = searchHeroes(searcher, query).slice(0, 10);
+      matched = searchHeroes(searcher, query).slice(0, searchLimit);
     } else if (isOpen) {
       // Show all heroes sorted alphabetically when dropdown is open with no query
       matched = [...heroes]
         .sort((a, b) => a.localized_name.localeCompare(b.localized_name))
-        .slice(0, 20);
+        .slice(0, browseLimit);
     } else {
       return [];
     }
@@ -65,18 +76,17 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
       .sort((a, b) => a.localized_name.localeCompare(b.localized_name));
 
     return [...nonExcluded, ...excluded];
-  }, [searcher, query, isOpen, heroes, excludedHeroIds]);
+  }, [searcher, query, isOpen, heroes, excludedHeroIds, searchLimit, browseLimit]);
 
   function handleSelect(hero: Hero) {
-    selectHero(hero);
+    onSelect(hero);
     setQuery("");
     setIsOpen(false);
   }
 
   function handleClear() {
-    clearHero();
+    onClear();
     setQuery("");
-    // Focus input after clearing
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
@@ -96,11 +106,11 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
   }
 
   // Selected hero display
-  if (selectedHero) {
+  if (value) {
     return (
       <div className="flex items-center justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <HeroPortrait hero={selectedHero} size="lg" selected />
+          <HeroPortrait hero={value} size="lg" selected />
         </div>
         <button
           onClick={handleClear}
@@ -126,6 +136,8 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
   }
 
   // Search input and dropdown
+  const inputTextSize = compact ? "text-xs" : "text-sm";
+
   return (
     <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
       <input
@@ -137,8 +149,8 @@ function HeroPicker({ excludedHeroIds = new Set() }: HeroPickerProps) {
           setIsOpen(true);
         }}
         onFocus={() => setIsOpen(true)}
-        placeholder="Search heroes..."
-        className="w-full bg-bg-elevated border border-bg-elevated text-gray-100 placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-accent focus:border-transparent"
+        placeholder={placeholder}
+        className={`w-full bg-bg-elevated border border-bg-elevated text-gray-100 placeholder-gray-500 rounded-lg px-3 py-2 ${inputTextSize} focus:outline-none focus:ring-2 focus:ring-cyan-accent focus:border-transparent`}
       />
 
       {isOpen && results.length > 0 && (
