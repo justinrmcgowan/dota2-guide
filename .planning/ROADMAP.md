@@ -96,11 +96,11 @@ Plans:
   2. User can select lane result (Won/Even/Lost) and input damage profile via toggles and manual percentage entry
   3. User can mark key enemy items spotted (e.g., enemy BKB, enemy Blink Dagger) from a curated list
   4. User can hit Re-Evaluate and see only the unpurchased remaining items regenerated with updated reasoning reflecting the new game state
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Backend + frontend data layer: mid-game schema extensions, purchased item filtering, context builder, store/type/hook extensions, ItemCard purchase overlay
+- [ ] 05-02-PLAN.md -- Game state UI: LaneResultSelector, DamageProfileInput, EnemyItemTracker, GameStatePanel, ReEvaluateButton, Sidebar integration
 
 ### Phase 6: Data Pipeline and Hardening
 **Goal**: Matchup data stays fresh automatically via a daily refresh pipeline, and the system is production-ready for long-term use
