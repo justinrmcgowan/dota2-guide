@@ -10,12 +10,12 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Draft Inputs
 
 - [x] **DRFT-01**: User can search and select their hero from a searchable dropdown with hero portraits
-- [ ] **DRFT-02**: User can search and select 4 allied heroes from searchable dropdowns with portraits
-- [ ] **DRFT-03**: User can search and select 5 opponent heroes from searchable dropdowns with portraits
-- [ ] **DRFT-04**: User can select their role/position (Pos 1-5) via button selector
-- [ ] **DRFT-05**: User can select a playstyle from role-dependent options (e.g., aggressive, passive, farming, fighting)
-- [ ] **DRFT-06**: User can select Radiant or Dire side
-- [ ] **DRFT-07**: User can select their lane assignment (Safe/Off/Mid)
+- [x] **DRFT-02**: User can search and select 4 allied heroes from searchable dropdowns with portraits
+- [x] **DRFT-03**: User can search and select 5 opponent heroes from searchable dropdowns with portraits
+- [x] **DRFT-04**: User can select their role/position (Pos 1-5) via button selector
+- [x] **DRFT-05**: User can select a playstyle from role-dependent options (e.g., aggressive, passive, farming, fighting)
+- [x] **DRFT-06**: User can select Radiant or Dire side
+- [x] **DRFT-07**: User can select their lane assignment (Safe/Off/Mid)
 - [ ] **DRFT-08**: User can select 1-2 lane opponents from the already-picked enemy heroes once the game begins
 
 ### Recommendation Engine
@@ -95,12 +95,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DRFT-01 | Phase 1 | Complete |
-| DRFT-02 | Phase 2 | Pending |
-| DRFT-03 | Phase 2 | Pending |
-| DRFT-04 | Phase 2 | Pending |
-| DRFT-05 | Phase 2 | Pending |
-| DRFT-06 | Phase 2 | Pending |
-| DRFT-07 | Phase 2 | Pending |
+| DRFT-02 | Phase 2 | Complete |
+| DRFT-03 | Phase 2 | Complete |
+| DRFT-04 | Phase 2 | Complete |
+| DRFT-05 | Phase 2 | Complete |
+| DRFT-06 | Phase 2 | Complete |
+| DRFT-07 | Phase 2 | Complete |
 | DRFT-08 | Phase 4 | Pending |
 | ENGN-01 | Phase 3 | Pending |
 | ENGN-02 | Phase 3 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-03-PLAN.md — Phase 01 Foundation complete
-last_updated: "2026-03-21T19:12:41.339Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-21T20:11:27.116Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # Project State
@@ -19,18 +19,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — draft-inputs
 
 ## Current Position
 
-Phase: 01 (foundation) — COMPLETE
-Plan: 3 of 3 (all complete)
+Phase: 02 (draft-inputs) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: ~5min
 - Total execution time: ~0.23 hours
 
@@ -49,6 +49,8 @@ Plan: 3 of 3 (all complete)
 | Phase 01 P01 | 4min | 2 tasks | 22 files |
 | Phase 01 P02 | 5min | 2 tasks | 24 files |
 | Phase 01 P03 | 5min | 3 tasks | 7 files |
+| Phase 02 P01 | 3min | 2 tasks | 5 files |
+| Phase 02 P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Vitest with jsdom for React component testing -- test infra ready for Plan 03
 - [Phase 01]: Hybrid search (substring + initials + Fuse.js fuzzy) for Dota hero abbreviation matching
 - [Phase 01]: HeroPicker excludedHeroIds as Set<number> prop for Phase 2 multi-picker reuse
+- [Phase 02]: Controlled component pattern for HeroPicker enables reuse across all 10 hero picker slots
+- [Phase 02]: Role-playstyle cross-validation invalidates playstyle when switching to role where it is not valid
+- [Phase 02]: clearOpponent auto-removes hero from laneOpponents to prevent stale references
 
 ### Pending Todos
 
@@ -80,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T19:07:30.471Z
-Stopped at: Completed 01-03-PLAN.md — Phase 01 Foundation complete
+Last session: 2026-03-21T20:11:15.099Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
