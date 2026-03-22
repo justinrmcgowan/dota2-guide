@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 interface ErrorBannerProps {
   message: string;
   onDismiss: () => void;
@@ -5,6 +7,14 @@ interface ErrorBannerProps {
 }
 
 function ErrorBanner({ message, onDismiss, type }: ErrorBannerProps) {
+  useEffect(() => {
+    if (type !== "error") return;
+    const timer = setTimeout(() => {
+      onDismiss();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [type, onDismiss]);
+
   if (type === "fallback") {
     return (
       <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg px-4 py-3 mb-4">
@@ -16,7 +26,7 @@ function ErrorBanner({ message, onDismiss, type }: ErrorBannerProps) {
   }
 
   return (
-    <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-3 mb-4 flex items-center justify-between">
+    <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-3 mb-4 flex items-center justify-between transition-opacity duration-300">
       <p className="text-amber-400 text-sm">{message}</p>
       <button
         onClick={onDismiss}

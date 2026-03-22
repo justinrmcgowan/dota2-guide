@@ -63,7 +63,7 @@ function MainPanel() {
         <div className="flex items-center justify-center h-full">
           <p className="text-gray-500 text-sm">
             {selectedHero
-              ? "Configure your draft and click Get Item Build to see recommendations"
+              ? "Select a hero and get your build"
               : "Select a hero from the sidebar to get started"}
           </p>
         </div>
