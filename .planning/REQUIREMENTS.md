@@ -24,7 +24,7 @@ Requirements for v1.1 release. Each maps to roadmap phases.
 
 - [ ] **DEBT-01**: Remove unused frontend item API methods and other dead code
 - [ ] **DEBT-02**: Wire /admin endpoint through Nginx reverse proxy
-- [ ] **DEBT-03**: Fill test coverage gaps from v1.0 sprint
+- [x] **DEBT-03**: Fill test coverage gaps from v1.0 sprint
 - [ ] **DEBT-04**: General UI polish — loading states, error messages, edge cases
 
 ## v2 Requirements
@@ -61,7 +61,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NEUT-03 | Phase 9 | Pending |
 | DEBT-01 | Phase 7 | Pending |
 | DEBT-02 | Phase 7 | Pending |
-| DEBT-03 | Phase 7 | Pending |
+| DEBT-03 | Phase 7 | Complete |
 | DEBT-04 | Phase 7 | Pending |
 
 **Coverage:**
