@@ -1,5 +1,4 @@
 import type { Hero } from "../types/hero";
-import type { Item } from "../types/item";
 import type {
   RecommendRequest,
   RecommendResponse,
@@ -35,9 +34,6 @@ export interface DataFreshness {
 
 export const api = {
   getHeroes: () => fetchJson<Hero[]>("/heroes"),
-  getHero: (id: number) => fetchJson<Hero>(`/heroes/${id}`),
-  getItems: () => fetchJson<Item[]>("/items"),
-  getItem: (id: number) => fetchJson<Item>(`/items/${id}`),
   recommend: (req: RecommendRequest) =>
     postJson<RecommendRequest, RecommendResponse>("/recommend", req),
   getDataFreshness: () => fetchJson<DataFreshness>("/data-freshness"),
