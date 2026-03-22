@@ -1,0 +1,281 @@
+"""Unit tests for the context builder that assembles Claude API user messages."""
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from engine.context_builder import ContextBuilder
+from engine.schemas import RecommendRequest, RuleResult
+
+
+def _make_request(**kwargs) -> RecommendRequest:
+    """Create a minimal valid RecommendRequest for testing."""
+    defaults = dict(
+        hero_id=1,
+        role=1,
+        playstyle="farming",
+        side="radiant",
+        lane="safe",
+        lane_opponents=[],
+        allies=[],
+    )
+    defaults.update(kwargs)
+    return RecommendRequest(**defaults)
+
+
+@pytest.fixture
+def builder():
+    """ContextBuilder with a mock OpenDota client."""
+    mock_opendota = MagicMock()
+    return ContextBuilder(opendota_client=mock_opendota)
+
+
+# ---------------------------------------------------------------------------
+# _build_rules_lines (pure, no DB)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildRulesLines:
+    def test_formats_rule_items(self, builder: ContextBuilder):
+        """Rule items are formatted with name, phase, and reasoning."""
+        rules = [
+            RuleResult(
+                item_id=36,
+                item_name="Magic Stick",
+                reasoning="Bristleback spams quills",
+                phase="laning",
+                priority="core",
+            ),
+            RuleResult(
+                item_id=116,
+                item_name="Black King Bar",
+                reasoning="Zeus deals heavy magic damage",
+                phase="core",
+                priority="core",
+            ),
+        ]
+        result = builder._build_rules_lines(rules)
+        assert "Magic Stick" in result
+        assert "laning" in result
+        assert "Bristleback spams quills" in result
+        assert "Black King Bar" in result
+        assert "core" in result
+        assert "Zeus deals heavy magic damage" in result
+
+    def test_empty_rules_returns_empty_string(self, builder: ContextBuilder):
+        """Empty rules list produces empty string."""
+        result = builder._build_rules_lines([])
+        assert result == ""
+
+    def test_single_rule_formatting(self, builder: ContextBuilder):
+        """Single rule formats as '- name (phase): reasoning'."""
+        rules = [
+            RuleResult(
+                item_id=48,
+                item_name="Power Treads",
+                reasoning="Good stat switching",
+                phase="laning",
+                priority="core",
+            ),
+        ]
+        result = builder._build_rules_lines(rules)
+        assert result == "- Power Treads (laning): Good stat switching"
+
+
+# ---------------------------------------------------------------------------
+# _build_midgame_section (pure, no DB)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildMidgameSection:
+    def test_no_midgame_fields_returns_empty(self, builder: ContextBuilder):
+        """Request with no midgame fields produces empty string."""
+        req = _make_request()
+        result = builder._build_midgame_section(req)
+        assert result == ""
+
+    def test_lane_result_included(self, builder: ContextBuilder):
+        """Lane result 'won' is capitalized and included."""
+        req = _make_request(lane_result="won")
+        result = builder._build_midgame_section(req)
+        assert "Mid-Game Update" in result
+        assert "Lane Result: Won" in result
+
+    def test_lane_result_lost(self, builder: ContextBuilder):
+        """Lane result 'lost' is capitalized correctly."""
+        req = _make_request(lane_result="lost")
+        result = builder._build_midgame_section(req)
+        assert "Lane Result: Lost" in result
+
+    def test_damage_profile_included(self, builder: ContextBuilder):
+        """Damage profile percentages are formatted correctly."""
+        req = _make_request(
+            damage_profile={"physical": 60, "magical": 30, "pure": 10}
+        )
+        result = builder._build_midgame_section(req)
+        assert "Mid-Game Update" in result
+        assert "Damage Taken:" in result
+        assert "Physical 60%" in result
+        assert "Magical 30%" in result
+        assert "Pure 10%" in result
+
+    def test_enemy_items_spotted_title_case(self, builder: ContextBuilder):
+        """Enemy items use title case with underscores replaced by spaces."""
+        req = _make_request(enemy_items_spotted=["black_king_bar", "blink"])
+        result = builder._build_midgame_section(req)
+        assert "Mid-Game Update" in result
+        assert "Enemy Items Spotted:" in result
+        assert "Black King Bar" in result
+        assert "Blink" in result
+
+    def test_all_midgame_fields_combined(self, builder: ContextBuilder):
+        """All midgame fields present in output when all set."""
+        req = _make_request(
+            lane_result="even",
+            damage_profile={"physical": 50, "magical": 50, "pure": 0},
+            enemy_items_spotted=["force_staff"],
+        )
+        result = builder._build_midgame_section(req)
+        assert "Lane Result: Even" in result
+        assert "Physical 50%" in result
+        assert "Force Staff" in result
+
+
+# ---------------------------------------------------------------------------
+# Full build method (needs DB, mock external services)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildFull:
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+            {"id": 1, "name": "Blink Dagger", "cost": 2250},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_contains_hero_and_game_state(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Build output contains hero name, role, playstyle, side, and lane."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request()
+        result = await cb.build(req, [], test_db_session)
+
+        assert "Anti-Mage" in result
+        assert "Pos 1" in result
+        assert "farming" in result
+        assert "radiant" in result
+        assert "safe" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_includes_opponent_section(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Build output includes Lane Opponents section when opponents provided."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request(lane_opponents=[2])  # Axe
+        result = await cb.build(req, [], test_db_session)
+
+        assert "Lane Opponents" in result
+        assert "Axe" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_includes_available_items(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Build output includes Available Items section with item catalog."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request()
+        result = await cb.build(req, [], test_db_session)
+
+        assert "Available Items" in result
+        assert "Power Treads" in result
+        assert "1400g" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_includes_rules_section(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Build output includes Already Recommended section when rules provided."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        rules = [
+            RuleResult(
+                item_id=36,
+                item_name="Magic Stick",
+                reasoning="Bristleback spams quills",
+                phase="laning",
+                priority="core",
+            ),
+        ]
+        req = _make_request()
+        result = await cb.build(req, rules, test_db_session)
+
+        assert "Already Recommended" in result
+        assert "Magic Stick" in result
