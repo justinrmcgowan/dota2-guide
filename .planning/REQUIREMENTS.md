@@ -52,23 +52,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ALLY-01 | Pending | Pending |
-| ALLY-02 | Pending | Pending |
-| ALLY-03 | Pending | Pending |
-| ALLY-04 | Pending | Pending |
-| NEUT-01 | Pending | Pending |
-| NEUT-02 | Pending | Pending |
-| NEUT-03 | Pending | Pending |
-| DEBT-01 | Pending | Pending |
-| DEBT-02 | Pending | Pending |
-| DEBT-03 | Pending | Pending |
-| DEBT-04 | Pending | Pending |
+| ALLY-01 | Phase 8 | Pending |
+| ALLY-02 | Phase 8 | Pending |
+| ALLY-03 | Phase 8 | Pending |
+| ALLY-04 | Phase 8 | Pending |
+| NEUT-01 | Phase 9 | Pending |
+| NEUT-02 | Phase 9 | Pending |
+| NEUT-03 | Phase 9 | Pending |
+| DEBT-01 | Phase 7 | Pending |
+| DEBT-02 | Phase 7 | Pending |
+| DEBT-03 | Phase 7 | Pending |
+| DEBT-04 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*
