@@ -53,11 +53,11 @@ Plans:
   2. If an ally is likely to build a team aura item (Pipe, Vlads, Crimson Guard, Mekansm), the recommendation does not suggest the same item for the user's hero
   3. When an ally has strong setup abilities (e.g., Enigma Black Hole, Magnus Reverse Polarity), recommendations prioritize follow-up items (BKB, damage items) with reasoning that references the combo
   4. When the team lacks a key capability (stuns, saves, wave clear), recommendations suggest items that fill that gap with explicit reasoning about the team deficit
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01-PLAN.md — Wire allied heroes into context builder with names and popular items
+- [ ] 08-02-PLAN.md — Add Team Coordination rules to system prompt and integration tests
 
 ### Phase 9: Neutral Items
 **Goal**: The player sees which neutral items to prioritize each tier and understands when a neutral item changes their build path
@@ -87,5 +87,5 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 5. Mid-Game Adaptation | v1.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Data Pipeline | v1.0 | 1/1 | Complete | 2026-03-21 |
 | 7. Tech Debt & Polish | v1.1 | 2/2 | Complete | 2026-03-22 |
-| 8. Allied Synergy | v1.1 | 0/? | Not started | - |
+| 8. Allied Synergy | v1.1 | 0/2 | Not started | - |
 | 9. Neutral Items | v1.1 | 0/? | Not started | - |
