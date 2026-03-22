@@ -38,11 +38,11 @@
   2. The /admin endpoint is accessible through the Nginx reverse proxy at the expected URL
   3. Test coverage includes the previously untested paths identified during v1.0 (backend and frontend), and all tests pass
   4. Loading spinners, error toasts, and empty-state messages display correctly for all user-facing flows (hero search, recommendation fetch, re-evaluate, data refresh)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Dead code removal, admin proxy, UI polish
+- [ ] 07-02-PLAN.md — Fill test coverage gaps (frontend + backend)
 
 ### Phase 8: Allied Synergy
 **Goal**: Recommendations account for what allies bring to the team — no duplicate auras, combo synergies exploited, role gaps filled with item choices
@@ -86,6 +86,6 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 4. Item Timeline & E2E | v1.0 | 3/3 | Complete | 2026-03-21 |
 | 5. Mid-Game Adaptation | v1.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Data Pipeline | v1.0 | 1/1 | Complete | 2026-03-21 |
-| 7. Tech Debt & Polish | v1.1 | 0/? | Not started | - |
+| 7. Tech Debt & Polish | v1.1 | 0/2 | Planned | - |
 | 8. Allied Synergy | v1.1 | 0/? | Not started | - |
 | 9. Neutral Items | v1.1 | 0/? | Not started | - |
