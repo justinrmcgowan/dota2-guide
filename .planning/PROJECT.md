@@ -29,7 +29,14 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Active
 
-(Planning next milestone)
+## Current Milestone: v1.1 Allied Synergy & Neutral Items
+
+**Goal:** Leverage the full 10-hero draft by wiring allied heroes into Claude reasoning, add neutral item recommendations, and clean up v1.0 tech debt.
+
+**Target features:**
+- Allied team synergy in recommendations (duplication avoidance, combo awareness, role gap filling)
+- Neutral item tier priorities with dedicated section and inline build-path callouts
+- Dead code removal, admin proxy fix, test coverage gaps, general UI polish
 
 ### Out of Scope
 
@@ -72,4 +79,4 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | APScheduler for daily refresh | Native async job support in FastAPI event loop | ✓ Good — 24h interval, clean shutdown |
 
 ---
-*Last updated: 2026-03-21 after v1.0 milestone*
+*Last updated: 2026-03-22 after v1.1 milestone start*

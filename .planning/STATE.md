@@ -1,67 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-21T23:11:36.184Z"
+milestone: v1.1
+milestone_name: Allied Synergy & Neutral Items
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-03-22T08:30:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-21)
+See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 06 — data-pipeline-and-hardening
+**Current focus:** Defining requirements for v1.1
 
 ## Current Position
 
-Phase: 06 (data-pipeline-and-hardening) — COMPLETE
-Plan: 1 of 1 (DONE)
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 8
-- Average duration: ~4.5min
-- Total execution time: ~0.45 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-| Phase 01 P01 | 4min | 2 tasks | 22 files |
-| Phase 01 P02 | 5min | 2 tasks | 24 files |
-| Phase 01 P03 | 5min | 3 tasks | 7 files |
-| Phase 02 P01 | 3min | 2 tasks | 5 files |
-| Phase 02 P02 | 4min | 3 tasks | 10 files |
-| Phase 03 P01 | 6min | 2 tasks | 8 files |
-| Phase 03 P01 | 6min | 2 tasks | 8 files |
-| Phase 03 P02 | 4min | 2 tasks | 5 files |
-| Phase 03 P03 | 3min | 2 tasks | 5 files |
-| Phase 04 P01 | 2min | 2 tasks | 5 files |
-| Phase 04 P02 | 5min | 3 tasks | 7 files |
-| Phase 04 P03 | 2min | 2 tasks | 4 files |
-| Phase 05 P01 | 3min | 2 tasks | 9 files |
-| Phase 05 P02 | 2min | 2 tasks | 7 files |
-| Phase 06 P01 | 3min | 2 tasks | 7 files |
-| Phase 06 P01 | 3min | 2 tasks | 7 files |
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-22 — Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -70,48 +35,13 @@ Plan: 1 of 1 (DONE)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Roadmap: 6 phases derived from 28 requirements. Phase 3 (Recommendation Engine) is highest risk -- budget iteration time for prompt engineering.
-- Roadmap: Phase 2 and Phase 3 can execute in either order (both depend only on Phase 1). Research recommends Phase 3 first (higher risk, needs more iteration).
-- [Phase 01]: Used SQLAlchemy 2.0 Mapped/mapped_column syntax for type safety
-- [Phase 01]: OpenDota keyed-object response iterated with .items() to avoid array assumption
-- [Phase 01]: Tailwind v4 CSS-first config with @theme directive -- no tailwind.config.js
-- [Phase 01]: OKLCH color system for perceptual uniformity across spectral accent colors
-- [Phase 01]: Vitest with jsdom for React component testing -- test infra ready for Plan 03
-- [Phase 01]: Hybrid search (substring + initials + Fuse.js fuzzy) for Dota hero abbreviation matching
-- [Phase 01]: HeroPicker excludedHeroIds as Set<number> prop for Phase 2 multi-picker reuse
-- [Phase 02]: Controlled component pattern for HeroPicker enables reuse across all 10 hero picker slots
-- [Phase 02]: Role-playstyle cross-validation invalidates playstyle when switching to role where it is not valid
-- [Phase 02]: clearOpponent auto-removes hero from laneOpponents to prevent stale references
-- [Phase 02]: HeroSlot 32px circular portraits with hover overlay for clear action
-- [Phase 02]: Ally teal border / Opponent red border section styling per CONTEXT.md
-- [Phase 02]: PlaystyleSelector animated reveal via CSS max-h transition controlled by parent Sidebar
-- [Phase 02]: GetBuildButton pinned to sidebar footer outside scrollable area
-- [Phase 03]: 12 deterministic rules covering spell-spammers, evasion, magic damage, passives, invisibility, regen, mana sustain, armor, and role-based boots
-- [Phase 03]: Stale-while-revalidate pattern for matchup cache: return stale data immediately, refresh in background via asyncio.create_task
-- [Phase 03]: Role-based item budget filtering: 10000g for cores (Pos 1-3), 5500g for supports (Pos 4-5)
-- [Phase 03]: System prompt at 9610 chars with specificity constraints requiring enemy hero names and ability references
-- [Phase 03]: output_config.format with json_schema (GA path) for Claude structured output, max_retries=0 within 10s timeout
-- [Phase 03]: All LLMEngine failure paths return None to trigger rules-only fallback in orchestrator
-- [Phase 03]: Rules items prepended to LLM phases in merge (rules take priority, dedup removes LLM copies)
-- [Phase 03]: Singleton engine instances at module level in recommend route for request reuse
-- [Phase 03]: Item ID validation filters hallucinated IDs against DB, removes empty phases
-- [Phase 04]: useGameStore.getState() for non-reactive read in recommend() to avoid stale closure issues
-- [Phase 04]: Composite key 'phase-itemId' for selectedItemId to uniquely identify items across phases
-- [Phase 04]: Toggle behavior on selectItem: clicking same item deselects it
-- [Phase 04]: ItemCard shows gold cost below portrait with item name fallback when gold_cost is null
-- [Phase 04]: Phase-specific color accents: gray for starting, cyan for laning, amber for core, purple for late game
-- [Phase 04]: MainPanel priority rendering chain: error > loading > data > empty state
-- [Phase 04]: gold_cost populated via model_copy during _validate_item_ids -- zero additional DB queries
-- [Phase 04]: cost_map dict replaces valid_ids set for dual-purpose ID validation and cost lookup
-- [Phase 05]: clearResults vs clear split: clearResults preserves purchasedItems across re-evaluations for mid-game
-- [Phase 05]: Purchased item filtering runs before item ID validation to avoid unnecessary DB lookups
-- [Phase 05]: ItemCard click toggles both purchase state AND shows reasoning via combined handler
-- [Phase 05]: Independent damage sliders (no auto-normalize to 100) matching Dota death screen reporting
-- [Phase 05]: Game State panel visible only after first recommendation, gated on recommendationStore.data !== null
-- [Phase 05]: 15 counter items chosen for high-impact itemization decisions (BKB, Blink, Force Staff, etc.)
-- [Phase 06]: AsyncIOScheduler for native async job support in FastAPI event loop
-- [Phase 06]: session.merge for upsert pattern matching seed.py field mapping
-- [Phase 06]: Error logging uses separate async session to avoid corrupted session state
+- [v1.0]: Allies already accepted in draft UI and sent to backend — context builder just doesn't use them yet
+- [v1.0]: 12 deterministic rules covering spell-spammers, evasion, magic damage, passives, invisibility, regen, mana sustain, armor, and role-based boots
+- [v1.0]: System prompt at 9610 chars with specificity constraints requiring enemy hero names and ability references
+- [v1.0]: output_config.format with json_schema (GA path) for Claude structured output, max_retries=0 within 10s timeout
+- [v1.0]: Role-based item budget filtering: 10000g for cores (Pos 1-3), 5500g for supports (Pos 4-5)
+- [v1.0]: Purchased item filtering runs before item ID validation to avoid unnecessary DB lookups
+- [v1.0]: Known tech debt: unused frontend item API methods, admin endpoint not proxied, allies field unused in context builder
 
 ### Pending Todos
 
@@ -119,13 +49,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Research flag: OpenDota `/heroes/{id}/itemPopularity` endpoint needs validation during Phase 1.
-- Research flag: Stratz GraphQL schema for bracket-filtered matchup queries needs hands-on exploration during Phase 1.
-- Research flag: SQLite WAL mode on Unraid Docker volumes must be tested on actual deployment target during Phase 1.
-- Research flag: Tailwind v4 OKLCH color mapping from hex values needs visual verification.
+None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T23:01:27.503Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-22
+Stopped at: Milestone v1.1 initialization
 Resume file: None
