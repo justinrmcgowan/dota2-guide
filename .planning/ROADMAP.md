@@ -23,7 +23,7 @@
 
 **Milestone Goal:** Leverage the full 10-hero draft by wiring allied heroes into Claude reasoning, add neutral item recommendations, and clean up v1.0 tech debt.
 
-- [ ] **Phase 7: Tech Debt & Polish** - Clean up dead code, fix admin proxy, fill test gaps, polish UI rough edges
+- [x] **Phase 7: Tech Debt & Polish** - Clean up dead code, fix admin proxy, fill test gaps, polish UI rough edges
 - [ ] **Phase 8: Allied Synergy** - Wire allied heroes into recommendation reasoning for aura dedup, combo awareness, and role gap filling
 - [ ] **Phase 9: Neutral Items** - Add neutral item data layer, dedicated recommendation section, and inline build-path callouts
 
@@ -41,8 +41,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Dead code removal, admin proxy, UI polish
-- [ ] 07-02-PLAN.md — Fill test coverage gaps (frontend + backend)
+- [x] 07-01-PLAN.md — Dead code removal, admin proxy, UI polish
+- [x] 07-02-PLAN.md — Fill test coverage gaps (frontend + backend)
 
 ### Phase 8: Allied Synergy
 **Goal**: Recommendations account for what allies bring to the team — no duplicate auras, combo synergies exploited, role gaps filled with item choices
@@ -86,6 +86,6 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 4. Item Timeline & E2E | v1.0 | 3/3 | Complete | 2026-03-21 |
 | 5. Mid-Game Adaptation | v1.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Data Pipeline | v1.0 | 1/1 | Complete | 2026-03-21 |
-| 7. Tech Debt & Polish | v1.1 | 0/2 | Planned | - |
+| 7. Tech Debt & Polish | v1.1 | 2/2 | Complete | 2026-03-22 |
 | 8. Allied Synergy | v1.1 | 0/? | Not started | - |
 | 9. Neutral Items | v1.1 | 0/? | Not started | - |
