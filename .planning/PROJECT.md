@@ -40,7 +40,6 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Out of Scope
 
-- Neutral item recommendations — V2
 - GSI/live game data auto-integration — V2
 - Screenshot/scoreboard parsing — V2
 - Mobile optimization — desktop-first
@@ -50,7 +49,7 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 - **Shipped:** v1.0 MVP on 2026-03-21
 - **Codebase:** ~1000 source files, React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
-- **Test suite:** 127 tests (82 backend pytest + 45 frontend vitest), zero failures
+- **Test suite:** 141 tests (96 backend pytest + 45 frontend vitest), zero failures
 - **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
 - **Core problem:** Player knows Dota itemization theory but loses track of matchup nuances during live games
 - **Data sources:** OpenDota API for hero stats, win rates, item popularity. Steam CDN for images
@@ -78,6 +77,8 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | APScheduler for daily refresh | Native async job support in FastAPI event loop | ✓ Good — 24h interval, clean shutdown |
 | Prompt-only ally coordination | Aura dedup, combo awareness, gap filling via system prompt rules rather than deterministic rules engine | ✓ Good — keeps flexibility, system prompt grew to 13326 chars (well above caching threshold) |
 | OpenDota item popularity for ally builds | Reuse existing data pipeline for ally item context | ✓ Good — no new API calls needed, same get_hero_item_popularity function |
+| Neutral items via system prompt, not rules engine | Claude ranks neutrals per tier with per-item reasoning and build-path callouts | ✓ Good — dedicated section below timeline, all 5 tiers visible, 2-3 picks per tier |
+| Send all neutrals to Claude, not pre-filtered | Claude catches non-obvious synergies that attribute-based filtering would miss | ✓ Good — ~500 tokens for full neutral catalog, manageable |
 
 ---
-*Last updated: 2026-03-23 after Phase 8 (Allied Synergy) completion*
+*Last updated: 2026-03-23 after Phase 9 (Neutral Items) completion — v1.1 milestone complete*
