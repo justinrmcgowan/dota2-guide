@@ -1,30 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Allied Synergy & Neutral Items
-status: v1.1 milestone complete
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-23T11:05:46.305Z"
+milestone: v2.0
+milestone_name: Live Game Intelligence
+status: defining requirements
+stopped_at: "Milestone v2.0 started"
+last_updated: "2026-03-23"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-22)
+See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 09 — neutral-items
+**Current focus:** Defining requirements for v2.0 Live Game Intelligence
 
 ## Current Position
 
-Phase: 09
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-23 — Milestone v2.0 started
 
 ## Performance Metrics
 

@@ -29,25 +29,28 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Active
 
-## Current Milestone: v1.1 Allied Synergy & Neutral Items
+## Current Milestone: v2.0 Live Game Intelligence
 
-**Goal:** Leverage the full 10-hero draft by wiring allied heroes into Claude reasoning, add neutral item recommendations, and clean up v1.0 tech debt.
+**Goal:** Transform Prismlab from manual-input advisor to live-game-aware system using Dota 2 GSI, screenshot parsing, and auto gold tracking — recommendations evolve in real-time as the game progresses.
 
 **Target features:**
-- Allied team synergy in recommendations (duplication avoidance, combo awareness, role gap filling)
-- Neutral item tier priorities with dedicated section and inline build-path callouts
-- Dead code removal, admin proxy fix, test coverage gaps, general UI polish
+- GSI integration — FastAPI endpoint receives live game state, pushes to frontend via WebSocket
+- Auto-detect draft, lane, gold/net worth, purchased items from GSI data
+- Auto-determine lane result from gold data at 10 min, adjust item timings
+- Screenshot parsing — user pastes scoreboard screenshot, Claude vision extracts enemy items
+- Auto-refresh recommendations on key game events (rate-limited, max 1 per 2 min)
+- Full automation pipeline: GSI real-time data + screenshots for enemy builds
 
 ### Out of Scope
 
-- GSI/live game data auto-integration — V2
-- Screenshot/scoreboard parsing — V2
 - Mobile optimization — desktop-first
-- Auto gold/net worth tracking — V2
+- Voice coaching / audio callouts — text-only for v2.0
+- Hotkey screen capture / clipboard monitoring — manual paste only for v2.0
+- Ability build suggestions — item-focused only
 
 ## Context
 
-- **Shipped:** v1.0 MVP on 2026-03-21
+- **Shipped:** v1.0 MVP (2026-03-21), v1.1 Allied Synergy & Neutral Items (2026-03-23)
 - **Codebase:** ~1000 source files, React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
 - **Test suite:** 141 tests (96 backend pytest + 45 frontend vitest), zero failures
 - **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
@@ -80,5 +83,22 @@ At any point in any game, the player knows exactly what to buy next and why — 
 | Neutral items via system prompt, not rules engine | Claude ranks neutrals per tier with per-item reasoning and build-path callouts | ✓ Good — dedicated section below timeline, all 5 tiers visible, 2-3 picks per tier |
 | Send all neutrals to Claude, not pre-filtered | Claude catches non-obvious synergies that attribute-based filtering would miss | ✓ Good — ~500 tokens for full neutral catalog, manageable |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-23 after Phase 9 (Neutral Items) completion — v1.1 milestone complete*
+*Last updated: 2026-03-23 — v2.0 Live Game Intelligence milestone started*
