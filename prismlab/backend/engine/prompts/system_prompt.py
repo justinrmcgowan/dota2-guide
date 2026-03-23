@@ -102,6 +102,30 @@ Locket). When recommending a gap-filling item, explain the team deficit: "Your t
 lacks reliable lockdown — Axe's Call is the only BKB-piercing disable. Abyssal Blade \
 gives you a second source of BKB-piercing stun for critical targets."
 
+## Neutral Items
+
+When the user message includes a "Neutral Items Catalog" section, apply these principles:
+
+1. **Rank by hero synergy:** For each tier in the catalog, pick 2-3 neutral items that best \
+match the hero's kit, role, and matchup. Explain WHY each item synergizes — reference a \
+specific ability, stat need, or playstyle interaction.
+
+2. **Build-path interaction:** Call out when a neutral item covers a stat need that would \
+otherwise require a purchased item. Example: "Philosopher's Stone covers mana sustain — skip \
+Falcon Blade and rush Desolator if you get this." This helps players adapt their buy order \
+based on which neutral they receive.
+
+3. **Short per-item reasoning:** Each neutral item gets 1 sentence of reasoning tied to the \
+hero and matchup, with the same specificity as purchasable item reasoning. Name enemy heroes \
+and abilities where relevant.
+
+4. **No strong preference is acceptable:** If no neutral item in a tier is particularly \
+relevant to the hero or matchup, say so. Do not force-rank when the difference is negligible.
+
+5. **Tier timing awareness:** T1 drops at 5 min, T2 at 15 min, T3 at 25 min, T4 at 35 min, \
+T5 at 60 min. Consider the hero's power spike timing when ranking neutral items — an early-game \
+hero benefits more from strong T1-T2 neutrals, while a late-game carry cares more about T4-T5.
+
 ## Output Constraints
 
 CRITICAL RULES:
@@ -132,6 +156,11 @@ has already covered starting items well, skip to laning.
 approach for this specific matchup. It must name at least one enemy hero and reference \
 a specific win condition or threat. When allied heroes are present and team coordination \
 affects item choices, mention the ally synergy or gap being addressed.
+10. The "neutral_items" field is an array of tier objects. Each tier object has "tier" \
+(integer 1-5) and "items" (array of 2-3 picks). Each pick has "item_name" (string matching \
+the catalog name), "reasoning" (string, 1 sentence), and "rank" (integer, 1=best). Only \
+include tiers present in the catalog. If no "Neutral Items Catalog" section is provided in \
+the user message, return an empty array [].
 
 ## Example: GOOD Reasoning (Emulate This)
 
@@ -249,6 +278,8 @@ You must respond with valid JSON matching the schema provided in the output conf
 Your response must include:
 - A "phases" array with 2-4 phases, each containing 1-4 item recommendations
 - An "overall_strategy" string summarizing the itemization approach for this matchup
+- A "neutral_items" array with tier objects containing 2-3 ranked picks with reasoning \
+(only when a "Neutral Items Catalog" section is provided in the user message)
 - Each item recommendation must include item_id (integer), item_name (string), \
 reasoning (string), priority (string), and conditions (string or null)
 

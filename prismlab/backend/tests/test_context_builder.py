@@ -414,6 +414,122 @@ class TestSystemPromptAllyRules:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Neutral Items Catalog tests
+# ---------------------------------------------------------------------------
+
+
+class TestNeutralCatalog:
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_neutral_items_by_tier",
+        new_callable=AsyncMock,
+        return_value={
+            1: [
+                {"id": 301, "name": "Mysterious Hat", "internal_name": "mysterious_hat",
+                 "active_desc": "Grants +1 mana regeneration"},
+                {"id": 350, "name": "Chipped Vest", "internal_name": "chipped_vest",
+                 "active_desc": "Returns 28 damage when attacked"},
+            ],
+            3: [
+                {"id": 351, "name": "Psychic Headband", "internal_name": "psychic_headband",
+                 "active_desc": "Pushes the target 400 units away"},
+            ],
+        },
+    )
+    async def test_neutral_catalog_groups_by_tier(
+        self, mock_neutral, builder: ContextBuilder, test_db_session
+    ):
+        """Neutral catalog groups items by tier with T1: and T3: headers."""
+        result = await builder._build_neutral_catalog(test_db_session)
+        assert "T1:" in result
+        assert "T3:" in result
+        assert "Mysterious Hat" in result
+        assert "Chipped Vest" in result
+        assert "Psychic Headband" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_neutral_items_by_tier",
+        new_callable=AsyncMock,
+        return_value={},
+    )
+    async def test_neutral_catalog_empty_returns_empty(
+        self, mock_neutral, builder: ContextBuilder, test_db_session
+    ):
+        """Empty neutral items returns empty string."""
+        result = await builder._build_neutral_catalog(test_db_session)
+        assert result == ""
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_neutral_items_by_tier",
+        new_callable=AsyncMock,
+        return_value={
+            1: [
+                {"id": 301, "name": "Mysterious Hat", "internal_name": "mysterious_hat",
+                 "active_desc": "Grants +1 mana regeneration"},
+            ],
+        },
+    )
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_includes_neutral_catalog_section(
+        self, mock_matchup, mock_popularity, mock_items, mock_neutral, test_db_session
+    ):
+        """Full build() with neutral items includes '## Neutral Items Catalog' section."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request()
+        result = await cb.build(req, [], test_db_session)
+        assert "## Neutral Items Catalog" in result
+        assert "Mysterious Hat" in result
+
+
+# ---------------------------------------------------------------------------
+# System prompt neutral items smoke tests
+# ---------------------------------------------------------------------------
+
+
+class TestSystemPromptNeutralRules:
+    """Smoke tests confirming system prompt contains neutral item rules."""
+
+    def test_system_prompt_has_neutral_items_section(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "## Neutral Items" in SYSTEM_PROMPT
+
+    def test_system_prompt_has_rank_by_hero_synergy(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "Rank by hero synergy" in SYSTEM_PROMPT
+
+    def test_system_prompt_has_build_path_interaction(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "Build-path interaction" in SYSTEM_PROMPT
+
+    def test_system_prompt_has_neutral_items_field(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "neutral_items" in SYSTEM_PROMPT
+
+
 class TestBuildFull:
     @pytest.mark.asyncio
     @patch(

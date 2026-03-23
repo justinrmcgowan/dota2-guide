@@ -15,6 +15,7 @@ from data.matchup_service import (
     get_or_fetch_matchup,
     get_hero_item_popularity,
     get_relevant_items,
+    get_neutral_items_by_tier,
 )
 from data.opendota_client import OpenDotaClient
 from engine.schemas import RecommendRequest, RuleResult
@@ -111,6 +112,11 @@ class ContextBuilder:
             sections.append(
                 f"## Popular Items on This Hero\n{popularity_section}"
             )
+
+        # 7b. Get neutral items catalog (optional)
+        neutral_catalog = await self._build_neutral_catalog(db)
+        if neutral_catalog:
+            sections.append(f"## Neutral Items Catalog\n{neutral_catalog}")
 
         # Final instruction: adjust for mid-game re-evaluation
         if request.purchased_items:
@@ -316,3 +322,26 @@ class ContextBuilder:
                 sections.append(f"{label}: {', '.join(item_names)}")
 
         return "\n".join(sections)
+
+    async def _build_neutral_catalog(self, db: AsyncSession) -> str:
+        """Build compact neutral items catalog grouped by tier.
+
+        Queries all neutral items and formats them as compact markdown
+        for Claude to rank by hero synergy. Returns empty string if no
+        neutral items exist in the database.
+        """
+        tier_groups = await get_neutral_items_by_tier(db)
+        if not tier_groups:
+            return ""
+
+        tier_lines: list[str] = []
+        for tier in sorted(tier_groups.keys()):
+            items = tier_groups[tier]
+            tier_lines.append(f"T{tier}:")
+            for item in items:
+                desc = item["active_desc"]
+                if len(desc) > 80:
+                    desc = desc[:77] + "..."
+                tier_lines.append(f"  - {item['name']}: {desc}")
+
+        return "\n".join(tier_lines)

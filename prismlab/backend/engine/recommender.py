@@ -82,9 +82,11 @@ class HybridRecommender:
         if llm_result and not fallback:
             phases = self._merge(rules_items, llm_result)
             overall_strategy = llm_result.overall_strategy
+            neutral_items = llm_result.neutral_items
         else:
             phases = self._rules_only(rules_items)
             overall_strategy = "Rules-based recommendations only. AI reasoning unavailable."
+            neutral_items = []
 
         # Step 5: Filter purchased items (if any)
         if request.purchased_items:
@@ -97,6 +99,7 @@ class HybridRecommender:
         return RecommendResponse(
             phases=phases,
             overall_strategy=overall_strategy,
+            neutral_items=neutral_items,
             fallback=fallback,
             model=LLMEngine.MODEL if not fallback else None,
             latency_ms=elapsed_ms,

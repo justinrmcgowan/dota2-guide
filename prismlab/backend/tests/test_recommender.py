@@ -15,6 +15,8 @@ from engine.schemas import (
     ItemRecommendation,
     RuleResult,
     LLMRecommendation,
+    NeutralItemPick,
+    NeutralTierRecommendation,
 )
 from engine.rules import RulesEngine
 from engine.recommender import HybridRecommender
@@ -330,3 +332,63 @@ async def test_overall_strategy_on_fallback(
     assert response.overall_strategy is not None
     assert "unavailable" in response.overall_strategy.lower() or \
            "rules-based" in response.overall_strategy.lower()
+
+
+# -------------------------------------------------------------------
+# Neutral items passthrough tests
+# -------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_neutral_items_passthrough(
+    recommender_fixture, mock_llm_engine, sample_request, test_db_session
+):
+    """When LLM returns neutral_items, they pass through to the response."""
+    neutral_data = [
+        NeutralTierRecommendation(
+            tier=1,
+            items=[
+                NeutralItemPick(
+                    item_name="Mysterious Hat",
+                    reasoning="Mana regen helps sustain spell usage.",
+                    rank=1,
+                ),
+            ],
+        ),
+    ]
+    mock_llm_engine.generate = AsyncMock(return_value=LLMRecommendation(
+        phases=[
+            RecommendPhase(
+                phase="laning",
+                items=[
+                    ItemRecommendation(
+                        item_id=48,
+                        item_name="Power Treads",
+                        reasoning="Attack speed.",
+                        priority="core",
+                    ),
+                ],
+            ),
+        ],
+        overall_strategy="Farm aggressively.",
+        neutral_items=neutral_data,
+    ))
+
+    response = await recommender_fixture.recommend(sample_request, test_db_session)
+
+    assert len(response.neutral_items) == 1
+    assert response.neutral_items[0].tier == 1
+    assert response.neutral_items[0].items[0].item_name == "Mysterious Hat"
+
+
+@pytest.mark.asyncio
+async def test_neutral_items_empty_on_fallback(
+    recommender_fixture, mock_llm_engine, sample_request, test_db_session
+):
+    """When LLM fails (fallback), neutral_items is empty list."""
+    mock_llm_engine.generate = AsyncMock(return_value=None)
+
+    response = await recommender_fixture.recommend(sample_request, test_db_session)
+
+    assert response.neutral_items == []
+    assert response.fallback is True
