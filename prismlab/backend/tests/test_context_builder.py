@@ -298,6 +298,122 @@ class TestBuildAllyLines:
         assert hero_idx < ally_idx < opponent_idx
 
 
+# ---------------------------------------------------------------------------
+# Integration: full ally-aware pipeline (async, needs DB + mocked services)
+# ---------------------------------------------------------------------------
+
+
+class TestAllyIntegration:
+    """Integration tests for ally context flowing through the full build pipeline."""
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_with_allies_and_popularity(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Full build with allies and popularity data shows ally names and items."""
+
+        async def popularity_side_effect(hero_id, db, client):
+            if hero_id == 2:  # Axe
+                return {
+                    "early_game_items": {"50": 500, "48": 400},
+                    "mid_game_items": {"1": 300},
+                }
+            return None  # Player hero or other allies
+
+        mock_popularity.side_effect = popularity_side_effect
+
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request(allies=[2])  # Axe as ally
+        result = await cb.build(req, [], test_db_session)
+
+        assert "Allied Heroes" in result
+        assert "Axe" in result
+        # Axe has popularity data, so should show typical builds
+        assert "typical builds include" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_with_allies_no_popularity(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Full build with allies but no popularity shows fallback text."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request(allies=[3])  # Crystal Maiden as ally
+        result = await cb.build(req, [], test_db_session)
+
+        assert "Allied Heroes" in result
+        assert "Crystal Maiden" in result
+        assert "no typical build data available" in result
+
+
+# ---------------------------------------------------------------------------
+# System prompt smoke tests (confirm ally coordination rules exist)
+# ---------------------------------------------------------------------------
+
+
+class TestSystemPromptAllyRules:
+    """Smoke tests confirming system prompt contains ally coordination rules."""
+
+    def test_system_prompt_has_team_coordination(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "## Team Coordination" in SYSTEM_PROMPT
+
+    def test_system_prompt_has_aura_dedup_rule(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "Aura and utility deduplication" in SYSTEM_PROMPT
+
+    def test_system_prompt_has_combo_awareness_rule(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "Combo and setup awareness" in SYSTEM_PROMPT
+
+    def test_system_prompt_has_gap_filling_rule(self):
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+
+        assert "Team role gap filling" in SYSTEM_PROMPT
+
+
+# ---------------------------------------------------------------------------
+# Full build method (needs DB, mock external services)
+# ---------------------------------------------------------------------------
+
+
 class TestBuildFull:
     @pytest.mark.asyncio
     @patch(
