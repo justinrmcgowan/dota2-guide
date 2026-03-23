@@ -1,5 +1,6 @@
 import type { RecommendResponse } from "../../types/recommendation";
 import PhaseCard from "./PhaseCard";
+import NeutralItemSection from "./NeutralItemSection";
 
 interface ItemTimelineProps {
   data: RecommendResponse;
@@ -31,6 +32,11 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
           onSelectItem={onSelectItem}
         />
       ))}
+
+      {/* Neutral items section below purchasable timeline */}
+      {data.neutral_items && data.neutral_items.length > 0 && (
+        <NeutralItemSection neutralItems={data.neutral_items} />
+      )}
     </div>
   );
 }

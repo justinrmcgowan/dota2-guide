@@ -16,12 +16,24 @@ export interface RecommendPhase {
   gold_budget: number | null;
 }
 
+export interface NeutralItemPick {
+  item_name: string;
+  reasoning: string;
+  rank: number;
+}
+
+export interface NeutralTierRecommendation {
+  tier: number;
+  items: NeutralItemPick[];
+}
+
 export interface RecommendResponse {
   phases: RecommendPhase[];
   overall_strategy: string | null;
   fallback: boolean;
   model: string | null;
   latency_ms: number | null;
+  neutral_items: NeutralTierRecommendation[];
 }
 
 export interface RecommendRequest {

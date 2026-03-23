@@ -24,6 +24,7 @@ const mockResponse: RecommendResponse = {
   fallback: false,
   model: "test-model",
   latency_ms: 100,
+  neutral_items: [],
 };
 
 beforeEach(() => {
