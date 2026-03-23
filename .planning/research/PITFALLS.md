@@ -1,187 +1,189 @@
 # Pitfalls Research
 
-**Domain:** Dota 2 adaptive item advisor with hybrid rules+LLM engine
-**Researched:** 2026-03-21
-**Confidence:** HIGH (multiple authoritative sources cross-referenced)
+**Domain:** Live game intelligence for Dota 2 item advisor (GSI, screenshot parsing, WebSocket, auto-refresh)
+**Researched:** 2026-03-23
+**Confidence:** HIGH (official Valve GSI docs, Claude Vision API docs, FastAPI WebSocket docs, community issue reports)
 
 ## Critical Pitfalls
 
-### Pitfall 1: LLM Hallucinating Item Names, Abilities, and Interactions
+### Pitfall 1: GSI Cannot See Enemy Items -- The Core Data Gap
 
 **What goes wrong:**
-Claude invents item names that do not exist in Dota 2, confuses items that have been renamed across patches (e.g., "Poor Man's Shield" removed in 7.20, "Vanguard" renamed components), or describes ability interactions that are factually incorrect. Research shows LLMs hallucinate named entities at alarming rates -- up to 26% of tasks with one-character name similarity, and structured output compliance does NOT prevent semantic hallucination. Anthropic explicitly states: "We guarantee that the model's output will adhere to a specified format, not that any output will be 100% accurate."
+The entire v2.0 vision assumes live game data can replace manual inputs. But Dota 2 GSI deliberately restricts data when playing (not spectating) to prevent cheating. Critically: **you cannot see enemy hero items, abilities, cooldowns, or positions through GSI when playing your own match.** GSI only exposes your own hero data (inventory, gold, stats) and your own team. The "enemy items spotted" feature -- which is central to mid-game re-evaluation -- gets ZERO data from GSI. Developers discover this after building the entire GSI pipeline and realize they still need manual input for enemy items.
 
 **Why it happens:**
-Claude's training data contains Dota 2 information from multiple patches spanning years. Items get added, removed, renamed, and reworked constantly (Patch 7.39 alone removed 12+ neutral items and added 8 new ones, Patch 7.40 reworked Ethereal Blade, Guardian Greaves, and Radiance). The LLM has no way to distinguish current-patch item data from historical data without explicit grounding.
+Valve intentionally limits GSI player-mode data to prevent third-party tools from providing unfair information advantages. The GSI documentation buries this distinction. Libraries like Dota2GSI (C#) and dota2gsipy (Python) document spectator-mode fields prominently, making developers assume all fields are available during play.
 
 **How to avoid:**
-- Pass a **complete item ID-to-name mapping** in every prompt context. The LLM should only reference items from this list.
-- Use structured outputs with an `item_id` integer field referencing your database, NOT a freetext `item_name` string. Validate that every `item_id` in the response exists in your items table before returning to frontend.
-- Include a constraint in the system prompt: "You may ONLY recommend items from the provided item list. If an item is not in the list, it does not exist in this patch."
-- Post-process every Claude response to verify item IDs resolve to real items. Reject and retry (or fall back to rules) if validation fails.
+- Accept this limitation upfront and design the architecture around it. GSI provides YOUR data (gold, items, hero state, map time). Enemy data requires a separate channel (screenshot parsing or manual input).
+- Do NOT build a unified "game state from GSI" model that tries to include enemy data. Build two separate data flows: (1) GSI for player data, automatically populated, (2) Screenshot parsing or manual input for enemy data.
+- The screenshot parsing feature for enemy items is not just a "nice to have" -- it is the ONLY automated way to get enemy build data in v2.0. Prioritize it accordingly.
+- Document clearly in the UI what data is auto-detected vs what requires user input.
 
 **Warning signs:**
-- Items appearing in recommendations that return 404 from your items endpoint
-- Recommendations mentioning items by old names (e.g., "Ring of Aquila" which was removed years ago)
-- Ability descriptions that don't match current hero data (e.g., referencing a pre-rework ability)
+- Architecture diagrams showing "GSI provides full game state" without distinguishing player vs enemy data
+- Models that have fields for enemy items sourced from GSI
+- Confusion during testing: "why isn't enemy data coming through?"
 
 **Phase to address:**
-Phase 3 (Recommendation Engine). The context builder and response validator are the defense layers. This must be solved before any user-facing recommendation is displayed.
+Phase 1 (GSI Foundation). Must be understood before any code is written. The entire architecture depends on this data boundary.
 
 ---
 
-### Pitfall 2: Post-Patch Data Staleness Window
+### Pitfall 2: Docker Container Cannot Receive GSI Localhost Posts
 
 **What goes wrong:**
-A major Dota 2 patch drops (7.39, 7.40, etc.) and the app's cached hero stats, item data, matchup win rates, and item build popularity are now wrong. Items get added/removed, heroes get reworked, stats change. Win rate data from OpenDota/Stratz takes days to weeks to become statistically meaningful after a patch -- early post-patch data has tiny sample sizes and is dominated by players experimenting, not playing optimally.
+Dota 2 GSI sends HTTP POST requests to a URI configured in the .cfg file, typically `http://localhost:PORT/`. The Prismlab backend runs inside a Docker container on Unraid. Docker containers have their own network namespace -- `localhost` inside the container is NOT the host machine's localhost. Dota 2 (running on a separate gaming PC) sends POSTs to the host machine, but the container never receives them. Even if Dota 2 ran on the same machine, `localhost` in the GSI config would target the host, not the container.
 
 **Why it happens:**
-Dota 2 ships 2-4 major patches per year with sweeping changes. Patch 7.39 (May 2025) reworked the entire Facet system and rotated the neutral item pool. Patch 7.40 (December 2025) reworked Lone Druid, Slark, and Treant Protector entirely. OpenDota constants data (hero list, item list) updates relatively quickly after a patch, but win rate and item popularity data requires thousands of games to stabilize -- typically 1-2 weeks minimum.
+The standard GSI setup guides all assume the listener runs directly on the same machine as Dota 2. Docker introduces a network boundary that breaks this assumption. The Prismlab deployment runs on Unraid (a server), while Dota 2 runs on a gaming PC -- they are separate machines entirely. The GSI config must point to the Unraid server's LAN IP, and the Docker port mapping must expose the GSI endpoint.
 
 **How to avoid:**
-- Separate "constants data" (hero names, item names, stats) from "statistical data" (win rates, item popularity). Constants should refresh within hours of a patch. Statistical data should carry a `patch_version` tag and a `games_sampled` count.
-- Display a visible warning when `games_sampled < 1000` for a matchup: "Limited data for this matchup in current patch."
-- When statistical data is stale, lean harder on the rules engine and Claude's general game knowledge rather than data-driven recommendations. The prompt should say: "Note: matchup statistics may reflect the previous patch. Weight your game knowledge more heavily than the provided win rates."
-- Track the current Dota 2 patch version (scrape from the Dota 2 blog or use OpenDota's constants endpoint) and compare against your stored data's patch version.
+- The GSI .cfg file URI must point to the Unraid server's LAN IP, NOT localhost: `"uri" "http://192.168.X.X:8420/api/gsi"`.
+- Expose the GSI endpoint through the existing Docker port mapping (8420 maps to backend:8000). Add a `/api/gsi` POST endpoint to FastAPI.
+- The Nginx reverse proxy in the frontend container must also forward `/api/gsi` to the backend, or GSI posts must go directly to port 8420 (backend).
+- If using Cloudflare Tunnel or Nginx Proxy Manager, ensure the GSI endpoint is accessible on the LAN without going through external DNS/proxy (GSI posts from the local network should hit the server directly).
+- Include the `.cfg` file generation as part of the setup flow. Do NOT make users hand-edit config files -- provide a downloadable .cfg with the correct URI pre-filled based on the server's detected IP.
 
 **Warning signs:**
-- Win rate data showing heroes as strong/weak that the community consensus disagrees with
-- Items in your database that no longer exist in-game
-- Heroes missing from your database after a new hero release (Largo added in 7.40)
-- `updated_at` timestamps on matchup data older than the latest patch date
+- GSI endpoint receiving zero requests during testing
+- Dota 2 timeout/retry behavior (GSI waits for HTTP 2XX, retries on failure)
+- Works in local dev (no Docker) but fails in production deployment
 
 **Phase to address:**
-Phase 1 (Foundation) for the data model design that supports patch versioning. Phase 6 (Polish + Data Pipeline) for the automated refresh and staleness detection system. But the data model must be designed correctly from the start.
+Phase 1 (GSI Foundation). Must be validated end-to-end with actual Docker deployment on Unraid early. Do not defer this to a later phase -- the entire GSI feature depends on network connectivity working.
 
 ---
 
-### Pitfall 3: Generic "Good Advice" Instead of Matchup-Specific Reasoning
+### Pitfall 3: GSI Data Flood Triggering Uncontrolled Claude API Calls
 
 **What goes wrong:**
-The LLM recommends items that are generically good on the hero regardless of the matchup, opponent, or game state. Example: always recommending BKB on carry heroes because it's "always good" rather than explaining "BKB is critical here because Lina and Lion have 4 combined single-target disables and 3 magic nukes, and you need to survive their burst window to get your Phantom Strike off." Community feedback on Dota Plus (Valve's built-in recommendation system) is overwhelmingly negative precisely because of this -- it suggests items without matchup reasoning.
+GSI sends HTTP POST updates to your server continuously during a game. With a typical throttle of 1-5 seconds, that is 360-1800 requests per 30-minute game. Each update contains changed game state (new gold amount, items purchased, hero level, etc.). If the auto-refresh logic naively triggers a Claude API recommendation call on every "significant" state change, you burn through API budget ($0.004-0.01 per call) and hit rate limits. A single game could generate 50+ Claude API calls without rate limiting -- costing $0.20-0.50 per game and potentially exhausting API quota.
 
 **Why it happens:**
-- The prompt context doesn't include enough specific matchup information (opponent abilities, damage types, disable durations)
-- The system prompt doesn't enforce the specificity requirement strongly enough
-- The LLM defaults to safe, generic advice because it's technically correct
-- No feedback loop or quality check on reasoning specificity
+Game state changes are continuous and granular. Gold increments every second. Items are purchased. Hero levels up. Each of these is a "change" that could trigger a refresh. Without explicit rate limiting and change significance thresholds, the system fires Claude API calls far too often. The "max 1 per 2 min" constraint in the project spec is correct but easy to violate if the debounce logic has bugs or edge cases.
 
 **How to avoid:**
-- The context builder must assemble rich matchup data: opponent hero abilities (names and effects), damage types the opponents deal, disable types and durations, the specific items commonly built against this matchup. This is NOT optional context -- it's the core value of the product.
-- System prompt must include explicit constraints: "Every reasoning field MUST mention at least one enemy hero by name AND at least one specific ability or mechanic. Generic reasoning like 'provides good stats' is unacceptable."
-- Include few-shot examples in the system prompt showing the DIFFERENCE between generic and specific reasoning. Show a bad example and a good example side by side.
-- Post-process reasoning text: if no enemy hero name appears in the reasoning string, flag it for regeneration or supplement with rules-engine commentary.
+- Implement a **three-layer rate control**: (1) Backend-side hard cooldown timer (minimum 2 minutes between Claude API calls, no exceptions), (2) Change significance filter (only trigger on meaningful changes: item purchased, death, level milestone, gold threshold crossed), (3) Token bucket limiter on the Claude API client.
+- Define the exact "trigger events" explicitly: item purchase detected, hero death (respawn timer starts), game clock hitting 10:00/20:00/30:00 minute marks, lane result determination (gold delta at 10 min). Everything else is informational -- update the UI but do NOT trigger re-recommendation.
+- Show a "next refresh available in X:XX" countdown in the UI so the user understands the rate limit.
+- Track Claude API call count per game session. Alert if it exceeds 15 calls per game (budget protection).
+- Consider cheaper models (Haiku) for rapid low-stakes updates and Sonnet only for full re-evaluations.
 
 **Warning signs:**
-- Reasoning text that could apply to any game (no hero names, no ability references)
-- Same items recommended regardless of opponent changes
-- User feedback that advice "sounds like a guide, not a coach"
+- Claude API call count exceeding 10 per game in logs
+- "Rate limit exceeded" errors from Anthropic API during games
+- Monthly API costs increasing 10x after enabling auto-refresh
+- Backend latency spikes as Claude API calls queue up
 
 **Phase to address:**
-Phase 3 (Recommendation Engine). The system prompt and context builder are the primary defense. The few-shot examples in the system prompt are especially critical -- invest real time crafting 3-4 high-quality examples.
+Phase 3 (Auto-Refresh Engine). The rate limiter must be the FIRST thing built before any auto-trigger logic. Design it so auto-refresh cannot physically call Claude more than once per 2 minutes, even if the trigger logic has bugs.
 
 ---
 
-### Pitfall 4: Claude API Latency Killing Mid-Game Usability
+### Pitfall 4: Screenshot Parsing Unreliability for Enemy Items
 
 **What goes wrong:**
-During a live Dota 2 game, the player has approximately 10-30 seconds of downtime (death timer, walking to lane, brief pause). If the Claude API takes 5-15 seconds to respond, the recommendation arrives too late to be useful. The player either doesn't use the tool mid-game or learns to not trust it for timely advice.
+Claude Vision API is used to parse Dota 2 scoreboard screenshots to extract enemy item builds. But Dota 2 item icons are small (roughly 30x30 pixels on a 1080p scoreboard), visually similar items exist (Ogre Axe vs Mithril Hammer vs Broadsword are all simple brown/gray rectangles), and screenshot quality varies (JPEG compression, different resolutions, UI scaling). Claude Vision hallucinates or misidentifies items, reporting items the enemy does not have. The recommendation engine then generates advice countering items that don't exist.
 
 **Why it happens:**
-Claude Sonnet API calls with 2K+ input tokens and structured output can take 3-8 seconds in normal conditions, and 10-15+ seconds under API load or with larger context windows. Network latency to Anthropic's API adds 100-500ms. If the prompt includes extensive hero data, item lists, and matchup context, input tokens balloon and latency increases proportionally.
+Claude Vision's spatial reasoning and small-object recognition have documented limitations. The official docs state: "Claude may hallucinate or make mistakes when interpreting low-quality, rotated, or very small images under 200 pixels" and "Claude's spatial reasoning abilities are limited." Dota 2 item icons on a scoreboard are well under 200 pixels each. Additionally, item icons change with patches and some items share visual elements (all Blade items look similar, all Staff items look similar).
 
 **How to avoid:**
-- **10-second hard timeout** on Claude API calls. If it doesn't respond in time, immediately return rules-only recommendations with a note: "Quick recommendations (detailed analysis loading...)". Then optionally complete the LLM call in the background and push updated results.
-- **Minimize input token count.** Don't dump the entire hero/item database into every prompt. Only include the relevant heroes (your hero + lane opponents), their key abilities, and the specific items already being considered by the rules engine. Target under 1500 input tokens.
-- **Cache system prompt context.** Hero ability descriptions, item stats, and other static data should be in the system prompt (which Anthropic caches across calls), not in the user message.
-- **Pre-compute during draft phase.** When the user selects their hero and opponents, immediately fire the first Claude API call. Don't wait for them to click "Get Recommendations."
-- **Use streaming** for the initial recommendation (show items as they're generated). For re-evaluation, use non-streaming with timeout + fallback.
+- **Crop the scoreboard region before sending to Claude.** A full 1920x1080 screenshot wastes tokens on irrelevant UI. Crop to just the item grid area for each hero. This increases effective resolution for the items and reduces token cost (~1334 tokens for a 1000x1000 image vs ~1590 for full resolution).
+- **Provide Claude with the complete item icon reference in the prompt.** Include the full list of purchasable items with their internal names. Ask Claude to match what it sees against this known list rather than free-associating item names.
+- **Use structured output with constrained item names.** Claude should only return item identifiers from a predefined enum, not freetext item descriptions. Validate every returned item name against the items database.
+- **Show parsed results to the user for confirmation.** Never auto-apply screenshot parsing results without user review. Display "We detected: BKB, Blink, Manta -- is this correct?" with edit capability.
+- **Track confidence per item.** If Claude is uncertain about an item icon, mark it as "uncertain" and let the user confirm. Low-confidence items should not influence recommendations.
+- **Image preparation:** require PNG screenshots (not JPEG -- compression artifacts destroy small icons), and instruct users to take screenshots at native resolution without UI scaling.
 
 **Warning signs:**
-- Average API response time exceeding 5 seconds in logs
-- Users clicking "Re-Evaluate" and then alt-tabbing back to the game before results load
-- Input token counts growing beyond 2000 tokens per request
+- Items being detected that the enemy cannot possibly have at that game time (e.g., Radiance at 5 minutes)
+- Same screenshot producing different results on repeated parsing
+- Gold-cost validation failing (detected items cost more than enemy's visible net worth)
+- User complaints about wrong items being detected
 
 **Phase to address:**
-Phase 3 (Recommendation Engine) for the timeout/fallback architecture. Phase 5 (Mid-Game Adaptation) for the re-evaluation speed optimization. Phase 6 for performance monitoring and optimization.
+Phase 2 (Screenshot Parsing). Build a validation layer that cross-references detected items against game time and enemy net worth (from OpenDota live data or estimation). Include human-in-the-loop confirmation before any parsed data affects recommendations.
 
 ---
 
-### Pitfall 5: OpenDota and Stratz API Rate Limits Exhausted During Data Seeding
+### Pitfall 5: WebSocket Connection Dies Silently, Frontend Shows Stale Data
 
 **What goes wrong:**
-The initial data seeding process (fetching all heroes, all items, all matchup data for every hero pair) requires thousands of API calls. With 124+ heroes, fetching matchup data for every hero pair is 124 x 123 = 15,252 matchup combinations. OpenDota's free tier allows 50,000 calls/month and 60/minute. Stratz allows 10,000 calls/day on a default token. A naive seeding script blows through these limits in minutes, gets rate-limited, and the seeding process fails or takes hours.
+The WebSocket connection between backend and frontend drops silently (network hiccup, Cloudflare Tunnel reconnection, Nginx proxy timeout, user's laptop goes to sleep). The frontend continues displaying the last received game state as if it is current. The user thinks they are seeing live data but the gold counter stopped updating 3 minutes ago. Worse, the UI shows no indication that the connection is lost. The user makes item decisions based on stale information.
 
 **Why it happens:**
-Developers underestimate the combinatorial explosion of hero matchup data. 124 heroes means ~15K matchup pairs. Each pair might need multiple API calls (win rates by bracket, common items). Without rate limiting on the client side, you hit the API rate limit wall immediately.
+WebSocket connections can die without sending a close frame. Unlike HTTP requests that fail visibly with error codes, a dead WebSocket just stops receiving messages. The frontend has no way to distinguish "no new data because game state has not changed" from "no new data because connection is dead." FastAPI WebSocket handlers in particular have a known pattern where background tasks leak if the client disconnects without proper cleanup (one of the most common FastAPI WebSocket bugs).
 
 **How to avoid:**
-- **Batch and throttle.** Implement a request queue with configurable delay (minimum 1 second between calls for OpenDota, respect Stratz's 20/second limit). Use asyncio with a semaphore to limit concurrent requests.
-- **Prioritize data.** Don't fetch ALL matchup pairs on first seed. Fetch hero and item constants first (2 API calls). Then fetch matchup data lazily -- when a user queries a specific matchup, fetch and cache it on-demand. Pre-populate only the top 20 most popular heroes' matchups.
-- **Use bulk endpoints.** OpenDota's `/heroStats` endpoint returns aggregated data for all heroes in a single call. Use it instead of individual hero endpoints. The `/heroes/{hero_id}/matchups` endpoint returns all matchup data for one hero in a single call.
-- **Cache aggressively.** Matchup data doesn't change between patches. Cache everything in SQLite with `patch_version` tracking. Only refresh when a new patch is detected.
-- **Stratz GraphQL advantage.** Stratz's GraphQL API lets you request exactly the fields you need and can batch multiple hero queries into a single request, drastically reducing call count.
+- **Heartbeat/ping-pong protocol.** Backend sends a ping every 10 seconds. Frontend expects a pong response. If no heartbeat received for 30 seconds, frontend shows a "Connection lost -- reconnecting..." banner. This is non-negotiable for any real-time system.
+- **Connection state indicator in the UI.** A small green/yellow/red dot in the corner showing: green = connected and receiving data, yellow = connected but no data in 30s (game may be paused), red = disconnected, attempting reconnection.
+- **Exponential backoff reconnection on the frontend.** When connection drops: retry immediately, then 1s, 2s, 4s, 8s, max 30s. Reset backoff on successful connection.
+- **State reconciliation on reconnect.** When WebSocket reconnects, backend must send the FULL current game state, not just the delta. The frontend must replace its entire GSI state, not merge incrementally. This prevents stale partial state.
+- **Nginx WebSocket configuration.** The existing Nginx config does NOT support WebSocket proxying. Must add `proxy_http_version 1.1;`, `proxy_set_header Upgrade $http_upgrade;`, `proxy_set_header Connection "upgrade";` and increase `proxy_read_timeout` (default 60s is too short for WebSocket -- use 3600s or higher).
+- **Task cleanup on disconnect.** In FastAPI, use `try/finally` in the WebSocket handler. When the connection closes, cancel any background tasks (like GSI data forwarding) associated with that connection using `task.cancel()`.
 
 **Warning signs:**
-- HTTP 429 responses from OpenDota/Stratz during seeding
-- Seeding script taking longer than 30 minutes
-- Incomplete matchup data in the database after seeding completes
-- Monthly API call budget exhausted in the first week
+- Frontend gold counter frozen while game is ongoing
+- "last updated" timestamp not changing
+- Memory leak in backend (orphaned background tasks per dead connection)
+- Nginx 504 errors in logs after 60 seconds of WebSocket inactivity
 
 **Phase to address:**
-Phase 1 (Foundation) for the API client design with built-in rate limiting. Phase 3 for matchup data ingestion strategy. Phase 6 for the automated refresh pipeline.
+Phase 1 (WebSocket Foundation). The heartbeat protocol and reconnection logic must be built into the initial WebSocket implementation, not added retroactively. The Nginx configuration change is a prerequisite.
 
 ---
 
-### Pitfall 6: SQLite Locking Under Docker on Unraid with Mounted Volumes
+### Pitfall 6: Manual Inputs and Automated GSI Data Conflicting
 
 **What goes wrong:**
-SQLite uses file-level locking. When the database file lives on a Docker volume mounted from the Unraid host (potentially on an array or cache drive), file locking behavior can be unreliable. WAL mode -- which is critical for concurrent read/write access -- requires shared memory between processes, and this can fail on network filesystems. The symptom is intermittent "database is locked" errors, especially when the data refresh script runs while a user is requesting recommendations.
+The existing v1.0 system uses manual inputs for everything: hero selection, role, lane, opponents, gold, items purchased. V2.0 introduces GSI auto-detection for some of these (hero, gold, items purchased). But both input methods coexist -- the user can still manually adjust. Conflicts arise: GSI says hero is level 12, user manually set lane result to "lost" but gold data shows they are ahead. GSI auto-marks items as purchased but user already marked different items. The recommendation engine receives contradictory signals and produces confused advice.
 
 **Why it happens:**
-Unraid's storage system uses FUSE-based filesystems for array drives, and some cache drive configurations use btrfs or XFS. SQLite's WAL mode requires that the filesystem properly support `mmap` and POSIX advisory locking. Docker bind mounts from FUSE filesystems can violate these assumptions. This is a known issue documented in multiple Docker/SQLite issue trackers.
+The dual-input system creates a "source of truth" ambiguity. The v1.0 Zustand stores (`gameStore` and `recommendationStore`) assume a single source of truth: user input. Adding GSI as a second input source creates merge conflicts that are not modeled in the existing state architecture. The `purchasedItems` Set in `recommendationStore` tracks user-clicked purchases; GSI detects items in inventory. These can diverge.
 
 **How to avoid:**
-- **Store the SQLite database on a cache drive, NOT the array.** Unraid cache drives (typically SSD/NVMe with ext4/XFS) have proper filesystem support for SQLite WAL mode. Array drives (FUSE-based) do not.
-- **Enable WAL mode explicitly** in the SQLAlchemy engine configuration: `engine = create_engine("sqlite:///./data/prismlab.db", connect_args={"check_same_thread": False})` and execute `PRAGMA journal_mode=WAL` on connection.
-- **Set PUID/PGID environment variables** in the Docker Compose file to match the Unraid user's UID/GID, preventing permission mismatches on the mounted volume.
-- **Use connection pooling with NullPool or StaticPool** for SQLite in async FastAPI to avoid connection contention. Or use a single writer pattern where all writes go through a dedicated background task.
-- **Document the volume mount requirement clearly** in the deployment instructions.
+- **Explicit priority hierarchy:** GSI data is the default truth for fields it provides (hero, gold, inventory, game clock). Manual input is the override. If the user explicitly changes something GSI auto-set, the manual value wins and a "manual override" flag is set for that field.
+- **Add a `source` field to each game state property.** `{value: "won", source: "manual"}` vs `{value: 14500, source: "gsi"}`. The UI shows which fields are auto-detected (subtle GSI icon) vs manually entered.
+- **Reconcile purchasedItems from GSI inventory data.** When GSI reports items in inventory, cross-reference against the recommendation list and auto-mark matches as purchased. But do NOT un-mark items the user manually purchased -- they may have sold and rebought, or the GSI data may be delayed.
+- **Gold tracking from GSI replaces the manual estimation.** Remove the need for user gold input entirely. Show real-time gold in the UI with GSI source indicator. But keep a "gold override" option for edge cases where GSI data is delayed.
+- **Lane result auto-detection from gold differential at 10 minutes** should populate the laneResult field but show a confirmation: "GSI detected lane as WON (gold advantage +1200 at 10:00). Correct?" Let user override.
 
 **Warning signs:**
-- "database is locked" errors in backend logs
-- Intermittent 500 errors on API endpoints that write to the database
-- Data refresh script failing silently or partially completing
-- WAL file (-wal) growing without bound (checkpoint starvation)
+- Recommendation output contradicting visible game state
+- Items flickering between purchased/unpurchased as GSI and manual inputs fight
+- User confusion: "I set my lane to lost but the app says I won?"
+- State management bugs where GSI overwrites a manual override on next update tick
 
 **Phase to address:**
-Phase 1 (Foundation) for database configuration and Docker Compose setup. Must be validated early with actual Unraid deployment, not just local Docker.
+Phase 1 (GSI Foundation). The state management architecture must be redesigned BEFORE building any GSI features. The existing Zustand stores need a `source` concept added to every auto-detectable field. This is an architectural change, not a feature addition.
 
 ---
 
-### Pitfall 7: Structured Output Schema Rigidity vs. Recommendation Flexibility
+### Pitfall 7: Screenshot Parsing Cost Explosion
 
 **What goes wrong:**
-The recommendation response schema is designed with fixed phases (starting, early_laning, laning_complete, first_core, situational). But real Dota 2 games don't follow a rigid phase structure. Some games need a "survive the lane" emergency phase. Some heroes skip early items entirely and rush a key item. The rigid schema forces Claude to fill every phase with recommendations even when the optimal advice is "skip this phase and rush X." Alternatively, Claude wants to recommend conditional branches ("if they have BKB, get Y; otherwise get Z") but the schema doesn't support it cleanly.
+Each Claude Vision API call for screenshot parsing costs ~$0.004 for a 1000x1000px image (~1334 input tokens at $3/1M tokens for Sonnet 4.6). If a user pastes a screenshot every 2-3 minutes during a 40-minute game, that is 13-20 Vision API calls per game. Combined with regular recommendation API calls, total per-game cost reaches $0.15-0.30. For a tool used daily across multiple games, monthly costs can reach $10-30 just on Vision API -- on top of existing text recommendation costs. This is unsustainable for a personal project.
 
 **Why it happens:**
-Designing a JSON schema upfront based on the "average game" rather than the full range of game states. The temptation is to model the happy path and force every game into that structure. But Dota 2 is a game of exceptions -- the best advice is often situational, conditional, and non-linear.
+Vision API costs are per-image, calculated by pixel count (tokens = width * height / 750). A full 1920x1080 Dota 2 screenshot is ~2,764 tokens (~$0.008 per image). Even cropped screenshots add up quickly with frequent use. Developers underestimate vision costs because text API costs are familiar, but image token counts are much higher per request.
 
 **How to avoid:**
-- Make phases **optional** in the schema. Not every recommendation needs every phase populated. Use `"required": false` on phase objects or allow null values.
-- Include a `skip_reason` field: "Skip early laning items -- rush Midas before 8:00 for this build."
-- The `situational` phase with `decision_trees` (already in the blueprint) is the right pattern. Extend it -- allow decision trees within ANY phase, not just the final one. "If lane is going well, buy X. If lane is contested, buy Y instead."
-- Use Claude's structured outputs with a schema that supports an array of phases with a `phase_type` enum rather than fixed named phases. This lets Claude add or omit phases as needed.
-- Test the schema with 10+ diverse hero/matchup scenarios before locking it down. Include edge cases: support heroes (fewer items, lower gold), late-game carries (item progression matters), turbo game timings.
+- **Aggressive image preprocessing.** Crop to ONLY the scoreboard item grid. A 400x200px crop is ~107 tokens (~$0.0003) vs ~2,764 tokens for full screenshot. This is a 25x cost reduction.
+- **Rate limit screenshot parsing.** Maximum 1 parse per 3 minutes. Show cooldown timer.
+- **Cache results.** If the user pastes the same screenshot (or near-identical based on perceptual hash), return cached results. Enemy items do not change between 10-second scoreboard checks.
+- **Batch enemy heroes.** Parse all 5 enemy heroes from ONE screenshot in a single Claude call rather than 5 separate calls. Send one cropped scoreboard image and ask Claude to identify items for all visible enemy heroes.
+- **Cost tracking per session.** Show the user how many API calls have been made this session. Consider a daily budget cap.
+- **Consider OCR alternatives for simpler cases.** Some items (BKB, Blink Dagger, etc.) have distinctive visual profiles. A lightweight local classifier could handle common items without Claude API, reserving Vision API for ambiguous cases only. This is an optimization for later, not v2.0.
 
 **Warning signs:**
-- Claude recommending filler items in phases where the real advice would be "skip this"
-- All recommendations looking structurally identical regardless of hero role (carry vs support)
-- Support heroes getting 6+ item recommendations when they'll realistically afford 3-4
-- Users reporting that the advice "doesn't match how this hero actually plays"
+- Monthly Claude API costs doubling or tripling after enabling screenshot parsing
+- Users sending full-resolution screenshots instead of cropped regions
+- Same screenshot being parsed multiple times (cache miss or no caching)
 
 **Phase to address:**
-Phase 3 (Recommendation Engine) for schema design. Phase 4 (Item Timeline UI) for flexible rendering. Must be iterated on during Phase 5 (Mid-Game Adaptation) as more game states are tested.
+Phase 2 (Screenshot Parsing). Image preprocessing (crop, resize) must be implemented before any Vision API calls are made. The cost monitoring should be built into the same phase.
 
 ---
 
@@ -189,116 +191,117 @@ Phase 3 (Recommendation Engine) for schema design. Phase 4 (Item Timeline UI) fo
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Hardcoding hero/item IDs anywhere in rules engine | Faster rules implementation | Breaks every patch when IDs change or items are added/removed | Never -- always reference by internal_name or query from DB |
-| Embedding full hero data in every Claude prompt | Simple context building | Token costs balloon, latency increases, prompt exceeds optimal size | Never -- use the system prompt cache for static data, user message for game-specific context only |
-| Skipping Claude response validation | Faster iteration during dev | Hallucinated items, malformed data, or schema violations reach the frontend and confuse users | Only in local dev with mock data, never in production |
-| Using OpenDota without an API key | Avoids signup friction | 50K calls/month limit, 60/min cap; will block data refresh and development iteration | Early development only, get a key before Phase 3 |
-| Storing matchup data without patch version | Simpler data model | Cannot distinguish stale vs current data, cannot clear old data on patch day | Never -- always include patch version in matchup records |
-| Synchronous Claude API calls in FastAPI | Simpler code | Blocks the event loop, one slow API call blocks ALL concurrent requests | Never -- always use async httpx or the async Anthropic client |
+| Polling instead of WebSocket for GSI data relay | Simpler frontend, no WebSocket setup | Higher latency (1-3s polling delay), unnecessary HTTP overhead, missed rapid events | Never for live game data -- WebSocket is the correct pattern for sub-second updates |
+| Storing GSI state in the same Zustand store as manual inputs | No store refactoring needed | Source-of-truth conflicts, impossible to distinguish auto vs manual data, bugs on every edge case | Never -- separate GSI state from manual state, merge with explicit priority |
+| Sending full screenshots to Vision API without cropping | Faster implementation, no image processing | 25x higher per-image cost, more hallucination due to irrelevant visual context, slower response | Early prototyping only, must crop before any repeated use |
+| Single WebSocket endpoint for all real-time data | Simpler routing, one connection | Message types get tangled, hard to add new data streams, hard to debug | Acceptable in v2.0 with message type discriminators. Separate channels only needed at scale. |
+| Hardcoding GSI .cfg file contents | Works on your setup | Breaks for any user with different network config, different Dota install path | Never -- generate the .cfg dynamically based on server IP |
+| Skipping heartbeat protocol on WebSocket | Fewer moving parts | Silent disconnections, stale data without user awareness | Never for any production WebSocket |
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| OpenDota API | Using individual hero endpoints for bulk data | Use `/heroStats` (all heroes, one call) and `/heroes/{id}/matchups` (all matchups for one hero, one call). Never loop over individual endpoints. |
-| OpenDota API | Not handling 429 (rate limit) responses | Implement exponential backoff with jitter. OpenDota returns 429 with no Retry-After header -- start at 3s, double each retry, max 60s. |
-| Stratz API | Using REST endpoints instead of GraphQL | Stratz's REST API is legacy. Their GraphQL API lets you fetch exactly the fields you need and batch queries. One GraphQL call can replace 10+ REST calls. |
-| Stratz API | Ignoring bracket filtering | Stratz data defaults to all brackets. High-MMR item builds differ significantly from all-bracket averages. Always filter by Legend+ or Divine+ for recommendation quality. |
-| Steam CDN | Constructing image URLs with display names instead of internal names | CDN uses internal short names (e.g., `antimage`, `bfury`). The OpenDota constants data provides the mapping. Heroes use `npc_dota_hero_` prefix in the API but CDN strips it. |
-| Steam CDN | Assuming CDN URLs never break | New heroes and renamed items occasionally have missing or different CDN paths. Always include a fallback/placeholder image and check for 404s on hero portraits. |
-| Claude API | Using the synchronous Python client in async FastAPI | Use `anthropic.AsyncAnthropic()` for async calls. The sync client will block the event loop and destroy throughput under any concurrent load. |
-| Claude API | Not using structured outputs (parsing JSON from freetext) | Use `output_config.format` with a JSON schema. Structured outputs guarantee valid JSON since late 2025. Freetext JSON parsing is fragile and unnecessary. |
-| Claude API | Prefilling responses with `{` for JSON | Prefilling is deprecated and not supported on Claude Sonnet 4.5+. Use structured outputs instead -- the feature exists specifically to replace prefill-based JSON hacks. |
+| Dota 2 GSI | Assuming enemy data is available during play | GSI only exposes YOUR hero, items, gold, and team data. Enemy data requires screenshot parsing or manual input. Design two separate data flows. |
+| Dota 2 GSI | Using existing Python GSI libraries (dota2gsipy) without checking maintenance status | dota2gsipy has 0.1 release on PyPI, minimal maintenance. Write a lightweight FastAPI POST endpoint yourself -- GSI is just JSON POSTs. You already have FastAPI. |
+| Dota 2 GSI | Not handling GSI data structure variability | GSI JSON structure differs between playing, spectating, and menu states. Not all fields exist in all states. Null-check everything. Use Pydantic models with all Optional fields. |
+| Dota 2 GSI | Listening on port 80 or 443 (common HTTP ports) | These ports may conflict with existing services. Use a dedicated port or your existing backend port with a distinct endpoint path (`/api/gsi`). |
+| Dota 2 GSI | Not returning HTTP 2XX quickly enough | Dota 2 waits for 2XX response. If your handler does heavy processing synchronously, GSI times out and retries, causing duplicate events. Return 200 immediately, process asynchronously. |
+| Claude Vision | Sending base64-encoded images in every request | Base64 increases payload by ~33%. For repeated use, consider the Files API (upload once, reference by file_id). For one-shot screenshots, base64 is fine. |
+| Claude Vision | Not specifying the item vocabulary in the prompt | Claude will hallucinate item names. Always include the full list of valid Dota 2 item names and tell Claude to ONLY use names from that list. |
+| FastAPI WebSocket | Using HTTPException in WebSocket handlers | HTTPException does not work in WebSocket routes -- it crashes the handler instead of returning an error. Close the WebSocket with a custom close code (4000-4999 range) instead. |
+| FastAPI WebSocket | Not canceling background tasks on disconnect | If you spawn asyncio tasks per connection (e.g., forwarding GSI data), you must cancel them when the client disconnects. Otherwise tasks leak memory indefinitely. Use try/finally with task.cancel(). |
+| Nginx reverse proxy | Using existing Nginx config for WebSocket | The current nginx.conf does NOT support WebSocket. Must add `proxy_http_version 1.1`, Upgrade headers, and increase `proxy_read_timeout` from default 60s to 3600s+. |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Loading all heroes + items on frontend mount | Initial page load takes 2-3 seconds, visible FOUC or loading spinners | Pre-cache hero/item data with SWR or React Query with staleTime of 24h. Data changes only on patch days. | Immediately visible on first load |
-| Re-fetching hero/item lists on every navigation | Unnecessary network requests, UI flicker | Use Zustand store or React Query cache. Hero/item data is essentially static between patches. | Noticeable with slow connections |
-| Sending full item database in Claude prompt context | Token count exceeds 4000, latency doubles, cost triples | Only include items relevant to the hero's role and the matchup. A carry doesn't need support items in context. Filter to ~50 relevant items max. | First production use with real prompts |
-| Not debouncing the hero search filter | Fires on every keystroke, 10+ filter operations per search | Debounce by 200-300ms. Hero list is ~124 items, filtering is fast, but rapid re-renders hurt perceived performance. | Noticeable on slower devices |
-| Storing recommendations in Zustand without memoization | Timeline component re-renders on every store update | Memoize recommendation data with `useMemo` or Zustand selectors. Only re-render when recommendations actually change. | Noticeable when mid-game state toggles trigger re-renders |
+| Processing every GSI update synchronously | Backend latency spikes during games, blocked event loop | Return HTTP 200 to GSI immediately. Process state diff asynchronously. Only forward meaningful changes to WebSocket clients. | Immediately -- GSI sends updates every 1-5 seconds |
+| Broadcasting full game state on every GSI tick | WebSocket messages are large (full JSON), frontend re-renders constantly | Send only changed fields (JSON Patch or delta). Frontend applies diffs to local state. | With multiple concurrent sessions or complex game states |
+| No debounce on auto-refresh trigger | Claude API called on every gold change, item purchase, level up | Implement 2-minute hard cooldown. Define specific trigger events (item purchase, death, time milestones). Ignore incremental changes. | First game with auto-refresh enabled |
+| Full screenshot sent to Vision API | Each parse costs ~$0.008, takes 3-5 seconds | Crop to item grid region (~400x200px), reducing cost to ~$0.0003 and latency to 1-2 seconds | First session with frequent screenshot use |
+| WebSocket per-message JSON serialization overhead | CPU spike on backend with frequent GSI updates | Use msgpack or a binary protocol for WebSocket messages if performance becomes an issue. JSON is fine for v2.0 initial implementation. | Only at very high message frequency (unlikely for single-user) |
+| Frontend re-rendering entire recommendation panel on every GSI update | UI jank, laggy gold counter | Separate GSI display state (gold, items, game clock) from recommendation state. Use Zustand selectors to prevent cross-store re-renders. | Immediately visible during gameplay |
 
 ## Security Mistakes
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Exposing ANTHROPIC_API_KEY in frontend code or client-side requests | API key theft, unauthorized usage charges, potential abuse | API key stays in backend .env only. Frontend calls your FastAPI backend, which calls Claude. Never expose the key in any client-facing code or network response. |
-| No rate limiting on /api/recommend endpoint | Abuse vector: automated scripts hammering Claude API, running up costs | Implement rate limiting per IP (e.g., 10 requests/minute per IP) using FastAPI middleware. Each /recommend call costs real money. |
-| Admin endpoints (data refresh, data status) accessible without authentication | Anyone can trigger data refreshes, potentially causing API rate limit exhaustion or data corruption | Protect /api/admin/* endpoints with at minimum a shared secret token in the Authorization header. |
-| SQLite database file accessible via Nginx misconfiguration | Database download exposes cached matchup data (low risk, but bad practice) | Ensure Nginx only serves the built frontend assets, not the data volume. Docker network isolation helps -- frontend container shouldn't have access to backend's data volume. |
+| GSI endpoint accessible without auth token | Anyone on LAN can POST fake game state data, corrupting recommendations | Include an `auth` token in the GSI .cfg file. Validate the token on every POST to `/api/gsi`. Reject requests without valid token. |
+| GSI auth token hardcoded in source code | Token visible in public repos or Docker image layers | Generate a random token during setup. Store in .env file. Reference via `settings.gsi_auth_token`. |
+| WebSocket endpoint open without authentication | Anyone can connect and receive live game data | Authenticate WebSocket connections. Use a query parameter token or first-message auth pattern (browser WebSocket API does not support custom headers). |
+| Screenshot upload endpoint with no size/type validation | Upload of malicious files, memory exhaustion from huge images | Validate Content-Type (only image/png, image/jpeg). Limit file size to 5MB. Validate image dimensions. Reject non-image content. |
+| CORS allowing all origins for WebSocket | Cross-site WebSocket hijacking | Restrict WebSocket CORS to the same origins as HTTP CORS (localhost:5173 and localhost:8421). Validate Origin header in the WebSocket handshake. |
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Showing a full-page loading spinner during Claude API calls | User can't reference current recommendations while waiting for re-evaluation results | Show loading state ONLY on the recommendation panel. Keep sidebar inputs interactive. Show a subtle progress indicator, not a blocker. |
-| Requiring all inputs before generating any recommendations | User has to fill out hero + role + playstyle + side + lane + opponents before seeing anything | Generate partial recommendations as soon as a hero is selected. Each additional input refines the results. Progressive enhancement, not gate-keeping. |
-| Using Dota 2 internal item names in the UI (e.g., "item_black_king_bar") | Confusing, non-human-readable text in the interface | Always map to display names ("Black King Bar"). Store internal names for API/CDN use only. |
-| Not showing item cost alongside recommendations | Player can't assess gold feasibility at a glance | Always display gold cost next to each item. For supports (Pos 4/5), this is critical -- they need to know if they can afford the recommendation. |
-| Damage profile inputs (physical/magical/pure %) showing before laning phase | Overwhelming the user with inputs they can't answer yet | Only reveal damage profile inputs after lane result is set (midgame transition). Progressive disclosure matching the actual game flow. |
-| Tiny or unrecognizable item icons | User can't quickly identify items during a live game | Item icons should be at minimum 40x40px, ideally 48x48px. Use the higher-resolution CDN images. Add item name as both tooltip and visible text. |
+| Auto-updating recommendations without user consent | Jarring -- user is reading a recommendation and it changes mid-sentence | Show "New recommendations available" notification. Let user click to apply. Never auto-replace visible recommendations. |
+| No visual distinction between GSI-detected and manual data | User cannot trust the data -- "did I set this or did the app detect it?" | Add subtle GSI icon (antenna/signal icon) next to auto-detected fields. Different visual treatment for manual vs automated data. |
+| Hiding the manual input fallback when GSI is active | If GSI disconnects or misdetects, user has no way to correct data | Always keep manual override accessible. Show a toggle: "Auto (GSI)" / "Manual" for each field. Manual override persists until GSI reconnects. |
+| Screenshot paste workflow requiring too many clicks | During a live game, every second matters. Three-click workflows are abandoned. | Single paste action: Ctrl+V on the app, immediate processing, results shown in 2 seconds with one-click confirm. Minimal friction. |
+| Gold counter updating faster than human can read | Distracting, seizure-risk for rapid number changes | Smooth gold counter transitions (CSS transition on number change). Update at most once per second even if GSI sends faster. Round to nearest 50g for display. |
+| No indication of when next auto-refresh will happen | User mashes re-evaluate button not knowing it is rate-limited | Show countdown timer: "Next refresh in 1:45" after an auto-refresh triggers. Make it clear that manual re-evaluate still works (bypasses auto-refresh cooldown). |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Hero Picker:** Often missing attribute-based filtering (STR/AGI/INT/Universal) -- verify all four attribute filters work, including Universal heroes (added in 7.33)
-- [ ] **Item recommendations:** Often missing component breakdown -- verify each recommended item shows its build-up components and intermediate items to buy
-- [ ] **Structured output validation:** Often missing server-side validation -- verify that every item_id in Claude's response resolves to a real item in the database BEFORE returning to frontend
-- [ ] **Error states:** Often missing fallback UI -- verify what the user sees when Claude API is down, when OpenDota is down, when a hero has no matchup data
-- [ ] **Re-evaluate flow:** Often missing "locked items" persistence -- verify that items marked as purchased survive a re-evaluation and don't reappear as recommendations
-- [ ] **Mobile viewport:** Often missing scroll handling -- verify the sidebar doesn't overflow on 768px-wide screens, even though mobile isn't a V1 priority
-- [ ] **Favicon:** Often forgotten entirely -- verify favicon.ico AND favicon.svg exist, are themed (prism/refraction), and render in browser tabs (per CLAUDE.md requirements)
-- [ ] **Docker health checks:** Often missing -- verify both containers have health check endpoints and Docker restart policies actually work on Unraid
-- [ ] **Empty state:** Often missing -- verify what the user sees before selecting any hero (should be an inviting prompt, not a blank panel)
-- [ ] **Patch version display:** Often missing -- verify the app shows which Dota 2 patch the data corresponds to, so users know if data is current
+- [ ] **GSI Endpoint:** Often missing authentication -- verify the auth token from .cfg is validated on every POST, not just checked once
+- [ ] **GSI Endpoint:** Often missing immediate 200 response -- verify the handler returns 200 before any processing. Dota 2 retries on timeout, causing duplicate events.
+- [ ] **GSI .cfg file:** Often missing all required data fields -- verify `hero`, `items`, `player`, `map`, and `abilities` are all set to `"1"` in the data section
+- [ ] **WebSocket:** Often missing heartbeat -- verify ping/pong runs every 10s and frontend shows disconnection state after 30s silence
+- [ ] **WebSocket:** Often missing Nginx configuration -- verify nginx.conf has `proxy_http_version 1.1`, Upgrade headers, and increased `proxy_read_timeout`
+- [ ] **Screenshot Parsing:** Often missing image cropping -- verify screenshots are cropped to item grid before being sent to Claude Vision API
+- [ ] **Screenshot Parsing:** Often missing result confirmation -- verify parsed items are shown to user for approval before affecting recommendations
+- [ ] **Auto-Refresh:** Often missing hard cooldown enforcement -- verify even if trigger logic fires rapidly, Claude API is never called more than once per 2 minutes
+- [ ] **State Management:** Often missing source tracking -- verify every auto-detectable field in Zustand stores has a `source` property ("gsi" | "manual" | "screenshot")
+- [ ] **Lane Result Detection:** Often missing user confirmation -- verify auto-detected lane result shows a confirmation prompt, not silent auto-apply
+- [ ] **Cost Tracking:** Often missing -- verify there is a per-session counter for Claude API calls (both text and vision) visible somewhere in the UI or logs
+- [ ] **Reconnection:** Often missing state reconciliation -- verify that after WebSocket reconnect, the frontend receives FULL current state and replaces local state entirely
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| LLM hallucinating items | LOW | Add item_id validation layer. Filter invalid items from response. Return partial results + rules-engine fallback for filtered items. Can be added without schema changes. |
-| Post-patch stale data | MEDIUM | Add `patch_version` column to matchup_data table. Write a migration script. Implement a data refresh triggered by patch detection. Requires data pipeline work but no architecture change. |
-| Generic recommendations | MEDIUM | Rewrite system prompt with few-shot examples. Enrich context builder with opponent ability data. Add post-processing validation. Iterative prompt engineering -- budget 2-3 days. |
-| Claude API latency | LOW | Add timeout middleware to FastAPI. Implement rules-engine fallback. These are additive changes that don't require refactoring existing code. |
-| OpenDota rate limit exhaustion | MEDIUM | Redesign seeding to be lazy/on-demand. Add request queue with rate limiting. Requires refactoring the data client but not the API or frontend. |
-| SQLite locking on Unraid | HIGH | If WAL mode doesn't work on the host filesystem, must either change the volume mount configuration (cache drive), switch to PostgreSQL (Docker container), or use an in-memory write buffer. The PostgreSQL switch is the nuclear option but solves it permanently. |
-| Rigid schema limiting recommendations | HIGH | Schema change requires coordinated updates: backend response model, Claude prompt, frontend rendering. Must be done carefully to avoid breaking the existing flow. Design the schema flexibly from the start to avoid this. |
+| GSI cannot see enemy items | LOW | Already planned: screenshot parsing as the enemy data channel. No architecture change needed if this was designed in from the start. If not, requires adding a second data pipeline. |
+| Docker networking blocks GSI | LOW | Change GSI .cfg URI to server LAN IP. Update Docker port mapping if needed. No code changes, just config. But requires testing with actual deployment. |
+| Claude API call flood | MEDIUM | Add rate limiter middleware. Requires defining trigger events and cooldown timers. Can be added retroactively but risks budget damage before it is caught. |
+| Screenshot parsing hallucinations | MEDIUM | Add validation layer: cross-reference detected items vs game time and estimated net worth. Add user confirmation step. Requires UI work but no architecture change. |
+| WebSocket silent disconnect | MEDIUM | Implement heartbeat protocol. Requires changes to both backend handler and frontend hook. Can be retrofitted but should be built in from the start. |
+| Manual/GSI state conflicts | HIGH | Requires refactoring Zustand stores to add source tracking on every field. If built without this, every field interaction has potential bugs. Retrofitting is expensive -- build it in from Phase 1. |
+| Screenshot cost explosion | LOW | Add image cropping. Can be added at any time with minimal code change. The sooner the better to avoid budget waste. |
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| LLM hallucinating items | Phase 3 | Write a test that sends 20 diverse matchups to Claude and validates every item_id in responses against the items table. Zero invalid IDs = pass. |
-| Post-patch data staleness | Phase 1 (model) + Phase 6 (pipeline) | Check that matchup_data table has a `patch_version` column. Run data refresh script after a simulated patch and verify old data is flagged/replaced. |
-| Generic recommendations | Phase 3 | Review 10 recommendation outputs manually. Every reasoning field must mention at least one enemy hero name and one specific ability. |
-| Claude API latency | Phase 3 + Phase 5 | Add a test that simulates a 15-second Claude API delay. Verify the endpoint returns rules-only results within 10 seconds. |
-| OpenDota/Stratz rate limits | Phase 1 | Run the full seeding script against real APIs. Monitor for 429 responses. Verify seeding completes without errors. |
-| SQLite locking on Unraid | Phase 1 | Deploy to actual Unraid with Docker Compose. Run concurrent read+write operations (recommendations while data refresh runs). Check for "database is locked" errors in logs. |
-| Rigid recommendation schema | Phase 3 | Test schema with: a Pos 5 support (few items), a Pos 1 carry rushing an item (skip early phase), a hero needing conditional branches. All three should produce sensible output without filler. |
+| GSI enemy data limitation | Phase 1 (GSI Foundation) | Architecture diagram explicitly shows two data flows: GSI (player data) and screenshot/manual (enemy data). No GSI model fields for enemy data. |
+| Docker GSI networking | Phase 1 (GSI Foundation) | End-to-end test: Dota 2 on gaming PC sends GSI POST to Unraid Docker container. Backend receives and parses the data. Test with actual deployment, not local dev. |
+| Claude API call flood | Phase 3 (Auto-Refresh) | Run a simulated 30-minute game with GSI data replay. Count Claude API calls in logs. Must be 15 or fewer per game. |
+| Screenshot parsing reliability | Phase 2 (Screenshot Parsing) | Test with 10 diverse scoreboard screenshots (different resolutions, different game times). Measure item identification accuracy. Target >85% per-item accuracy with user confirmation. |
+| WebSocket silent disconnect | Phase 1 (WebSocket Foundation) | Simulate network disconnect (kill WebSocket connection). Frontend must show "disconnected" indicator within 30 seconds. Reconnection must restore full state. |
+| Manual/GSI state conflicts | Phase 1 (GSI Foundation) | Zustand store code review: every auto-detectable field has `source` property. Manual override test: set field manually, verify GSI update does NOT overwrite. |
+| Screenshot cost control | Phase 2 (Screenshot Parsing) | Measure token count per screenshot parse. Must be under 200 tokens (cropped image). Full screenshot token count as a regression test (must NOT be used). |
+| Lane result auto-detection | Phase 3 (Auto-Refresh) | At 10:00 game time in simulated data, verify lane result is auto-detected and shown with confirmation prompt. Verify user can override to a different result. |
+| Nginx WebSocket support | Phase 1 (WebSocket Foundation) | WebSocket connection test through Nginx proxy. Verify connection stays alive for 5+ minutes without timeout. Verify Upgrade headers are present in Nginx config. |
+| GSI .cfg generation | Phase 1 (GSI Foundation) | Setup flow generates a .cfg file. File contents include correct server IP, auth token, and all required data fields. User can download and place in Dota 2 cfg directory. |
 
 ## Sources
 
-- [OpenDota API Documentation](https://docs.opendota.com/) - Rate limits: 50K calls/month free, 60/min
-- [OpenDota API Changes Blog Post](https://blog.opendota.com/2018/04/17/changes-to-the-api/) - Rate limit policy history
-- [Stratz API Rate Limits](https://stratz.com/knowledge-base/API/Are%20there%20any%20rate%20limits) - Default: 2K/hour, Individual: 4K/hour, 20/sec
-- [Stratz API Knowledge Base](https://stratz.com/knowledge-base/API) - GraphQL API structure and authentication
-- [Claude Structured Outputs Documentation](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) - JSON schema limitations, model support, migration notes
-- [Claude Prefill Deprecation](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prefill-claudes-response) - Prefilling incompatible with newer models
-- [Claude Prompting Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) - Few-shot examples, XML tags, structure
-- [LLM Hallucination Research - Named Entity Sensitivity](https://arxiv.org/pdf/2509.22202) - 26% hallucination rate with one-character name similarity
-- [Dota 2 Patch 7.39 Spring Forward](https://www.dota2.com/springforward2025) - Neutral item rotation, Facet reworks
-- [Dota 2 Patch 7.40 Changes](https://blix.gg/news/dota-2/dota-2-patch-7-40-overview/) - Hero reworks, item changes
-- [SQLite Concurrent Writes and Database Locking](https://tenthousandmeters.com/blog/sqlite-concurrent-writes-and-database-is-locked-errors/) - WAL mode limitations, Docker filesystem issues
-- [SQLite WAL Mode Documentation](https://sqlite.org/wal.html) - Network filesystem limitations, checkpoint starvation
-- [Jellyfin Docker SQLite Issues on Unraid](https://forums.unraid.net/topic/190813-jellyfin-docker-sqlite-unable-to-open-database-file-aka-help-with-general-file-permission-in-unraid/) - Real-world Unraid SQLite permission problems
-- [Docker Compose Named Volume Permissions](https://www.codegenes.net/blog/docker-compose-and-named-volume-permission-denied/) - PUID/PGID configuration for Docker
-- [Dota 2 Community Discussion on Item Guides](https://steamcommunity.com/app/570/discussions/0/4628107223585858742/?ctp=3) - Community frustration with generic recommendations
-- [Dota Plus Suggestions Criticism](https://steamcommunity.com/app/570/discussions/0/1697169163407568828/) - Community feedback on Valve's recommendation system
-- [Sequential Item Recommendation in Dota 2 (arXiv)](https://arxiv.org/abs/2201.08724) - Academic research on item recommendation challenges
-- [FastAPI Timeout Middleware](https://www.compilenrun.com/docs/framework/fastapi/fastapi-middleware/fastapi-timeout-middleware/) - Request-level timeout patterns
-- [FastAPI Best Practices (async)](https://github.com/zhanymkanov/fastapi-best-practices) - Async route patterns, blocking call prevention
+- [Dota 2 GSI - antonpup/Dota2GSI](https://github.com/antonpup/Dota2GSI) - C# library, most comprehensive GSI data field documentation. Confirms player-only data restriction during gameplay.
+- [Dota 2 GSI Issue 1023 - Intermittent connectivity](https://github.com/ValveSoftware/Dota-2/issues/1023) - Known intermittent connection issues, Linux containerization problems, delayed event transmission.
+- [Game State Integration Intro - auo.nu](https://auo.nu/posts/game-state-integration-intro/) - GSI .cfg configuration, data fields, observer vs player distinction, authentication.
+- [dota2gsipy - Python GSI Library](https://github.com/Daniel-EST/dota2gsipy) - Python GSI implementation, minimal maintenance (v0.1), basic HTTP POST listener pattern.
+- [Claude Vision API Documentation](https://platform.claude.com/docs/en/build-with-claude/vision) - Image size limits (5MB API), token calculation (width*height/750), cost tables, supported formats, known limitations.
+- [FastAPI WebSocket Documentation](https://fastapi.tiangolo.com/advanced/websockets/) - WebSocket endpoint patterns, connection management.
+- [FastAPI WebSocket Scaling Techniques - hexshift](https://hexshift.medium.com/top-ten-advanced-techniques-for-scaling-websocket-applications-with-fastapi-a5af1e5e901f) - Task cleanup on disconnect, background task leaks, Redis pub/sub for multi-worker.
+- [FastAPI WebSocket Auth - peterbraden](https://peterbraden.co.uk/article/websocket-auth-fastapi/) - WebSocket authentication patterns, query parameter tokens, custom close codes.
+- [WebSocket Best Practices - websocket.org](https://websocket.org/guides/best-practices/) - Heartbeat protocol, reconnection with backoff, state recovery.
+- [React WebSocket Best Practices - maybe.works](https://maybe.works/blogs/react-websocket) - useRef for connection, singleton pattern, cleanup in useEffect, exponential backoff reconnection.
+- [Claude API Rate Limits](https://platform.claude.com/docs/en/api/rate-limits) - Token bucket algorithm, RPM/TPM/daily limits, tier system.
+- [Dota 2 GSI - xzion/dota2-gsi (Node.js)](https://github.com/xzion/dota2-gsi) - GSI data structure, event handling patterns, JSON variability between play/spectate modes.
 
 ---
-*Pitfalls research for: Dota 2 adaptive item advisor with hybrid rules+LLM engine*
-*Researched: 2026-03-21*
+*Pitfalls research for: Live game intelligence for Dota 2 item advisor (v2.0)*
+*Researched: 2026-03-23*

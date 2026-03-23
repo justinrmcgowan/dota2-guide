@@ -1,245 +1,299 @@
-# Feature Research
+# Feature Research: v2.0 Live Game Intelligence
 
-**Domain:** Dota 2 adaptive item advisor
-**Researched:** 2026-03-21
-**Confidence:** HIGH
-
-## Competitive Landscape Summary
-
-The Dota 2 item recommendation space has several established players, each with distinct approaches:
-
-| Tool | Approach | Strengths | Weaknesses |
-|------|----------|-----------|------------|
-| **In-game guides** (Torte de Lini, ImmortalFaith) | Static, manually curated builds for every hero | Universal reach (90% of matches use them), always visible in-game shop | Static -- same build regardless of matchup, no adaptation, no reasoning |
-| **Dota Plus** (Valve) | ML-powered suggestions from millions of matches, in-game overlay | Real-time, draft-aware, three build paths, adapts to lane/inventory | No explanations for "why," shallow -- just shows popular items, requires subscription |
-| **Dotabuff Adaptive Items** | ML model via Overwolf overlay, draft-aware with timing estimates | Adapts on the fly if you deviate, shows gold progress and purchase timing | Requires Overwolf, no reasoning/explanation, limited to build path (no decision trees) |
-| **Dota Coach** (Overwolf) | Professionally-curated coaching with in-game overlay | Timer notifications, hero coaching text, actively maintained | Requires Overwolf, coaching is generic per-hero not per-matchup |
-| **STRATZ** | Auto-generated guides from top player match data | Always up-to-date, multiple guide variants per hero, free, rich stats | Web-only post-game analysis, no real-time adaptation, no reasoning text |
-| **Dota2ProTracker** | Aggregated 7K+ MMR and pro match data | Filtered by position and facet, updated daily, shows most common sequences | Reference tool not advisor, no adaptation, no explanations |
-| **OpenDota** | Open API with matchup win rates, item popularity by phase | Free, comprehensive data, open source | Raw data platform, not a recommendation tool -- requires interpretation |
-| **Spectral Builds** | Stats-based builds with optional "explain" feature | Unique explanation attempt, community-driven | Explanations are basic, builds are static, small audience |
-| **dota2-helper** (GitHub) | LLM-powered (Groq/GPT-OSS 120B) item + ability advice | Full draft context, ability-level reasoning, natural language output | Hobby project, no mid-game adaptation, no item tracking, no phase progression |
-
-**The critical gap:** No existing tool combines all three of (1) draft/matchup awareness, (2) mid-game adaptation, and (3) natural language reasoning explaining "why." Prismlab fills this gap.
+**Domain:** Dota 2 real-time game integration (GSI, screenshot parsing, auto gold tracking, WebSocket)
+**Researched:** 2026-03-23
+**Confidence:** HIGH (GSI well-documented, vision API verified, WebSocket patterns mature)
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete or broken.
+Features that any GSI-powered Dota 2 tool must have. Dotabuff App and Dota Plus already set user expectations here.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Searchable hero picker with portraits | Every Dota tool has this. Without it, users cannot interact at all | MEDIUM | Fuzzy search, attribute/attack-type filters, hero portraits from Steam CDN. Reusable for your hero + opponent slots |
-| Hero portraits and item icons from CDN | Players identify heroes/items visually, not by text | LOW | Steam CDN URLs are well-documented. Never self-host these |
-| Role/position selection (Pos 1-5) | Role fundamentally changes item builds. Same hero, different role = different items | LOW | Simple 5-button selector. Unlocks playstyle options |
-| Item build organized by game phase | Every guide (static or dynamic) segments starting/early/core/late. Players think in phases | MEDIUM | Timeline UI with starting, laning, core, situational phases. This is the primary output surface |
-| Starting item recommendations | The first thing a player needs to know. Universal expectation from any item guide | LOW | Rule-based layer can handle most starting item logic without LLM |
-| Lane opponent context | Dota Plus, Dotabuff Adaptive Items, and even static guides implicitly build around matchups | MEDIUM | 1-2 opponent slots. Lane matchup is the single most important input for item decisions |
-| Dark theme with Dota aesthetic | Every Dota tool uses dark UI. A light theme would feel alien and hostile | LOW | Deep charcoal background, spectral cyan accent, Radiant/Dire color coding |
-| Item images with cost displayed | Players need to see what the item looks like and what it costs. Basic information | LOW | CDN images with gold cost overlay |
-| Loading states during recommendation generation | LLM calls take 2-5 seconds. Without loading feedback, users think it is broken | LOW | Skeleton loaders or spinner on the recommendation panel only |
-| Fallback when AI/API fails | Claude API may timeout or fail. Users must still get something useful | MEDIUM | Rules-only fallback produces reasonable (if generic) builds. Users see a notice that reasoning is unavailable |
+| GSI endpoint receives game state | Valve official mechanism; Dotabuff App, Dota Plus, Overwolf all use it | MEDIUM | FastAPI POST endpoint at /api/gsi. Dota 2 POSTs JSON to a configurable URI every 0.1-5s depending on throttle settings. Must validate auth token from cfg file |
+| Auto-detect own hero from GSI | GSI provides hero.name in console format (e.g., npc_dota_hero_antimage). Every GSI tool auto-populates the hero | LOW | Map console name to hero_id in DB. Fires during DOTA_GAMERULES_STATE_PRE_GAME or DOTA_GAMERULES_STATE_GAME_IN_PROGRESS |
+| Auto-detect own items/inventory | GSI provides items.slot0-slot5.name, items.stash0-stash5.name, items.backpack0-backpack2.name. Dotabuff App tracks gold progress toward next item | LOW | Parse item names from console format. Cross-reference with purchased items in recommendationStore. Auto-mark items as purchased |
+| Auto-track gold/net worth | GSI exposes player.gold, player.gold_reliable, player.gold_unreliable, player.gpm, player.net_worth. Core to any real-time advisor | LOW | Direct field reads from GSI payload. Update gameStore with current gold. Display gold progress toward next recommended item |
+| Game clock sync | GSI exposes map.clock_time and map.game_time. Users expect the app to know what phase of the game they are in | LOW | Use clock_time for phase detection: 0-10 min = laning, 10-25 min = midgame, 25+ = lategame. Current phase already exists in gameStore |
+| WebSocket push to frontend | GSI data arrives at backend; frontend needs real-time updates without polling. All modern game overlays use push-based updates | MEDIUM | FastAPI WebSocket endpoint /ws/game-state. Backend receives GSI POST, processes, pushes to connected frontend clients. Single connection per browser tab |
+| GSI connection status indicator | Users need to know if the Dota client is actually sending data. Dotabuff App shows connection status prominently | LOW | Heartbeat-based: GSI config supports heartbeat field. Display connected/disconnected in frontend header. Timeout after 2x heartbeat interval |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set Prismlab apart from every existing tool. These are where the product competes.
+Features that set Prismlab apart from Dotabuff App and Dota Plus. These leverage the existing hybrid recommendation engine.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Natural language reasoning per item ("the why") | **No existing tool explains WHY you should buy an item in the context of your specific game.** Dota Plus shows what is popular. Guides show what to buy. Nobody says "buy BKB because Lina Light Strike Array + Laguna Blade will kill you at level 9 if you do not have spell immunity." This is Prismlab core differentiator | HIGH | Claude API generates 1-3 sentence reasoning per item referencing specific hero abilities, matchup dynamics, and game state. This is the heart of the product |
-| Playstyle-aware recommendations | No tool asks "how do you want to play?" -- they all assume a default playstyle. An aggressive Pos 1 carry needs different starting items than a passive farmer on the same hero | LOW | Dropdown per role (4 options each). Playstyle is injected into the Claude prompt as player intent. Simple to build, powerful in output |
-| Mid-game re-evaluation with state updates | Dotabuff Adaptive Items adapts if you deviate. But no tool lets you say "I lost my lane, they have 3 physical damage cores, and I saw a BKB on their Sven" and get a completely revised build. Prismlab does | HIGH | Lane result selector, damage profile input, enemy item tracker, re-evaluate button. Past purchases locked, only future items regenerated. This is the "living advisor" concept |
-| Situational decision trees (not just a linear build) | Existing tools give you one path (or three at best). Dota itemization is branching -- "if they have evasion, MKB; if they have magic damage, BKB." Prismlab shows these branches explicitly | MEDIUM | Decision tree cards in the UI with conditions and recommendations. Claude generates these as part of the situational phase |
-| Hybrid engine (rules + LLM) | Rules fire instantly for obvious decisions (Magic Stick vs spell spammers). Claude handles nuance. Users get instant results for known patterns and rich reasoning for complex decisions. Fallback mode if LLM fails | HIGH | Rule-based layer is fast and deterministic. LLM layer is slow but intelligent. Orchestrator decides what needs reasoning vs what is obvious |
-| Radiant/Dire side awareness | Side affects lane geometry, pull camps, Roshan proximity, triangle farming. No item tool factors this in. A Dire safelane carry might rush Helm of the Dominator to take early Roshan; a Radiant safelane carry would not | LOW | Simple toggle that gets injected into the prompt context. Low effort, meaningfully affects recommendations |
-| Matchup-specific item data from OpenDota/Stratz | Most tools show global item popularity. Prismlab shows "in this specific matchup (your hero vs their heroes), these items have the highest win rates" | MEDIUM | Backend fetches matchup-specific item win rates and feeds them as context to Claude. Data pipeline required |
-| Progressive information flow (draft -> laning -> mid -> late) | Matches how information reveals during an actual Dota game. You know draft first, then lane opponents, then damage profiles. No tool mirrors this naturally | MEDIUM | UI transitions through phases, revealing new input options and collapsing completed phases. State management via Zustand |
-| Click-to-mark items as purchased | Locks in what you already bought so re-evaluation only generates remaining items. Simple interaction during live gameplay | LOW | Click handler on item icons, toggling purchased state. Re-evaluate uses this to scope the generation |
+| Auto-determine lane result from gold data | At ~10 min, compare own GPM/net worth against expected benchmarks for role+hero. Auto-set lane_result (won/even/lost) instead of manual toggle. No other tool does this for item recommendations | MEDIUM | Algorithm: track gold at game start and at 10 min mark. Compare against role-specific benchmarks (Pos 1 carry: 5000+ gold at 10 min = won lane; 3500-5000 = even; below 3500 = lost). GPM thresholds from OpenDota hero averages. Trigger re-evaluation automatically |
+| Screenshot parsing for enemy items via Claude Vision | User pastes scoreboard screenshot (Tab screen), Claude Vision extracts enemy hero items and maps them to enemyItemsSpotted. No manual item-by-item entry. Unique to Prismlab because the app already has Claude API integration | HIGH | Send screenshot as base64 to Claude API with structured output schema. Identify all items for each enemy hero. ~1600 tokens per 1MP screenshot at ~$0.005/image. Must handle: scoreboard layout variations, item icon recognition at small sizes, mapping to internal item names. Rate-limit: max 1 screenshot parse per 60s |
+| Auto-refresh recommendations on key events | When GSI detects: (a) new item purchased, (b) 10-min mark crossed, (c) significant gold milestone reached, (d) death -- auto-queue a re-evaluation instead of requiring manual Re-Evaluate click. Rate-limited to max 1 per 2 minutes | HIGH | Event detection from GSI diff (compare previous vs current state). Queue system with 2-min cooldown. Claude API call is expensive so batching events is critical. Must not disrupt user if they are mid-action |
+| Gold progress bar toward next item | Visual progress (e.g., 2100/4150 gold toward BKB) using real-time gold from GSI. Dotabuff App does this but Prismlab ties it to the hybrid engine specific recommendation with reasoning | LOW | Calculate: current_gold / next_recommended_item_cost. Account for reliable vs unreliable gold. Component cost breakdown |
+| Draft auto-detection from GSI | GSI exposes draft.team2.pick0_id through pick4_id and draft.team3.pick0_id through pick4_id. Auto-populate all 10 hero slots during the draft phase without manual entry | MEDIUM | GSI sends draft data during DOTA_GAMERULES_STATE_HERO_SELECTION. Map pick IDs to heroes. Auto-fill allies[] and opponents[] in gameStore. Challenge: draft data only fully available to spectators; player mode may only see own pick plus already-revealed picks |
+| Automatic game phase progression | Instead of user manually managing phases, detect phase transitions from GSI clock + events: pre-game to laning to mid-game to late game. Collapse/expand timeline phases automatically | LOW | Clock thresholds + event triggers. Already have phase concept in UI; wire to GSI clock data |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems. Explicitly NOT building these in V1.
-
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| In-game overlay (Overwolf/GSI) | Players want recommendations visible during gameplay without alt-tabbing | Overwolf is bloated and controversial in the community. GSI requires local server setup and Steam configuration. Both add massive complexity. The overlay approach also risks Valve policy issues | Desktop web app on second monitor or alt-tab. V2 can explore GSI for auto-reading game state, but overlay is not the goal |
-| Full allied team synergy analysis | "Your team needs wave clear" type advice sounds valuable | Dramatically increases prompt complexity, API cost, and recommendation surface. V1 focus is "win your lane" -- allied team context adds noise without proportional value | V1 takes 10-hero draft as context but focuses recommendations on YOUR lane matchup. V2 can add deep synergy analysis |
-| Neutral item recommendations | Neutral items are part of every game after 7 minutes | Neutral item drops are random -- recommending "get Philosopher Stone" is useless if it does not drop. Timing is unpredictable. The decision space (5 tiers, random drops, team-wide sharing) does not fit the advisor model well | Defer to V2 where GSI might auto-detect drops. V1 focuses on purchased items only |
-| Auto gold/net worth tracking | Knowing current gold would let the tool say "you can afford X right now" | Requires GSI or manual entry (which is tedious during a game). Gold changes every second. The cognitive overhead of updating gold manually exceeds the benefit | V1 uses phase-based timing estimates instead of real gold values. V2 with GSI can read gold automatically |
-| Build history / session saving | Players might want to revisit recommendations from previous games | Adds database complexity, auth considerations, and maintenance burden for V1. The value is minimal -- each game is unique | Defer entirely. V1 is ephemeral -- each session is a fresh game. V2 can add persistence if demand exists |
-| Voice callouts / TTS | "Buy BKB now" audio cues during gameplay | Audio implementation is complex, accessibility concerns, and most players already have game audio + voice chat competing for attention | Not planned for any version. Text-based reasoning is sufficient |
-| Mobile-optimized layout | Some users might want phone access during games | Desktop-first matches the use case (second monitor or alt-tab). Mobile optimization is significant UI work with minimal value for the primary use case | Do not break on mobile (responsive basics) but do not optimize. V2 can consider mobile if demand exists |
-| Real-time meta/patch tracking | "This item was buffed in 7.38, consider it more" | Requires parsing patch notes (unstructured text), tracking item changes across patches, and maintaining a diff system. Extremely complex for marginal value | Data refresh pipeline updates matchup stats post-patch. If item win rates change, recommendations naturally shift. Claude training data includes general patch awareness. V2 can add explicit patch note integration |
-| Community build sharing | Let users share their generated builds | Social features are scope creep for a personal advisor tool. Requires auth, moderation, ranking systems | Not planned. The tool is a personal advisor, not a community platform |
-| Screenshot/scoreboard parsing | Upload a screenshot to auto-fill game state | OCR/CV pipeline adds massive complexity. Accuracy issues with varying resolutions, UI skins, and game state visibility | V1 uses manual toggles and entry (quick enough during death timers). V2 can explore this |
+| Real-time enemy item tracking via GSI | Just read enemy items from game data | GSI in player mode (not spectator) only exposes YOUR OWN data. Enemy items are NOT available through GSI. Anti-cheat restriction by Valve. Reading game memory is bannable | Screenshot parsing via Claude Vision. User opens scoreboard (Tab), takes screenshot, pastes into app. Slower but VAC-safe |
+| Clipboard monitoring / auto-capture screenshots | Auto-detect when I open scoreboard and capture it | Requires OS-level hooks, raises anti-cheat concerns, platform-specific. Too invasive | Manual paste only for v2.0. User presses PrtScn, Ctrl+V into app. Clean, explicit, cross-platform |
+| In-game overlay via GSI | Display item recommendations as overlay on top of game | Requires injecting into game rendering pipeline or overlay SDK (Overwolf). VAC risk, heavy development, platform-specific | Prismlab stays as second-monitor/alt-tab web app. Updates real-time via WebSocket |
+| Auto-detect enemy heroes from GSI during game | Fill in opponent heroes automatically | Player-mode GSI does not reliably expose all 10 heroes. Only your own pick and revealed enemy picks visible. Full enemy team only guaranteed for spectators | Hybrid: auto-detect what GSI reveals, let user fill gaps manually |
+| Re-evaluate on every GSI tick | Update recommendations constantly | GSI sends every 0.1-1s. Claude API calls take 3-10s and cost ~$0.01 each. Would cost $6/hour and create poor UX with constantly shifting recommendations | Rate-limit to max 1 per 2 minutes. Batch events. Only trigger on meaningful state changes |
+| Voice coaching / TTS callouts | Tell me what to buy next via audio | Significant scope expansion. Not core to v2.0 goal | Text-only for v2.0. Voice is v3.0 feature |
 
 ## Feature Dependencies
 
-```
-[Hero Picker]
-    |
-    +--requires--> [Hero Data API + CDN Images]
-    |
-    +--enables---> [Role Selector]
-                       |
-                       +--enables---> [Playstyle Selector]
-                       |
-                       +--enables---> [Lane Selector]
-                                          |
-                                          +--enables---> [Opponent Picker]
-                                                             |
-                                                             +--enables---> [Recommendation Engine]
-                                                                                |
-                                                                                +--requires--> [Rules Layer]
-                                                                                |
-                                                                                +--requires--> [Claude API Integration]
-                                                                                |
-                                                                                +--requires--> [Matchup Data Pipeline]
-                                                                                |
-                                                                                +--enables---> [Item Timeline UI]
-                                                                                                   |
-                                                                                                   +--enables---> [Click-to-Mark Purchased]
-                                                                                                                      |
-                                                                                                                      +--enables---> [Mid-Game State Inputs]
-                                                                                                                                        |
-                                                                                                                                        +--enables---> [Re-Evaluate Button]
+\`\`\`
+[GSI Endpoint (backend)]
+    +-- requires --> [GSI Config File Setup (user action)]
+    +-- enables --> [WebSocket Push to Frontend]
+    |                   +-- enables --> [GSI Connection Status Indicator]
+    |                   +-- enables --> [Real-time Gold/Item Display]
+    |                   +-- enables --> [Auto Game Phase Progression]
+    +-- enables --> [Auto-detect Own Hero]
+    |                   +-- enables --> [Draft Auto-detection]
+    |                                       +-- enables --> [Auto-fill Allies/Opponents]
+    +-- enables --> [Auto-detect Own Items]
+    |                   +-- enables --> [Auto-mark Purchased Items]
+    |                   +-- enables --> [Gold Progress Bar]
+    |                   +-- enables --> [Auto-refresh on Key Events]
+    |                                       +-- requires --> [Rate Limiter (2-min cooldown)]
+    +-- enables --> [Auto-track Gold/Net Worth]
+    |                   +-- enables --> [Auto-determine Lane Result]
+    +-- enables --> [Game Clock Sync]
+                        +-- enables --> [Auto Game Phase Progression]
+                        +-- enables --> [Auto-determine Lane Result (at 10 min)]
 
-[Side Selector] --enhances--> [Recommendation Engine] (independent, can build anytime)
+[Screenshot Parsing (Claude Vision)]
+    +-- requires --> [Paste/Upload UI Component]
+    +-- requires --> [Claude Vision API Integration (backend)]
+    +-- requires --> [Item Name Mapping (console name -> DB)]
+    +-- enables --> [Auto-fill Enemy Items Spotted]
+    +-- independent of GSI (works without GSI enabled)
 
-[Fallback Mode] --requires--> [Rules Layer] (must exist before LLM integration)
-```
+[Existing Manual Controls]
+    +-- remain as fallback for everything GSI automates
+    +-- user can override any auto-detected value
+\`\`\`
 
 ### Dependency Notes
 
-- **Playstyle Selector requires Role Selector:** Playstyle options are role-dependent (Pos 1 aggressive laner vs Pos 5 lane protector)
-- **Recommendation Engine requires all draft inputs:** Hero, role, playstyle, lane, opponents must be selectable before the engine has enough context
-- **Rules Layer must exist before Claude integration:** Rules layer serves as fallback -- it must work independently before the LLM layer is added
-- **Item Timeline requires Recommendation Engine:** Cannot render recommendations without generating them
-- **Mid-Game inputs require Item Timeline:** Users need to see initial recommendations before updating game state
-- **Re-Evaluate requires Click-to-Mark:** Must know what is already purchased to regenerate only remaining items
-- **Matchup Data Pipeline enhances Recommendation Engine:** Can start with LLM-only reasoning, add statistical context later. But better to have data from the start
+- **GSI Endpoint requires GSI Config File:** User must place a .cfg file in their Dota 2 installation directory and add -gamestateintegration to launch options.
+- **WebSocket requires GSI Endpoint:** WebSocket only has data to push if GSI is actively sending. Connect on page load but display no-game-data until GSI connects.
+- **Screenshot Parsing is independent of GSI:** Even without GSI, users can paste screenshots. Standalone feature feeding enemyItemsSpotted.
+- **Auto-refresh requires Rate Limiter:** 2-minute cooldown is a hard requirement to avoid Claude API cost explosion.
+- **Draft Auto-detection has data limitations:** Player mode may not expose all enemy picks. Handle partial data gracefully, allow manual overrides.
+- **Auto-determine Lane Result requires Gold Baseline:** Need role+hero-specific GPM benchmarks at 10 minutes from OpenDota.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v2.0 Core)
 
-Minimum viable product -- what is needed to validate the core value proposition ("always know what to buy and WHY").
+- [ ] GSI endpoint (/api/gsi) receiving and parsing Dota 2 game state -- foundation for everything
+- [ ] GSI config file generation/instructions -- user must be able to set this up easily
+- [ ] WebSocket endpoint (/ws/game-state) pushing processed game state to frontend
+- [ ] Frontend WebSocket hook with reconnection -- receives and applies game state updates to Zustand stores
+- [ ] GSI connection status indicator in header
+- [ ] Auto-detect own hero from GSI -- eliminates first manual step
+- [ ] Auto-detect own items and auto-mark purchased -- biggest time-saver during live games
+- [ ] Auto-track gold/net worth -- enables gold progress toward next item
+- [ ] Game clock sync and auto-phase progression -- removes manual phase management
+- [ ] Screenshot paste for enemy items via Claude Vision -- killer feature for enemy intel
+- [ ] Manual controls remain as overrides and fallbacks -- nothing breaks if GSI is not enabled
 
-- [ ] Hero picker with search and portraits -- core input mechanism
-- [ ] Role selector (Pos 1-5) -- fundamental to item builds
-- [ ] Playstyle selector (role-dependent) -- key differentiator, low cost
-- [ ] Side selector (Radiant/Dire) -- differentiator, trivial to build
-- [ ] Lane selector (Safe/Off/Mid) -- required context for recommendations
-- [ ] Opponent picker (1-2 lane opponents) -- the matchup is the core input
-- [ ] Rules-based starting item recommendations -- instant, no API call needed
-- [ ] Claude API integration for reasoned recommendations -- the differentiating output
-- [ ] Hybrid engine orchestrator (rules + LLM with fallback) -- reliability requirement
-- [ ] Item timeline UI with phase cards -- the primary output surface
-- [ ] Reasoning tooltips/text per item -- the "why" that makes this unique
-- [ ] Situational decision tree cards -- branching recommendations for late game
-- [ ] Dark theme with Dota aesthetic -- visual table stakes
-- [ ] Loading states during LLM calls -- UX requirement
-- [ ] Docker Compose deployment -- deployment target is Unraid
+### Add After Validation (v2.x)
 
-### Add After Validation (v1.x)
+- [ ] Auto-determine lane result from gold data at 10 min -- requires tuning benchmarks
+- [ ] Gold progress bar toward next recommended item with component breakdown
+- [ ] Auto-refresh recommendations on key events with 2-min rate limit
+- [ ] Draft auto-detection from GSI draft data -- complex due to player-mode limitations
 
-Features to add once the core draft-to-recommendation flow is working and validated.
+### Future Consideration (v3+)
 
-- [ ] Click-to-mark items as purchased -- enables re-evaluation
-- [ ] Lane result selector (Won/Even/Lost) -- first mid-game input
-- [ ] Damage profile input (Physical/Magical/Pure %) -- mid-game adaptation
-- [ ] Enemy item tracker -- spot key items on enemies
-- [ ] Re-evaluate button -- regenerate remaining items with updated state
-- [ ] Phase progression (collapse past phases, expand current) -- UI polish
-- [ ] Matchup data pipeline from OpenDota (item win rates per matchup) -- enriches recommendations with data
-- [ ] Data refresh scripts (daily cron) -- keeps matchup data current
-- [ ] Performance optimization (debounce, caching) -- production readiness
-
-### Future Consideration (v2+)
-
-Features to defer until the core product is validated and stable.
-
-- [ ] Full allied team synergy analysis -- "your team needs X" recommendations
-- [ ] Neutral item tier recommendations -- depends on drop randomness problem
-- [ ] GSI integration for auto-reading game state -- eliminates manual input
-- [ ] Build history / session persistence -- revisit past game recommendations
-- [ ] Mobile-optimized layout -- if user demand materializes
-- [ ] Patch notes integration -- explicit "this item was buffed" context
-- [ ] Screenshot/scoreboard parsing -- auto-fill game state from image
+- [ ] Docker networking optimization for remote Dota clients
+- [ ] Multiple simultaneous game tracking -- party/coaching mode
+- [ ] Voice coaching / TTS callouts for item timing reminders
+- [ ] Hotkey-triggered screenshot capture (OS-level integration)
+- [ ] Match history saving with GSI game data for post-game review
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Hero picker with search | HIGH | MEDIUM | P1 |
-| Role selector | HIGH | LOW | P1 |
-| Playstyle selector | HIGH | LOW | P1 |
-| Side selector | MEDIUM | LOW | P1 |
-| Lane selector | HIGH | LOW | P1 |
-| Opponent picker | HIGH | MEDIUM | P1 |
-| Rules-based starting items | HIGH | MEDIUM | P1 |
-| Claude API integration | HIGH | HIGH | P1 |
-| Hybrid engine orchestrator | HIGH | HIGH | P1 |
-| Item timeline UI | HIGH | MEDIUM | P1 |
-| Reasoning text per item | HIGH | LOW (output of LLM) | P1 |
-| Situational decision trees | MEDIUM | MEDIUM | P1 |
-| Dark Dota theme | HIGH | LOW | P1 |
-| Loading states | HIGH | LOW | P1 |
-| Fallback mode (rules-only) | HIGH | LOW | P1 |
-| Click-to-mark purchased | MEDIUM | LOW | P2 |
-| Lane result selector | MEDIUM | LOW | P2 |
-| Damage profile input | MEDIUM | LOW | P2 |
-| Enemy item tracker | MEDIUM | MEDIUM | P2 |
-| Re-evaluate button | HIGH | MEDIUM | P2 |
-| Phase progression UI | MEDIUM | MEDIUM | P2 |
-| Matchup data pipeline | HIGH | HIGH | P2 |
-| Data refresh scripts | MEDIUM | MEDIUM | P2 |
-| Allied team synergy | MEDIUM | HIGH | P3 |
-| Neutral items | LOW | MEDIUM | P3 |
-| GSI integration | MEDIUM | HIGH | P3 |
-| Build history | LOW | MEDIUM | P3 |
-
-**Priority key:**
-- P1: Must have for launch -- validates the core concept
-- P2: Should have, add when core flow works -- completes the mid-game adaptation story
-- P3: Nice to have, future consideration -- V2 scope
+| GSI endpoint + config setup | HIGH | MEDIUM | P1 |
+| WebSocket push to frontend | HIGH | MEDIUM | P1 |
+| GSI connection status indicator | MEDIUM | LOW | P1 |
+| Auto-detect own hero | HIGH | LOW | P1 |
+| Auto-detect own items / auto-mark purchased | HIGH | LOW | P1 |
+| Auto-track gold/net worth | HIGH | LOW | P1 |
+| Game clock sync + auto-phase progression | MEDIUM | LOW | P1 |
+| Screenshot parsing for enemy items (Claude Vision) | HIGH | HIGH | P1 |
+| Manual controls remain as fallback | HIGH | LOW | P1 |
+| Auto-determine lane result | MEDIUM | MEDIUM | P2 |
+| Gold progress bar toward next item | MEDIUM | LOW | P2 |
+| Auto-refresh on key events | HIGH | HIGH | P2 |
+| Draft auto-detection | MEDIUM | HIGH | P2 |
+| Docker networking for remote Dota | LOW | MEDIUM | P3 |
+| Voice coaching | LOW | HIGH | P3 |
 
 ## Competitor Feature Analysis
 
-| Feature | In-Game Guides | Dota Plus | Dotabuff Adaptive | STRATZ Guides | Dota2ProTracker | Prismlab |
-|---------|---------------|-----------|-------------------|---------------|-----------------|----------|
-| Item recommendations | Static per hero | Draft-aware, 3 paths | Draft-aware, adapts on deviation | Per hero, multiple variants | Per hero/position/facet | Draft + matchup + playstyle + side aware |
-| Explains "why" | Tooltip notes (manual) | No | No | No | No | **Yes -- natural language per item** |
-| Matchup-specific | No | Partially (draft context) | Partially (draft context) | Win rates shown | Win rates shown | **Yes -- abilities + interactions cited** |
-| Mid-game adaptation | No | Recalculate button | Adapts on purchase deviation | No (post-game analysis) | No | **Yes -- lane result, damage profile, enemy items** |
-| Playstyle input | No | No | No | No | No | **Yes -- 4 playstyles per role** |
-| Side awareness | No | No | No | No | No | **Yes -- Radiant/Dire lane geometry** |
-| Situational branches | No | No | No | No | No | **Yes -- decision tree cards** |
-| In-game overlay | Yes (native) | Yes (native) | Yes (Overwolf) | No | No | No (web app, second monitor) |
-| Data source | Manual curation | Valve match database | Dotabuff ML models | Top player matches | 7K+ MMR matches | OpenDota/Stratz + Claude reasoning |
-| Cost | Free | $3.99/mo subscription | Free (Overwolf, 3 module slots) | Free | Free | Free (self-hosted, user pays Claude API) |
-| Always up-to-date | Manual updates per patch | Auto-updated | Auto-updated | Auto-updated weekly | Auto-updated daily | Data pipeline + LLM knowledge |
+| Feature | Dotabuff App | Dota Plus (Valve) | Prismlab v2.0 |
+|---------|-------------|-------------------|---------------|
+| GSI data integration | Yes -- reads hero, items, gold | Yes -- native integration | Yes -- same GSI mechanism |
+| Item suggestions | Static builds from win-rate data | Three suggested builds, lane-specific | Hybrid engine: rules + Claude reasoning with per-item matchup explanations |
+| Gold progress tracking | Shows gold toward next item | Shows item completion progress | Gold progress + component breakdown + reliable/unreliable split |
+| Enemy item detection | No | No -- in-game only (Tab screen) | Claude Vision screenshot parsing -- unique differentiator |
+| Natural language reasoning | No -- data only | No -- percentages only | Yes -- contextual explanations referencing hero abilities and matchup dynamics |
+| Adaptive re-evaluation | Limited -- adjusts to draft | Adjusts to purchased items | Full re-evaluation with lane result, damage profile, enemy items, gold state |
+| Lane result detection | Post-game analytics only | No | Auto-detect at 10 min from gold data |
+| Setup friction | Desktop app install + Steam login | Built into game client | Config file in Dota folder + launch option flag + open web app |
 
-## Key Insight
+**Key competitive insight:** Dotabuff App and Dota Plus provide data-driven suggestions but neither explains why. Prismlab differentiator is the hybrid reasoning engine. GSI integration means the reasoning engine gets better inputs automatically. Screenshot parsing for enemy items is genuinely unique.
 
-The competitive landscape reveals a clear pattern: **existing tools answer "WHAT to buy" but none answer "WHY to buy it in this specific game."** The closest attempt is Spectral Builds "explain" feature, which provides basic statistical reasoning but not matchup-specific coaching-level analysis.
+## GSI Technical Details (Research Findings)
 
-Prismlab differentiation is not another item recommender. It is an **item reasoning engine** -- the recommendations are the vehicle, but the reasoning is the product. A player using Prismlab should internalize itemization logic over time because they receive explanations, not just instructions.
+### What GSI Exposes in Player Mode
+
+When playing (not spectating), Dota 2 GSI exposes ONLY the local player data.
+
+**Available to players (HIGH confidence -- verified across multiple GSI libraries):**
+- hero.name -- own hero, console format (e.g., npc_dota_hero_antimage)
+- hero.level, hero.health, hero.max_health, hero.mana, hero.max_mana
+- hero.alive, hero.respawn_seconds, hero.buyback_cost, hero.buyback_cooldown
+- hero.xpos, hero.ypos -- map coordinates (usable for lane detection)
+- player.gold, player.gold_reliable, player.gold_unreliable
+- player.gpm, player.xpm, player.net_worth
+- player.kills, player.deaths, player.assists, player.last_hits, player.denies
+- items.slot0-slot5.name, items.stash0-stash5.name, items.backpack0-backpack2.name
+- items.slot0-slot5.cooldown, items.slot0-slot5.charges
+- abilities.ability0-abilityN.name, level, cooldown
+- map.clock_time, map.game_time, map.daytime, map.game_state, map.matchid
+
+**NOT available to players (anti-cheat restriction):**
+- Other players hero data, items, gold, position
+- Enemy team draft picks (only revealed picks visible during pick phase)
+- Building health for enemy structures (unconfirmed)
+
+**Game state values (HIGH confidence):**
+- DOTA_GAMERULES_STATE_WAIT_FOR_PLAYERS_TO_LOAD
+- DOTA_GAMERULES_STATE_HERO_SELECTION
+- DOTA_GAMERULES_STATE_STRATEGY_TIME
+- DOTA_GAMERULES_STATE_PRE_GAME
+- DOTA_GAMERULES_STATE_GAME_IN_PROGRESS
+- DOTA_GAMERULES_STATE_POST_GAME
+
+### GSI Configuration
+
+\`\`\`
+"prismlab Configuration"
+{
+    "uri"           "http://localhost:8420/api/gsi"
+    "timeout"       "5.0"
+    "buffer"        "0.5"
+    "throttle"      "1.0"
+    "heartbeat"     "30.0"
+    "data"
+    {
+        "provider"      "1"
+        "map"           "1"
+        "player"        "1"
+        "hero"          "1"
+        "abilities"     "1"
+        "items"         "1"
+        "draft"         "1"
+    }
+    "auth"
+    {
+        "token"         "prismlab_gsi_token"
+    }
+}
+\`\`\`
+
+**Key settings:** buffer 0.5 (aggregate events over 0.5s), throttle 1.0 (max 1 update/sec), heartbeat 30.0 (ping every 30s when idle).
+
+### Docker Networking
+
+Dota 2 runs on the gaming PC. Prismlab runs in Docker on Unraid. The GSI config uri must point to the Unraid server IP, not localhost:
+- Config file URI: http://UNRAID_IP:8420/api/gsi
+- Backend must accept POSTs from external IPs
+- CORS/firewall must allow Dota client to reach the backend
+
+### VAC Safety
+
+GSI is Valve official API. It does NOT read game memory, inject code, or interact with the game process. Multiple community applications (Dotabuff App, Overwolf apps, casting overlays) use GSI without VAC issues. The -gamestateintegration launch option is officially supported. **Using GSI is safe.** (MEDIUM confidence -- no explicit Valve statement, but wide community usage without bans is strong evidence.)
+
+## Screenshot Parsing Technical Details
+
+### Claude Vision API for Enemy Items
+
+**Approach:** User opens scoreboard (Tab key), takes screenshot (PrtScn or Win+Shift+S), pastes into Prismlab. Backend sends base64 image to Claude Vision API with structured output request.
+
+**Cost:** ~1600 tokens per 1MP image at $3/M input tokens = ~$0.005 per parse. Negligible.
+
+**Accuracy considerations (MEDIUM confidence):**
+- Dota 2 scoreboard item icons are ~32x32 pixels in a 1920x1080 screenshot
+- Claude Vision accuracy diminishes with small icons and dense layouts
+- Mitigation: crop scoreboard region, provide reference list of valid item names, use structured output
+- Scoreboard layout is consistent (same structure every game), aiding reliable extraction
+
+**Extraction strategy:**
+- Include reference list of all valid Dota 2 item names from items DB
+- Ask Claude to identify each enemy hero items by scoreboard row
+- Structured output schema: {heroes: [{name: string, items: string[]}]}
+- Validate returned item names against DB before applying
+
+**Limitations:**
+- Items in backpack/stash not visible in scoreboard
+- Screenshot must be clear and unobstructed
+- Works best at 1080p+ resolution
+- Captures a moment in time only
+
+**Recommendation: Use Claude Vision over template matching.** Cost is negligible, accuracy is sufficient, and it leverages existing API integration. Template matching (OpenCV) breaks on patch icon changes and resolution variations.
+
+## Lane Result Auto-Detection Algorithm
+
+Use GPM at the 10-minute mark vs role-specific benchmarks from OpenDota.
+
+| Role | Won Lane GPM | Even Lane GPM | Lost Lane GPM |
+|------|-------------|---------------|---------------|
+| Pos 1 (Carry) | >550 | 400-550 | below 400 |
+| Pos 2 (Mid) | >550 | 400-550 | below 400 |
+| Pos 3 (Offlane) | >450 | 300-450 | below 300 |
+| Pos 4 (Soft Support) | >300 | 200-300 | below 200 |
+| Pos 5 (Hard Support) | >250 | 150-250 | below 150 |
+
+**Why GPM not net worth:** Net worth includes starting gold, less normalized. GPM at 10 min reflects actual farm efficiency.
+
+**Implementation:** Record gold at game start. At map.clock_time >= 600, calculate GPM. Compare against thresholds. Auto-set laneResult. Trigger re-evaluation if cooldown permits. User can always override.
 
 ## Sources
 
-- [Dotabuff Adaptive Items announcement](https://www.dotabuff.com/blog/2021-06-23-announcing-the-dotabuff-apps-new-adaptive-items-module) -- MEDIUM confidence (2021, features may have evolved)
-- [Dota Plus official page](https://www.dota2.com/plus) -- HIGH confidence (official Valve source, features verified)
-- [STRATZ Hero Guides blog post](https://medium.com/stratz/dota-2-hero-guides-2c19fab79795) -- MEDIUM confidence (could not fetch full content, details from search snippets)
-- [Dota2ProTracker](https://dota2protracker.com/) -- HIGH confidence (active site on current patch 7.40c)
-- [Torte de Lini background](https://esports.gg/news/dota-2/torte-de-lini-interview/) -- HIGH confidence (interview with guide creator)
-- [Dota Coach Overwolf](https://www.overwolf.com/app/dota-coach.com-dota_coach) -- MEDIUM confidence (search snippet data)
-- [dota2-helper GitHub project](https://github.com/samiamjidkhan/dota2-helper) -- HIGH confidence (verified GitHub repo)
-- [Spectral Hero Builds](https://builds.spectral.gg/) -- MEDIUM confidence (active project)
-- [OpenDota API docs](https://docs.opendota.com/) -- HIGH confidence (official documentation)
-- [Sequential Item Recommendation research](https://arxiv.org/abs/2201.08724) -- HIGH confidence (peer-reviewed paper)
+### GSI Documentation and Libraries
+- [Dota2GSI C# Library](https://github.com/antonpup/Dota2GSI) -- most comprehensive field docs
+- [dota2-gsi Node.js Library](https://github.com/xzion/dota2-gsi) -- event-driven interface
+- [dota2gsipy Python Library](https://github.com/Daniel-EST/dota2gsipy) -- Python implementation
+- [dota2-gsi JVM Library](https://mrbean355.github.io/dota2-gsi/) -- typed data model
+- [GSI Intro](https://auo.nu/posts/game-state-integration-intro/) -- configuration walkthrough
+
+### Claude Vision API
+- [Claude Vision Documentation](https://platform.claude.com/docs/en/build-with-claude/vision) -- official
+- [Claude Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+### Competitor Analysis
+- [Dotabuff App Adaptive Items](https://www.dotabuff.com/blog/2021-06-23-announcing-the-dotabuff-apps-new-adaptive-items-module)
+- [Dota Plus](https://www.dota2.com/plus)
+
+### WebSocket Patterns
+- [FastAPI WebSocket Docs](https://fastapi.tiangolo.com/advanced/websockets/)
+
+### Game Analytics
+- [STRATZ Lane Outcomes](https://stratz.com/knowledge-base/General/How%20are%20lane%20outcomes%20calculated)
+- [Dotabuff Laning Analysis](https://www.dotabuff.com/blog/2017-10-09-analyze-your-laning-stage)
 
 ---
-*Feature research for: Dota 2 adaptive item advisor*
-*Researched: 2026-03-21*
+*Feature research for: Dota 2 Live Game Intelligence (v2.0)*
+*Researched: 2026-03-23*
