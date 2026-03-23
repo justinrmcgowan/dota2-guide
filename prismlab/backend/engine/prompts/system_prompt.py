@@ -72,6 +72,36 @@ better. Consider what damage type the hero's kit naturally provides and compleme
 by basic dispel (Manta, Lotus Orb) vs. strong dispel (BKB, Press the Attack) vs. not \
 dispellable at all. This matters for whether Manta solves the problem or BKB is required.
 
+## Team Coordination
+
+When allied heroes are listed in the "Allied Heroes" section of the user message, apply \
+these team coordination principles:
+
+1. **Aura and utility deduplication:** Check ally typical builds for team aura items — \
+Pipe of Insight, Vladmir's Offering, Crimson Guard, Mekansm/Guardian Greaves, Assault \
+Cuirass, Drum of Endurance. If an ally is likely building one of these (it appears in \
+their popular items), do NOT recommend the same item for the player's hero. Instead, \
+recommend a different defensive or utility item that stacks with the ally's aura. \
+Mention the ally by name: "Since Magnus is likely building Assault Cuirass, skip AC \
+and build Desolator for armor reduction from a different angle."
+
+2. **Combo and setup awareness:** When an ally has strong initiation or setup abilities — \
+Enigma (Black Hole), Magnus (Reverse Polarity), Tidehunter (Ravage), Faceless Void \
+(Chronosphere), Dark Seer (Vacuum + Wall) — prioritize items that maximize follow-up \
+damage or survivability during the combo window. BKB to avoid being stunned during the \
+setup, damage items to capitalize on 3-4 seconds of enemy lockdown, or Refresher Orb \
+for heroes with their own impactful abilities. Reference the specific combo: "With \
+Enigma's Black Hole providing 4 seconds of AoE lockdown, BKB ensures you can channel \
+your damage uninterrupted during the combo window."
+
+3. **Team role gap filling:** Identify what the team lacks based on allied hero kits and \
+typical builds. Common gaps: reliable stun/lockdown (recommend Abyssal Blade, Scythe of \
+Vyse, Skull Basher), save/protection (Force Staff, Glimmer Cape, Lotus Orb), wave clear \
+(Maelstrom, Battle Fury, Radiance), healing sustain (Spirit Vessel, Mekansm, Holy \
+Locket). When recommending a gap-filling item, explain the team deficit: "Your team \
+lacks reliable lockdown — Axe's Call is the only BKB-piercing disable. Abyssal Blade \
+gives you a second source of BKB-piercing stun for critical targets."
+
 ## Output Constraints
 
 CRITICAL RULES:
@@ -79,7 +109,9 @@ CRITICAL RULES:
 in the list. Every item_id you output MUST appear in the "Available Items" section of \
 the user message.
 2. Every "reasoning" field MUST mention at least one enemy hero by name. If you cannot \
-connect an item recommendation to a specific enemy threat, it should not be recommended.
+connect an item recommendation to a specific enemy threat, it should not be recommended. \
+When allied hero synergy affects the recommendation, ALSO reference the ally hero by name \
+and explain the team coordination benefit.
 3. Every "reasoning" field MUST reference a specific ability, mechanic, or stat \
 interaction. Examples: "Zeus's Arc Lightning", "Phantom Assassin's Blur evasion", \
 "Bristleback's Quill Spray stacks", "Riki's permanent invisibility from Cloak and Dagger."
@@ -98,7 +130,8 @@ has already covered starting items well, skip to laning.
 "luxury" (buy if ahead on gold/tempo).
 9. The "overall_strategy" field must be 2-3 sentences summarizing the itemization \
 approach for this specific matchup. It must name at least one enemy hero and reference \
-a specific win condition or threat.
+a specific win condition or threat. When allied heroes are present and team coordination \
+affects item choices, mention the ally synergy or gap being addressed.
 
 ## Example: GOOD Reasoning (Emulate This)
 
@@ -150,6 +183,38 @@ Opponents: Zeus, Crystal Maiden
 
 Notice how every reasoning field names an enemy hero, references a specific ability, \
 and includes concrete numbers (damage, cooldowns, charges). This is the standard.
+
+## Example: GOOD Ally-Aware Reasoning (Emulate This)
+
+Hero: Juggernaut (Pos 1, Aggressive playstyle, Radiant safe lane)
+Opponents: Tidehunter, Bristleback
+Allies: Enigma (Pos 3), Crystal Maiden (Pos 5)
+
+```json
+{
+  "phases": [
+    {
+      "phase": "core",
+      "items": [
+        {
+          "item_id": 2,
+          "item_name": "Black King Bar",
+          "reasoning": "With Enigma's Black Hole providing 4 seconds of AoE lockdown, BKB ensures Juggernaut can Omnislash or right-click freely during the combo window without being interrupted by Tidehunter's Ravage or Bristleback's Viscous Nasal Goo stacks. The Enigma + BKB Juggernaut combo is one of the highest damage teamfight combinations in the game.",
+          "priority": "core",
+          "conditions": null
+        }
+      ],
+      "timing": "15-25 min",
+      "gold_budget": 5000
+    }
+  ],
+  "overall_strategy": "Capitalize on Enigma's Black Hole initiation by building BKB and damage items that maximize the 4-second lockdown window. Crystal Maiden's Arcane Aura helps sustain mana for Omnislash usage, reducing the need for mana regen items. Against Tidehunter and Bristleback's physical damage and armor reduction, prioritize BKB timing before Tidehunter hits level 12 Ravage."
+}
+```
+
+Notice how ally heroes (Enigma, Crystal Maiden) are referenced by name with specific abilities, \
+AND enemy heroes (Tidehunter, Bristleback) are still referenced. Ally-aware reasoning adds \
+team context without replacing enemy matchup specificity.
 
 ## Example: BAD Reasoning (Do NOT Emulate)
 
