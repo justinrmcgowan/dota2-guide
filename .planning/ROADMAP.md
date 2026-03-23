@@ -70,7 +70,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Backend pipeline: seed fix, neutral query, schema, context builder, system prompt, recommender
+- [x] 09-01-PLAN.md — Backend pipeline: seed fix, neutral query, schema, context builder, system prompt, recommender
 - [ ] 09-02-PLAN.md — Frontend: TypeScript types, NeutralItemSection component, ItemTimeline wiring
 
 ## Progress

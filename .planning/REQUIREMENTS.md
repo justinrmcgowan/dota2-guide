@@ -16,9 +16,9 @@ Requirements for v1.1 release. Each maps to roadmap phases.
 
 ### Neutral Items
 
-- [ ] **NEUT-01**: Neutral item data (name, tier, effects) stored in database
-- [ ] **NEUT-02**: Dedicated "Best Neutral Items" section in recommendations ranked by tier (T1-T5)
-- [ ] **NEUT-03**: Inline neutral item callouts in phase reasoning when a neutral item changes the build path
+- [x] **NEUT-01**: Neutral item data (name, tier, effects) stored in database
+- [x] **NEUT-02**: Dedicated "Best Neutral Items" section in recommendations ranked by tier (T1-T5)
+- [x] **NEUT-03**: Inline neutral item callouts in phase reasoning when a neutral item changes the build path
 
 ### Polish & Tech Debt
 
@@ -56,9 +56,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ALLY-02 | Phase 8 | Complete |
 | ALLY-03 | Phase 8 | Complete |
 | ALLY-04 | Phase 8 | Complete |
-| NEUT-01 | Phase 9 | Pending |
-| NEUT-02 | Phase 9 | Pending |
-| NEUT-03 | Phase 9 | Pending |
+| NEUT-01 | Phase 9 | Complete |
+| NEUT-02 | Phase 9 | Complete |
+| NEUT-03 | Phase 9 | Complete |
 | DEBT-01 | Phase 7 | Complete |
 | DEBT-02 | Phase 7 | Complete |
 | DEBT-03 | Phase 7 | Complete |

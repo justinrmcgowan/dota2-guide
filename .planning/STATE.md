@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Allied Synergy & Neutral Items
-status: Ready to plan
-stopped_at: Phase 9 context gathered
-last_updated: "2026-03-23T09:54:58.232Z"
+status: Ready to execute
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-23T10:47:31.934Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 08 — allied-synergy
+**Current focus:** Phase 09 — neutral-items
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
+Phase: 09 (neutral-items) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Plan: Not started
 | Phase 07 P01 | 2min | 3 tasks | 4 files |
 | Phase 08 P01 | 3min | 1 tasks | 3 files |
 | Phase 08-02 P02 | 2min | 2 tasks | 2 files |
+| Phase 09 P01 | 5min | 2 tasks | 11 files |
 
 ### Decisions
 
@@ -63,6 +64,10 @@ Recent decisions affecting current work:
 - [Phase 08-02]: Prompt-only approach for aura dedup — Claude reasons holistically about ally builds
 - [Phase 08-02]: Team Coordination section placed between Game Knowledge Principles and Output Constraints
 - [Phase 08-02]: Ally-aware example uses Enigma + Juggernaut combo to demonstrate combo awareness pattern
+- [Phase 09]: Use tier field (not qual) for neutral item detection -- qual=='rare' incorrectly marks 51 shop items
+- [Phase 09]: Neutral catalog context section placed after popularity, before final instruction
+- [Phase 09]: System prompt Neutral Items section between Team Coordination and Output Constraints
+- [Phase 09]: Schema extensions use default_factory=list for backward compatibility
 
 ### Pending Todos
 
@@ -74,7 +79,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T09:54:58.229Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-neutral-items/09-CONTEXT.md
+Last session: 2026-03-23T10:47:31.931Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None
 Resume command: /gsd:autonomous --from 8
