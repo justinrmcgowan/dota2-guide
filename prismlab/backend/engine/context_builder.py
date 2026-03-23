@@ -57,33 +57,39 @@ class ContextBuilder:
         primary_attr = (hero.primary_attr or "unknown") if hero else "unknown"
         attack_type = (hero.attack_type or "unknown") if hero else "unknown"
 
-        # 2. Fetch opponent hero names and matchup data
+        # 2. Build allied heroes section (if any)
+        ally_lines = await self._build_ally_lines(request.allies, db)
+
+        # 3. Fetch opponent hero names and matchup data
         opponent_lines = await self._build_opponent_lines(
             request.hero_id, request.lane_opponents, db
         )
 
-        # 3. Build already recommended section from rules
+        # 4. Build already recommended section from rules
         rules_lines = self._build_rules_lines(rules_items)
 
-        # 4. Get filtered item catalog
+        # 5. Get filtered item catalog
         items = await get_relevant_items(request.hero_id, request.role, db)
         item_lines = self._build_item_catalog(items)
 
-        # 5. Get item popularity (optional)
+        # 6. Get item popularity (optional)
         popularity_section = await self._build_popularity_section(
             request.hero_id, db, items
         )
 
-        # 6. Build mid-game context (if present)
+        # 7. Build mid-game context (if present)
         midgame_section = self._build_midgame_section(request)
 
-        # 7. Assemble the message
+        # 8. Assemble the message
         role_label = f"Pos {request.role}"
         sections = [
             f"## Your Hero\n{hero_name} ({role_label}, {request.playstyle} playstyle, "
             f"{request.side} {request.lane} lane)\n"
             f"Primary: {primary_attr}, Attack: {attack_type}",
         ]
+
+        if ally_lines:
+            sections.append(f"## Allied Heroes\n{ally_lines}")
 
         if opponent_lines:
             sections.append(f"## Lane Opponents\n{opponent_lines}")
@@ -186,6 +192,75 @@ class ContextBuilder:
                 lines.append(f"- {opp_name}: no matchup data available")
 
         return "\n".join(lines)
+
+    async def _build_ally_lines(
+        self,
+        allies: list[int],
+        db: AsyncSession,
+    ) -> str:
+        """Build allied heroes section with typical item builds."""
+        if not allies:
+            return ""
+
+        lines: list[str] = []
+        for ally_id in allies:
+            ally_hero = await self._get_hero(ally_id, db)
+            ally_name = ally_hero.localized_name if ally_hero else f"Hero #{ally_id}"
+
+            # Fetch popular items for this ally
+            popularity = await get_hero_item_popularity(ally_id, db, self.opendota)
+            if popularity:
+                popular_items = await self._extract_top_items(popularity, db)
+                if popular_items:
+                    lines.append(
+                        f"- {ally_name}: typical builds include {popular_items}"
+                    )
+                else:
+                    lines.append(
+                        f"- {ally_name}: no typical build data available"
+                    )
+            else:
+                lines.append(
+                    f"- {ally_name}: no typical build data available"
+                )
+
+        return "\n".join(lines)
+
+    async def _extract_top_items(
+        self,
+        popularity: dict,
+        db: AsyncSession,
+        limit: int = 5,
+    ) -> str:
+        """Merge all phase popularity dicts and return top item names.
+
+        Combines early, mid, and late game item counts into one ranking,
+        takes the top N unique items, resolves names from DB.
+        Returns a comma-separated string of item names.
+        """
+        merged: dict[int, int] = {}
+        for phase_key in _POPULARITY_PHASE_MAP:
+            phase_data = popularity.get(phase_key, {})
+            if not phase_data:
+                continue
+            for item_id_str, count in phase_data.items():
+                item_id = int(item_id_str)
+                merged[item_id] = merged.get(item_id, 0) + int(count)
+
+        if not merged:
+            return ""
+
+        # Sort by count descending, take top N
+        sorted_items = sorted(merged.items(), key=lambda x: x[1], reverse=True)
+        top_ids = [item_id for item_id, _ in sorted_items[:limit]]
+
+        # Resolve item names from DB
+        all_items_result = await db.execute(select(Item))
+        all_items = all_items_result.scalars().all()
+        item_name_map = {item.id: item.name for item in all_items}
+
+        names = [item_name_map.get(iid, f"Item #{iid}") for iid in top_ids]
+        return ", ".join(names)
 
     def _build_rules_lines(self, rules_items: list[RuleResult]) -> str:
         """Format already-recommended items from the rules engine."""
