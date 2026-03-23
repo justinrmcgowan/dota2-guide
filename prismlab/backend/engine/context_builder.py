@@ -203,26 +203,24 @@ class ContextBuilder:
             return ""
 
         lines: list[str] = []
+        fallback = "no typical build data available"
         for ally_id in allies:
             ally_hero = await self._get_hero(ally_id, db)
             ally_name = ally_hero.localized_name if ally_hero else f"Hero #{ally_id}"
 
             # Fetch popular items for this ally
             popularity = await get_hero_item_popularity(ally_id, db, self.opendota)
-            if popularity:
-                popular_items = await self._extract_top_items(popularity, db)
-                if popular_items:
-                    lines.append(
-                        f"- {ally_name}: typical builds include {popular_items}"
-                    )
-                else:
-                    lines.append(
-                        f"- {ally_name}: no typical build data available"
-                    )
-            else:
+            popular_items = (
+                await self._extract_top_items(popularity, db)
+                if popularity
+                else ""
+            )
+            if popular_items:
                 lines.append(
-                    f"- {ally_name}: no typical build data available"
+                    f"- {ally_name}: typical builds include {popular_items}"
                 )
+            else:
+                lines.append(f"- {ally_name}: {fallback}")
 
         return "\n".join(lines)
 
