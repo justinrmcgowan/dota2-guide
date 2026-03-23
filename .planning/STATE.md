@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Allied Synergy & Neutral Items
-status: Ready to execute
-stopped_at: Completed 08-01-PLAN.md (context builder ally lines)
-last_updated: "2026-03-23T09:36:42.209Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 08-02-PLAN.md (system prompt team coordination)
+last_updated: "2026-03-23T09:42:37.887Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -44,6 +44,7 @@ Plan: 2 of 2
 
 | Phase 07 P01 | 2min | 3 tasks | 4 files |
 | Phase 08 P01 | 3min | 1 tasks | 3 files |
+| Phase 08-02 P02 | 2min | 2 tasks | 2 files |
 
 ### Decisions
 
@@ -59,6 +60,9 @@ Recent decisions affecting current work:
 - [Phase 07]: 5-second auto-dismiss for error banners (not fallback type)
 - [Phase 08]: Merge all phase popularity dicts into one ranking per ally for compact prompt
 - [Phase 08]: Allied Heroes section placed between Your Hero and Lane Opponents for logical information flow
+- [Phase 08-02]: Prompt-only approach for aura dedup — Claude reasons holistically about ally builds
+- [Phase 08-02]: Team Coordination section placed between Game Knowledge Principles and Output Constraints
+- [Phase 08-02]: Ally-aware example uses Enigma + Juggernaut combo to demonstrate combo awareness pattern
 
 ### Pending Todos
 
@@ -70,7 +74,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T09:36:42.206Z
-Stopped at: Completed 08-01-PLAN.md (context builder ally lines)
+Last session: 2026-03-23T09:42:37.884Z
+Stopped at: Completed 08-02-PLAN.md (system prompt team coordination)
 Resume file: None
 Resume command: /gsd:autonomous --from 8

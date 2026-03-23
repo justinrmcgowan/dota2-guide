@@ -57,7 +57,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Wire allied heroes into context builder with names and popular items
-- [ ] 08-02-PLAN.md — Add Team Coordination rules to system prompt and integration tests
+- [x] 08-02-PLAN.md — Add Team Coordination rules to system prompt and integration tests
 
 ### Phase 9: Neutral Items
 **Goal**: The player sees which neutral items to prioritize each tier and understands when a neutral item changes their build path
