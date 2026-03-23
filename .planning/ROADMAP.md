@@ -67,11 +67,11 @@ Plans:
   1. All Dota 2 neutral items are stored in the database with correct name, tier (T1-T5), and effect data
   2. A dedicated "Best Neutral Items" section appears in recommendations, showing ranked picks per tier with reasoning tied to the hero and matchup
   3. When a neutral item meaningfully affects the build path (e.g., Philosopher's Stone reducing need for mana regen items), the phase reasoning cards call it out inline
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Backend pipeline: seed fix, neutral query, schema, context builder, system prompt, recommender
+- [ ] 09-02-PLAN.md — Frontend: TypeScript types, NeutralItemSection component, ItemTimeline wiring
 
 ## Progress
 
@@ -88,4 +88,4 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 6. Data Pipeline | v1.0 | 1/1 | Complete | 2026-03-21 |
 | 7. Tech Debt & Polish | v1.1 | 2/2 | Complete | 2026-03-22 |
 | 8. Allied Synergy | v1.1 | 0/2 | Not started | - |
-| 9. Neutral Items | v1.1 | 0/? | Not started | - |
+| 9. Neutral Items | v1.1 | 0/2 | Not started | - |
