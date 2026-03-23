@@ -86,6 +86,18 @@ async def test_db_setup():
                 primary_attr="str", attack_type="Melee",
                 roles=["Carry", "Durable"],
             ),
+            Hero(
+                id=33, name="Enigma", localized_name="Enigma",
+                internal_name="npc_dota_hero_enigma",
+                primary_attr="int", attack_type="Ranged",
+                roles=["Initiator", "Jungler"],
+            ),
+            Hero(
+                id=97, name="Magnus", localized_name="Magnus",
+                internal_name="npc_dota_hero_magnataur",
+                primary_attr="str", attack_type="Melee",
+                roles=["Initiator", "Disabler"],
+            ),
         ]
         session.add_all(extra_heroes)
 

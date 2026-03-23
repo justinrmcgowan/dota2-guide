@@ -145,6 +145,159 @@ class TestBuildMidgameSection:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# _build_ally_lines (async, needs DB + mocked popularity)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildAllyLines:
+    @pytest.mark.asyncio
+    async def test_empty_allies_returns_empty_string(
+        self, builder: ContextBuilder, test_db_session
+    ):
+        """Empty allies list returns empty string."""
+        result = await builder._build_ally_lines([], test_db_session)
+        assert result == ""
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_allies_returns_hero_names(
+        self, mock_popularity, builder: ContextBuilder, test_db_session
+    ):
+        """Two allies (Axe=2, Crystal Maiden=3) appear by name in output."""
+        result = await builder._build_ally_lines([2, 3], test_db_session)
+        assert "Axe" in result
+        assert "Crystal Maiden" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value={
+            "early_game_items": {"48": 500, "50": 400, "99": 300, "29": 200, "36": 150},
+            "mid_game_items": {"1": 600, "102": 500},
+        },
+    )
+    async def test_allies_include_popular_items(
+        self, mock_popularity, builder: ContextBuilder, test_db_session
+    ):
+        """Ally lines include top popular items when popularity data available."""
+        result = await builder._build_ally_lines([2], test_db_session)
+        assert "Axe" in result
+        assert "typical builds include" in result
+        # Blink Dagger has highest count (600) across all phases
+        assert "Blink Dagger" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_ally_no_popularity_shows_fallback(
+        self, mock_popularity, builder: ContextBuilder, test_db_session
+    ):
+        """When popularity fetch returns None, ally line shows fallback text."""
+        result = await builder._build_ally_lines([2], test_db_session)
+        assert "Axe" in result
+        assert "no typical build data available" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_with_allies_includes_section(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Full build() with allies includes '## Allied Heroes' section."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request(allies=[2, 3])
+        result = await cb.build(req, [], test_db_session)
+        assert "## Allied Heroes" in result
+        assert "Axe" in result
+        assert "Crystal Maiden" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_without_allies_no_section(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Full build() with empty allies does NOT include 'Allied Heroes'."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request(allies=[])
+        result = await cb.build(req, [], test_db_session)
+        assert "Allied Heroes" not in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_relevant_items",
+        new_callable=AsyncMock,
+        return_value=[
+            {"id": 48, "name": "Power Treads", "cost": 1400},
+        ],
+    )
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_allied_heroes_section_ordering(
+        self, mock_matchup, mock_popularity, mock_items, test_db_session
+    ):
+        """Allied Heroes appears after '## Your Hero' and before '## Lane Opponents'."""
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota)
+        req = _make_request(allies=[2], lane_opponents=[3])
+        result = await cb.build(req, [], test_db_session)
+
+        hero_idx = result.index("## Your Hero")
+        ally_idx = result.index("## Allied Heroes")
+        opponent_idx = result.index("## Lane Opponents")
+
+        assert hero_idx < ally_idx < opponent_idx
+
+
 class TestBuildFull:
     @pytest.mark.asyncio
     @patch(
