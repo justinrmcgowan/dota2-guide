@@ -77,6 +77,14 @@ async def seed_if_empty():
             elif isinstance(hint, str):
                 active_desc = hint
 
+            # Fallback: neutral items have empty hints but abilities with descriptions
+            if active_desc is None and info.get("tier") is not None:
+                abilities = info.get("abilities")
+                if isinstance(abilities, list) and len(abilities) > 0:
+                    desc = abilities[0].get("description") if isinstance(abilities[0], dict) else None
+                    if desc:
+                        active_desc = desc
+
             # Extract bonuses from attrib
             attrib = info.get("attrib")
             bonuses = None
@@ -94,7 +102,7 @@ async def seed_if_empty():
                 cost=info.get("cost"),
                 components=info.get("components"),
                 is_recipe=internal_name.startswith("recipe_"),
-                is_neutral=info.get("qual") == "rare",
+                is_neutral=info.get("tier") is not None,
                 tier=info.get("tier"),
                 bonuses=bonuses,
                 active_desc=active_desc,

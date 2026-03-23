@@ -140,6 +140,38 @@ async def get_hero_item_popularity(
         return None
 
 
+async def get_neutral_items_by_tier(
+    db: AsyncSession,
+) -> dict[int, list[dict]]:
+    """Get all neutral items grouped by tier number.
+
+    Returns dict mapping tier (1-5) to list of item dicts.
+    Each dict has keys: id, name, internal_name, active_desc.
+    Tiers with no items are absent from the result.
+    """
+    result = await db.execute(
+        select(Item).where(
+            Item.is_neutral == True,  # noqa: E712
+            Item.tier.isnot(None),
+        )
+    )
+    all_neutrals = result.scalars().all()
+
+    grouped: dict[int, list[dict]] = {}
+    for item in all_neutrals:
+        tier = item.tier
+        if tier not in grouped:
+            grouped[tier] = []
+        grouped[tier].append({
+            "id": item.id,
+            "name": item.name,
+            "internal_name": item.internal_name,
+            "active_desc": item.active_desc or "",
+        })
+
+    return grouped
+
+
 async def get_relevant_items(
     hero_id: int,
     role: int,

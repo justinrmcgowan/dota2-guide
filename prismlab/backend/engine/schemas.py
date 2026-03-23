@@ -54,11 +54,27 @@ class RecommendPhase(BaseModel):
     gold_budget: int | None = None
 
 
+class NeutralItemPick(BaseModel):
+    """Single neutral item recommendation with reasoning."""
+
+    item_name: str
+    reasoning: str
+    rank: int
+
+
+class NeutralTierRecommendation(BaseModel):
+    """Neutral item recommendations for a single tier."""
+
+    tier: int
+    items: list[NeutralItemPick]
+
+
 class LLMRecommendation(BaseModel):
     """Schema for Claude structured output. Used to generate JSON schema for output_config."""
 
     phases: list[RecommendPhase]
     overall_strategy: str
+    neutral_items: list[NeutralTierRecommendation] = Field(default_factory=list)
 
 
 class RecommendResponse(BaseModel):
@@ -66,6 +82,7 @@ class RecommendResponse(BaseModel):
 
     phases: list[RecommendPhase]
     overall_strategy: str | None = None
+    neutral_items: list[NeutralTierRecommendation] = Field(default_factory=list)
     fallback: bool = False
     model: str | None = None
     latency_ms: int | None = None
