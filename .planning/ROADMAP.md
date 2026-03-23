@@ -71,7 +71,7 @@ Plans:
 
 Plans:
 - [x] 09-01-PLAN.md — Backend pipeline: seed fix, neutral query, schema, context builder, system prompt, recommender
-- [ ] 09-02-PLAN.md — Frontend: TypeScript types, NeutralItemSection component, ItemTimeline wiring
+- [x] 09-02-PLAN.md — Frontend: TypeScript types, NeutralItemSection component, ItemTimeline wiring
 
 ## Progress
 
