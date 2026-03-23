@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Allied Synergy & Neutral Items
-status: executing
-stopped_at: "Phase 08 planned (2 plans in 2 waves), ready to execute"
-last_updated: "2026-03-22"
+status: Ready to execute
+stopped_at: Completed 08-01-PLAN.md (context builder ally lines)
+last_updated: "2026-03-23T09:36:42.209Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 08 (allied-synergy) — PLANNED, ready to execute
-Plan: 0 of 2 (2 plans in 2 waves, not yet executed)
+Phase: 08 (allied-synergy) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Plan: 0 of 2 (2 plans in 2 waves, not yet executed)
 ## Accumulated Context
 
 | Phase 07 P01 | 2min | 3 tasks | 4 files |
+| Phase 08 P01 | 3min | 1 tasks | 3 files |
 
 ### Decisions
 
@@ -56,6 +57,8 @@ Recent decisions affecting current work:
 - [v1.1 roadmap]: Tech debt first (Phase 7) before features — clean codebase reduces risk of building on shaky foundations
 - [Phase 07]: Keep only 3 API methods (getHeroes, recommend, getDataFreshness) -- dead methods removed
 - [Phase 07]: 5-second auto-dismiss for error banners (not fallback type)
+- [Phase 08]: Merge all phase popularity dicts into one ranking per ally for compact prompt
+- [Phase 08]: Allied Heroes section placed between Your Hero and Lane Opponents for logical information flow
 
 ### Pending Todos
 
@@ -67,7 +70,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22
-Stopped at: Phase 08 planned, ready to execute. Running /gsd:autonomous — Phase 7 complete, Phase 8 planned, Phase 9 not started.
+Last session: 2026-03-23T09:36:42.206Z
+Stopped at: Completed 08-01-PLAN.md (context builder ally lines)
 Resume file: None
 Resume command: /gsd:autonomous --from 8

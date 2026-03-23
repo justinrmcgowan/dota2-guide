@@ -9,7 +9,7 @@ Requirements for v1.1 release. Each maps to roadmap phases.
 
 ### Allied Synergy
 
-- [ ] **ALLY-01**: Allied heroes are passed to Claude context builder for recommendation reasoning
+- [x] **ALLY-01**: Allied heroes are passed to Claude context builder for recommendation reasoning
 - [ ] **ALLY-02**: Recommendations avoid duplicating team aura/utility items (Pipe, Vlads, Crimson, etc.)
 - [ ] **ALLY-03**: Recommendations factor in allied combo/setup potential (Enigma + follow-up items, Magnus + BKB priority)
 - [ ] **ALLY-04**: Recommendations identify and fill team role gaps (missing stuns, save, wave clear) via item priorities
@@ -52,7 +52,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ALLY-01 | Phase 8 | Pending |
+| ALLY-01 | Phase 8 | Complete |
 | ALLY-02 | Phase 8 | Pending |
 | ALLY-03 | Phase 8 | Pending |
 | ALLY-04 | Phase 8 | Pending |
