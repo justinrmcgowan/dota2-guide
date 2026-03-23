@@ -8,6 +8,7 @@ from data.matchup_service import (
     get_or_fetch_matchup,
     get_hero_item_popularity,
     get_relevant_items,
+    get_neutral_items_by_tier,
 )
 from data.models import MatchupData
 
@@ -191,3 +192,44 @@ async def test_get_relevant_items_capped_at_50(test_db_session):
     items = await get_relevant_items(1, 1, test_db_session)
 
     assert len(items) <= 50
+
+
+@pytest.mark.asyncio
+async def test_get_neutral_items_by_tier(test_db_session):
+    """get_neutral_items_by_tier groups neutral items by tier number."""
+    result = await get_neutral_items_by_tier(test_db_session)
+
+    # Tier 1 should have 2 items: Mysterious Hat and Chipped Vest
+    assert 1 in result
+    assert len(result[1]) == 2
+    tier1_names = {item["name"] for item in result[1]}
+    assert "Mysterious Hat" in tier1_names
+    assert "Chipped Vest" in tier1_names
+
+    # Tier 3 should have 1 item: Psychic Headband
+    assert 3 in result
+    assert len(result[3]) == 1
+    assert result[3][0]["name"] == "Psychic Headband"
+
+    # Tier 5 should have 1 item: Spider Legs
+    assert 5 in result
+    assert len(result[5]) == 1
+    assert result[5][0]["name"] == "Spider Legs"
+
+    # Each item should have the required keys
+    for tier_items in result.values():
+        for item in tier_items:
+            assert "id" in item
+            assert "name" in item
+            assert "internal_name" in item
+            assert "active_desc" in item
+
+
+@pytest.mark.asyncio
+async def test_get_neutral_items_by_tier_empty(test_db_session):
+    """Tiers without items are absent from result dict."""
+    result = await get_neutral_items_by_tier(test_db_session)
+
+    # Tiers 2 and 4 have no items in fixtures
+    assert 2 not in result
+    assert 4 not in result

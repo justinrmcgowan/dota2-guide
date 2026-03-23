@@ -124,7 +124,17 @@ async def test_db_setup():
             Item(id=300, name="Recipe: Assault Cuirass", internal_name="recipe_assault",
                  cost=1300, is_recipe=True),
             Item(id=301, name="Mysterious Hat", internal_name="mysterious_hat",
-                 cost=0, is_neutral=True, tier=1),
+                 cost=0, is_neutral=True, tier=1,
+                 active_desc="Grants +1 mana regeneration"),
+            Item(id=350, name="Chipped Vest", internal_name="chipped_vest",
+                 cost=0, is_neutral=True, tier=1,
+                 active_desc="Returns 28 damage when attacked"),
+            Item(id=351, name="Psychic Headband", internal_name="psychic_headband",
+                 cost=0, is_neutral=True, tier=3,
+                 active_desc="Pushes the target 400 units away"),
+            Item(id=352, name="Spider Legs", internal_name="spider_legs",
+                 cost=0, is_neutral=True, tier=5,
+                 active_desc="Grants free pathing and 25% move speed"),
             # Expensive item to test budget filtering
             Item(id=302, name="Divine Rapier", internal_name="rapier", cost=5950),
         ]

@@ -10,7 +10,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from engine.schemas import LLMRecommendation, LLM_OUTPUT_SCHEMA
+from engine.schemas import (
+    LLMRecommendation,
+    LLM_OUTPUT_SCHEMA,
+    RecommendResponse,
+    NeutralItemPick,
+    NeutralTierRecommendation,
+)
 
 
 # Valid response data matching LLMRecommendation schema
@@ -218,3 +224,51 @@ async def test_output_config_format():
                 "schema": LLM_OUTPUT_SCHEMA,
             }
         }
+
+
+# --- Neutral Items Schema Tests ---
+
+
+def test_neutral_items_schema_backward_compat():
+    """LLMRecommendation with no neutral_items defaults to empty list."""
+    rec = LLMRecommendation.model_validate(VALID_RESPONSE_DATA)
+    assert rec.neutral_items == []
+
+
+def test_neutral_items_schema_with_data():
+    """LLMRecommendation with populated neutral_items validates correctly."""
+    data_with_neutrals = {
+        **VALID_RESPONSE_DATA,
+        "neutral_items": [
+            {
+                "tier": 1,
+                "items": [
+                    {
+                        "item_name": "Mysterious Hat",
+                        "reasoning": "Mana regen helps sustain spell usage in lane.",
+                        "rank": 1,
+                    },
+                    {
+                        "item_name": "Chipped Vest",
+                        "reasoning": "Damage return punishes right-click harass.",
+                        "rank": 2,
+                    },
+                ],
+            }
+        ],
+    }
+    rec = LLMRecommendation.model_validate(data_with_neutrals)
+    assert len(rec.neutral_items) == 1
+    assert rec.neutral_items[0].tier == 1
+    assert len(rec.neutral_items[0].items) == 2
+    assert rec.neutral_items[0].items[0].item_name == "Mysterious Hat"
+    assert rec.neutral_items[0].items[0].rank == 1
+
+
+def test_recommend_response_neutral_items_default():
+    """RecommendResponse with no neutral_items defaults to empty list."""
+    resp = RecommendResponse(
+        phases=VALID_RESPONSE_DATA["phases"],
+        overall_strategy=VALID_RESPONSE_DATA["overall_strategy"],
+    )
+    assert resp.neutral_items == []
