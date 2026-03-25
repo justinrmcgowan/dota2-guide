@@ -12,6 +12,8 @@ from api.routes.heroes import router as heroes_router
 from api.routes.items import router as items_router
 from api.routes.recommend import router as recommend_router
 from api.routes.admin import router as admin_router
+from api.routes.settings import router as settings_router
+from gsi.receiver import router as gsi_router
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +64,5 @@ app.include_router(heroes_router, prefix="/api")
 app.include_router(items_router, prefix="/api")
 app.include_router(recommend_router, prefix="/api")
 app.include_router(admin_router)
+app.include_router(gsi_router)  # /gsi at root, no prefix
+app.include_router(settings_router, prefix="/api")

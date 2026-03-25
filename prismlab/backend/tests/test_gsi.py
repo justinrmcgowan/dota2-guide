@@ -319,3 +319,54 @@ class TestGsiStateManager:
         """to_broadcast_dict() returns None before any update."""
         manager = GsiStateManager()
         assert manager.to_broadcast_dict() is None
+
+
+# --- Integration tests (require test_client fixture from conftest.py) ---
+
+
+@pytest.mark.asyncio
+async def test_gsi_endpoint_returns_200(test_client):
+    """POST /gsi with valid payload + correct auth token returns 200."""
+    response = await test_client.post("/gsi", json=SAMPLE_GSI_PAYLOAD)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_gsi_endpoint_rejects_bad_token(test_client):
+    """POST /gsi with wrong auth token returns 401."""
+    payload = {**SAMPLE_GSI_PAYLOAD, "auth": {"token": "wrong_token"}}
+    response = await test_client.post("/gsi", json=payload)
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_gsi_endpoint_returns_200_on_parse_error(test_client):
+    """POST /gsi with malformed body (but valid token) still returns 200."""
+    malformed_payload = {
+        "auth": {"token": "prismlab"},
+        "hero": "not_a_dict",  # This will cause parsing to fail
+    }
+    response = await test_client.post("/gsi", json=malformed_payload)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_gsi_config_generation(test_client):
+    """GET /api/gsi-config?host=192.168.1.100 returns config with correct IP."""
+    response = await test_client.get("/api/gsi-config?host=192.168.1.100")
+    assert response.status_code == 200
+    content = response.text
+    assert "192.168.1.100" in content
+    assert "8421" in content
+    assert "gamestate_integration_prismlab" in content
+    assert "prismlab" in content  # auth token
+
+
+@pytest.mark.asyncio
+async def test_gsi_config_custom_port(test_client):
+    """GET /api/gsi-config with custom port includes the port in the URI."""
+    response = await test_client.get("/api/gsi-config?host=10.0.0.1&port=9000")
+    assert response.status_code == 200
+    content = response.text
+    assert "10.0.0.1" in content
+    assert "9000" in content
