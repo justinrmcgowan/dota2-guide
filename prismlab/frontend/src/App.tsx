@@ -4,6 +4,7 @@ import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGsiStore, type GsiLiveState } from "./stores/gsiStore";
+import SettingsPanel from "./components/settings/SettingsPanel";
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -37,6 +38,10 @@ function App() {
         <Sidebar />
         <MainPanel />
       </div>
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   );
 }
