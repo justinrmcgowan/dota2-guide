@@ -1,7 +1,8 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -14,6 +15,8 @@ from api.routes.recommend import router as recommend_router
 from api.routes.admin import router as admin_router
 from api.routes.settings import router as settings_router
 from gsi.receiver import router as gsi_router
+from gsi.ws_manager import ws_manager
+from gsi.state_manager import gsi_state_manager
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +40,19 @@ async def lifespan(app: FastAPI):
     scheduler.start()
     logger.info("Daily data refresh scheduler started (24h interval).")
 
+    # Start WebSocket broadcast loop (1Hz throttle)
+    broadcast_task = asyncio.create_task(ws_manager.start_broadcast_loop(gsi_state_manager))
+    logger.info("WebSocket broadcast loop started (1Hz throttle).")
+
     yield
+
+    # Stop WebSocket broadcast loop
+    broadcast_task.cancel()
+    try:
+        await broadcast_task
+    except asyncio.CancelledError:
+        pass
+    logger.info("WebSocket broadcast loop stopped.")
 
     scheduler.shutdown()
     logger.info("Daily data refresh scheduler shut down.")
@@ -66,3 +81,15 @@ app.include_router(recommend_router, prefix="/api")
 app.include_router(admin_router)
 app.include_router(gsi_router)  # /gsi at root, no prefix
 app.include_router(settings_router, prefix="/api")
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for live game state updates."""
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive; we only push, never expect client messages
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
