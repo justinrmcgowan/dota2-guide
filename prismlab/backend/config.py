@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     opendota_api_key: str | None = None
     stratz_api_token: str | None = None
     database_url: str = "sqlite+aiosqlite:///./data/prismlab.db"
+    gsi_auth_token: str = "prismlab"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
