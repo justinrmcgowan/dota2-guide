@@ -1,7 +1,7 @@
 # Requirements: Prismlab
 
 **Defined:** 2026-03-24
-**Core Value:** At any point in any game, the player knows exactly what to buy next and why — they never feel lost on itemization.
+**Core Value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
 
 ## v2.0 Requirements
 
@@ -26,7 +26,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 - [ ] **REFRESH-01**: Recommendations auto-refresh on key game events (item purchase, death, tower, Roshan, gold swing >2000g)
 - [ ] **REFRESH-02**: Rate limiter enforces max 1 auto-refresh per 2 minutes to control API costs
-- [ ] **REFRESH-03**: Auto-refresh notification toast shows reason for update (e.g., "BKB purchased — recommendations updated")
+- [ ] **REFRESH-03**: Auto-refresh notification toast shows reason for update (e.g., "BKB purchased -- recommendations updated")
 
 ### Screenshot Parsing
 
@@ -59,10 +59,10 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Feature | Reason |
 |---------|--------|
-| Hotkey/clipboard screen capture | Manual paste sufficient for v2.0 — lower complexity |
-| Voice coaching | Text-only for v2.0 — audio adds significant complexity |
-| Ability build suggestions | Item-focused only — abilities are a different domain |
-| Mobile optimization | Desktop-first — Dota 2 is a desktop game |
+| Hotkey/clipboard screen capture | Manual paste sufficient for v2.0 -- lower complexity |
+| Voice coaching | Text-only for v2.0 -- audio adds significant complexity |
+| Ability build suggestions | Item-focused only -- abilities are a different domain |
+| Mobile optimization | Desktop-first -- Dota 2 is a desktop game |
 | User accounts / OAuth | Single-user tool, no auth needed |
 
 ## Traceability
@@ -71,30 +71,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GSI-01 | TBD | Pending |
-| GSI-02 | TBD | Pending |
-| GSI-03 | TBD | Pending |
-| GSI-04 | TBD | Pending |
-| GSI-05 | TBD | Pending |
-| WS-01 | TBD | Pending |
-| WS-02 | TBD | Pending |
-| WS-03 | TBD | Pending |
-| WS-04 | TBD | Pending |
-| REFRESH-01 | TBD | Pending |
-| REFRESH-02 | TBD | Pending |
-| REFRESH-03 | TBD | Pending |
-| SCREEN-01 | TBD | Pending |
-| SCREEN-02 | TBD | Pending |
-| SCREEN-03 | TBD | Pending |
-| SCREEN-04 | TBD | Pending |
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
+| GSI-01 | Phase 10 | Pending |
+| GSI-02 | Phase 11 | Pending |
+| GSI-03 | Phase 11 | Pending |
+| GSI-04 | Phase 11 | Pending |
+| GSI-05 | Phase 12 | Pending |
+| WS-01 | Phase 10 | Pending |
+| WS-02 | Phase 11 | Pending |
+| WS-03 | Phase 11 | Pending |
+| WS-04 | Phase 11 | Pending |
+| REFRESH-01 | Phase 12 | Pending |
+| REFRESH-02 | Phase 12 | Pending |
+| REFRESH-03 | Phase 12 | Pending |
+| SCREEN-01 | Phase 13 | Pending |
+| SCREEN-02 | Phase 13 | Pending |
+| SCREEN-03 | Phase 13 | Pending |
+| SCREEN-04 | Phase 13 | Pending |
+| INFRA-01 | Phase 10 | Pending |
+| INFRA-02 | Phase 10 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after milestone definition*
+*Last updated: 2026-03-24 after roadmap creation*
