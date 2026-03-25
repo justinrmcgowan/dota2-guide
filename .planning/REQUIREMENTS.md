@@ -17,7 +17,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### WebSocket & Real-Time
 
-- [ ] **WS-01**: WebSocket endpoint pushes GSI state updates from backend to frontend in real-time
+- [x] **WS-01**: WebSocket endpoint pushes GSI state updates from backend to frontend in real-time
 - [ ] **WS-02**: Frontend WebSocket hook with auto-reconnect and connection status indicator (green/gray/red)
 - [ ] **WS-03**: Game clock from GSI displayed in the UI, synced with neutral item tier timing
 - [ ] **WS-04**: Live gold counter in sidebar replacing manual lane result input when GSI is active
@@ -37,7 +37,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Nginx config updated with WebSocket upgrade headers and file upload support
+- [x] **INFRA-01**: Nginx config updated with WebSocket upgrade headers and file upload support
 - [ ] **INFRA-02**: GSI config file generator (gamestate_integration_prismlab.cfg) with correct server IP for user's setup
 
 ## Future Requirements
@@ -76,7 +76,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GSI-03 | Phase 11 | Pending |
 | GSI-04 | Phase 11 | Pending |
 | GSI-05 | Phase 12 | Pending |
-| WS-01 | Phase 10 | Pending |
+| WS-01 | Phase 10 | Complete |
 | WS-02 | Phase 11 | Pending |
 | WS-03 | Phase 11 | Pending |
 | WS-04 | Phase 11 | Pending |
@@ -87,7 +87,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCREEN-02 | Phase 13 | Pending |
 | SCREEN-03 | Phase 13 | Pending |
 | SCREEN-04 | Phase 13 | Pending |
-| INFRA-01 | Phase 10 | Pending |
+| INFRA-01 | Phase 10 | Complete |
 | INFRA-02 | Phase 10 | Pending |
 
 **Coverage:**

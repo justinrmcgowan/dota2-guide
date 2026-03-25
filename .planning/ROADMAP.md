@@ -53,8 +53,8 @@
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Backend GSI module (models, receiver, state manager, config generator)
-- [ ] 10-02-PLAN.md -- WebSocket broadcast layer and Nginx proxy config
+- [x] 10-01-PLAN.md -- Backend GSI module (models, receiver, state manager, config generator)
+- [x] 10-02-PLAN.md -- WebSocket broadcast layer and Nginx proxy config
 - [ ] 10-03-PLAN.md -- Frontend WebSocket hook, GSI store, status indicator, settings panel
 
 **UI hint**: yes
@@ -112,7 +112,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 7. Tech Debt & Polish | v1.1 | 2/2 | Complete | 2026-03-22 |
 | 8. Allied Synergy | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
-| 10. GSI Receiver & WebSocket Pipeline | v2.0 | 0/3 | In progress | - |
+| 10. GSI Receiver & WebSocket Pipeline | v2.0 | 2/3 | In Progress|  |
 | 11. Live Game Dashboard | v2.0 | 0/0 | Not started | - |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 0/0 | Not started | - |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
