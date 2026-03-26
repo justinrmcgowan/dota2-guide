@@ -3,6 +3,7 @@ import LaneResultSelector from "./LaneResultSelector";
 import DamageProfileInput from "./DamageProfileInput";
 import EnemyItemTracker from "./EnemyItemTracker";
 import ReEvaluateButton from "./ReEvaluateButton";
+import { useScreenshotStore } from "../../stores/screenshotStore";
 
 function GameStatePanel() {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -56,6 +57,18 @@ function GameStatePanel() {
         <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5 mt-3">
           Enemy Items Spotted
         </h3>
+        {/* Parse Screenshot button (per D-04) */}
+        <button
+          onClick={() => useScreenshotStore.getState().openModal("", "")}
+          className="w-full mb-2 px-3 py-1.5 text-xs font-medium text-cyan-accent bg-cyan-accent/10 border border-cyan-accent/30 rounded-md hover:bg-cyan-accent/20 transition-colors flex items-center justify-center gap-1.5"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+          Parse Screenshot
+        </button>
         <EnemyItemTracker />
 
         {/* Re-Evaluate CTA */}
