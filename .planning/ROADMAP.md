@@ -33,7 +33,7 @@
 
 **Milestone Goal:** Transform Prismlab from manual-input advisor to live-game-aware system using Dota 2 GSI, screenshot parsing, and auto gold tracking -- recommendations evolve in real-time as the game progresses.
 
-- [x] **Phase 10: GSI Receiver & WebSocket Pipeline** - Backend receives live game data from Dota 2 and pushes it to the frontend in real-time (completed 2026-03-26)
+- [x] **Phase 10: GSI Receiver & WebSocket Pipeline** - Backend receives live game data from Dota 2 and pushes it to the frontend in real-time (completed 2026-03-26)
 - [ ] **Phase 11: Live Game Dashboard** - Frontend consumes GSI data to auto-detect hero, track gold, mark purchased items, and display game clock
 - [ ] **Phase 12: Auto-Refresh & Lane Detection** - Recommendations auto-refresh on key game events with rate limiting and auto-determined lane results
 - [ ] **Phase 13: Screenshot Parsing** - User pastes scoreboard screenshots to extract enemy hero and item data via Claude Vision
@@ -70,7 +70,13 @@ Plans:
   3. Items the player purchases in-game are automatically marked as bought in the item timeline within seconds
   4. Game clock is visible in the UI and neutral item tier timing updates automatically as the game progresses
   5. All manual input controls remain functional as fallback when GSI is not connected
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md -- Utility functions (neutralTiers, itemMatching) and useAnimatedValue hook
+- [ ] 11-02-PLAN.md -- useGsiSync hook, LiveStatsBar component, Sidebar/App wiring
+- [ ] 11-03-PLAN.md -- GameClock component, NeutralItemSection tier highlighting, Header wiring
+
 **UI hint**: yes
 
 ### Phase 12: Auto-Refresh & Lane Detection
@@ -114,7 +120,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 8. Allied Synergy | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 11. Live Game Dashboard | v2.0 | 0/0 | Not started | - |
+| 11. Live Game Dashboard | v2.0 | 0/3 | Planning | - |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 0/0 | Not started | - |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
 | 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
