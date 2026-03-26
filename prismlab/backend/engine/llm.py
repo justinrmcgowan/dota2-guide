@@ -8,6 +8,7 @@ any failure (triggers fallback to rules-only).
 import json
 import logging
 import re
+from enum import Enum
 
 from anthropic import (
     AsyncAnthropic,
@@ -24,6 +25,13 @@ from config import settings
 logger = logging.getLogger(__name__)
 
 
+class FallbackReason(str, Enum):
+    timeout = "timeout"
+    parse_error = "parse_error"
+    api_error = "api_error"
+    rate_limited = "rate_limited"
+
+
 class LLMEngine:
     """Claude API wrapper with JSON output, timeout, and prompt caching."""
 
@@ -35,13 +43,16 @@ class LLMEngine:
     def __init__(self) -> None:
         self.client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
-    async def generate(self, user_message: str) -> LLMRecommendation | None:
-        """Call Claude API and return validated recommendation.
+    async def generate(
+        self, user_message: str
+    ) -> tuple[LLMRecommendation | None, FallbackReason | None]:
+        """Call Claude API and return validated recommendation with error category.
 
         Uses prompt-instructed JSON (no output_config schema enforcement)
         for faster response times. Pydantic validates the parsed output.
 
-        Returns LLMRecommendation on success, None on any failure (triggers fallback).
+        Returns (LLMRecommendation, None) on success,
+        (None, FallbackReason) on any failure (triggers fallback).
         """
         try:
             response = await self.client.with_options(
@@ -62,27 +73,29 @@ class LLMEngine:
                 text = re.sub(r"\n?```\s*$", "", text)
 
             data = json.loads(text)
-            return LLMRecommendation.model_validate(data)
+            return (LLMRecommendation.model_validate(data), None)
 
         except APITimeoutError:
             logger.warning(
                 "Claude API timeout after %.1fs", self.TIMEOUT_SECONDS
             )
-            return None
+            return (None, FallbackReason.timeout)
         except APIConnectionError:
             logger.warning("Claude API connection error")
-            return None
+            return (None, FallbackReason.api_error)
         except APIStatusError as e:
             logger.error(
                 "Claude API error: %s %s", e.status_code, e.message
             )
-            return None
+            if e.status_code == 429:
+                return (None, FallbackReason.rate_limited)
+            return (None, FallbackReason.api_error)
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning("Claude API returned invalid JSON: %s", e)
-            return None
+            return (None, FallbackReason.parse_error)
         except Exception as e:
             logger.exception("Unexpected error calling Claude API: %s", e)
-            return None
+            return (None, FallbackReason.api_error)
 
     async def parse_screenshot(
         self,

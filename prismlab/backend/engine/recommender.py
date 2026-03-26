@@ -2,9 +2,10 @@
 
 Coordinates the rules engine (deterministic, instant) and LLM engine (Claude API,
 structured output) into a unified recommendation pipeline with merge, deduplication,
-fallback, and item ID validation.
+fallback, and item ID validation. Includes response caching for cost efficiency.
 """
 
+import hashlib
 import time
 import logging
 
@@ -20,11 +21,45 @@ from engine.schemas import (
     LLMRecommendation,
 )
 from engine.rules import RulesEngine
-from engine.llm import LLMEngine
+from engine.llm import LLMEngine, FallbackReason
 from engine.context_builder import ContextBuilder
 from data.models import Item
 
 logger = logging.getLogger(__name__)
+
+
+class ResponseCache:
+    """In-memory response cache with TTL. Hash request -> cached response."""
+
+    def __init__(self, ttl_seconds: float = 300.0) -> None:
+        self.ttl = ttl_seconds
+        self._cache: dict[str, tuple[RecommendResponse, float]] = {}
+
+    def _hash_request(self, request: RecommendRequest) -> str:
+        payload = request.model_dump_json(exclude_none=True)
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+    def get(self, request: RecommendRequest) -> RecommendResponse | None:
+        key = self._hash_request(request)
+        entry = self._cache.get(key)
+        if entry is None:
+            return None
+        response, timestamp = entry
+        if time.monotonic() - timestamp > self.ttl:
+            del self._cache[key]
+            return None
+        return response
+
+    def set(self, request: RecommendRequest, response: RecommendResponse) -> None:
+        key = self._hash_request(request)
+        self._cache[key] = (response, time.monotonic())
+
+    def cleanup(self) -> None:
+        """Evict expired entries."""
+        now = time.monotonic()
+        expired = [k for k, (_, ts) in self._cache.items() if now - ts > self.ttl]
+        for k in expired:
+            del self._cache[k]
 
 
 class HybridRecommender:
@@ -212,16 +247,22 @@ class HybridRecommender:
 
         Logs a warning for each filtered-out item. Removes empty phases.
         """
-        result = await db.execute(select(Item.id, Item.cost))
-        cost_map: dict[int, int | None] = {row[0]: row[1] for row in result.fetchall()}
+        result = await db.execute(select(Item.id, Item.cost, Item.internal_name))
+        item_info: dict[int, tuple[int | None, str]] = {
+            row[0]: (row[1], row[2]) for row in result.fetchall()
+        }
 
         validated_phases: list[RecommendPhase] = []
         for phase in phases:
             valid_items: list[ItemRecommendation] = []
             for item in phase.items:
-                if item.item_id in cost_map:
+                if item.item_id in item_info:
+                    cost, slug = item_info[item.item_id]
                     valid_items.append(
-                        item.model_copy(update={"gold_cost": cost_map.get(item.item_id)})
+                        item.model_copy(update={
+                            "gold_cost": cost,
+                            "item_name": slug,
+                        })
                     )
                 else:
                     logger.warning(

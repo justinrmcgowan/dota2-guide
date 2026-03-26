@@ -92,6 +92,7 @@ class RecommendResponse(BaseModel):
     overall_strategy: str | None = None
     neutral_items: list[NeutralTierRecommendation] = Field(default_factory=list)
     fallback: bool = False
+    fallback_reason: str | None = None  # "timeout" | "parse_error" | "api_error" | "rate_limited"
     model: str | None = None
     latency_ms: int | None = None
 
