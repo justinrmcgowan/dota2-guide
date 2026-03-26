@@ -15,9 +15,9 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - ✓ Searchable hero picker for all 10 draft positions — v1.0
 - ✓ Role/position selection (Pos 1-5) with role-dependent playstyle options — v1.0
 - ✓ Radiant/Dire side and lane assignment selection — v1.0
-- ✓ Hybrid recommendation engine (12 deterministic rules + Claude Sonnet 4.6) — v1.0
+- ✓ Hybrid recommendation engine (18 deterministic rules + Claude Haiku 4.5) — v1.0, expanded v2.0
 - ✓ Structured JSON output from Claude API, validated against Pydantic schema — v1.0
-- ✓ Fallback to rules-only mode with visible notice on Claude API failure/timeout — v1.0
+- ✓ Fallback to rules-only mode with visible notice and reason-specific messages — v1.0, enhanced v2.0
 - ✓ Phased item timeline (starting → laning → core → late game) with per-item reasoning — v1.0
 - ✓ Situational decision tree cards for conditional item choices — v1.0
 - ✓ Click-to-mark purchased items with green checkmark overlay — v1.0
@@ -26,37 +26,43 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - ✓ Docker Compose deployment (backend 8420, frontend 8421) with Nginx reverse proxy — v1.0
 - ✓ Daily data refresh pipeline via APScheduler with freshness indicator — v1.0
 - ✓ Dark theme with spectral cyan accent, Radiant teal, Dire red — v1.0
+- ✓ GSI integration with real-time game state via WebSocket — v2.0
+- ✓ Auto-detect hero, role, gold, items, game clock from GSI — v2.0
+- ✓ Auto-refresh recommendations on game events (death, tower, Roshan, gold swing, phase transitions) — v2.0
+- ✓ Lane result auto-detected from GPM at 10 min — v2.0
+- ✓ Screenshot parsing via Claude Vision with confirmation UI — v2.0
+- ✓ Per-IP rate limiter, response cache, damage profile validation, playstyle-role validation — v2.0
 
 ### Active
 
-## Current Milestone: v2.0 Live Game Intelligence
+## Current Milestone: v3.0 Design Overhaul & Performance
 
-**Goal:** Transform Prismlab from manual-input advisor to live-game-aware system using Dota 2 GSI, screenshot parsing, and auto gold tracking — recommendations evolve in real-time as the game progresses.
+**Goal:** Transform Prismlab's visual identity to the "Tactical Relic Editorial" design system, add in-memory data caching for performance, and close integration gaps from v2.0.
 
 **Target features:**
-- GSI integration — FastAPI endpoint receives live game state, pushes to frontend via WebSocket
-- Auto-detect draft, lane, gold/net worth, purchased items from GSI data
-- Auto-determine lane result from gold data at 10 min, adjust item timings
-- Screenshot parsing — user pastes scoreboard screenshot, Claude vision extracts enemy items
-- Auto-refresh recommendations on key game events (rate-limited, max 1 per 2 min)
-- Full automation pipeline: GSI real-time data + screenshots for enemy builds
+- DESIGN.md "Tactical Relic Editorial" retheme — obsidian surfaces, Newsreader + Manrope typography, 0px corners, crimson/gold palette
+- In-memory hero/item data cache — load at startup, refresh on pipeline cycle, eliminate DB queries on hot path
+- Auto-suggest playstyle when GSI detects hero+role
+- Feed KDA/level data from screenshots into recommendation context
+- Store subscription consolidation (useGsiSync + useAutoRefresh)
+- Tech debt cleanup (TriggerEvent dedup, session safety fix)
 
 ### Out of Scope
 
 - Mobile optimization — desktop-first
-- Voice coaching / audio callouts — text-only for v2.0
-- Hotkey screen capture / clipboard monitoring — manual paste only for v2.0
+- Voice coaching / audio callouts — text-only
+- Hotkey screen capture / clipboard monitoring — manual paste only
 - Ability build suggestions — item-focused only
 
 ## Context
 
-- **Shipped:** v1.0 MVP (2026-03-21), v1.1 Allied Synergy & Neutral Items (2026-03-23)
-- **Codebase:** ~1000 source files, React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
-- **Test suite:** 141 tests (96 backend pytest + 45 frontend vitest), zero failures
+- **Shipped:** v1.0 MVP (2026-03-21), v1.1 Allied Synergy & Neutral Items (2026-03-23), v2.0 Live Game Intelligence (2026-03-26)
+- **Codebase:** React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
+- **Test suite:** 160+ tests (backend pytest + frontend vitest), zero failures
 - **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
 - **Core problem:** Player knows Dota itemization theory but loses track of matchup nuances during live games
-- **Data sources:** OpenDota API for hero stats, win rates, item popularity. Steam CDN for images
-- **Known tech debt:** None critical — allies now wired through context builder and system prompt, admin proxy fixed, dead code removed in v1.1 Phase 7
+- **Data sources:** OpenDota API for hero stats, win rates, item popularity. Steam CDN for images. Dota 2 GSI for live game state.
+- **Known tech debt:** TriggerEvent duplication, refresh_lookups() session safety, KDA display-only in screenshots, store subscription duplication
 
 ## Constraints
 
@@ -64,7 +70,8 @@ At any point in any game, the player knows exactly what to buy next and why — 
 - **Deployment:** Docker Compose on Unraid — backend port 8420, frontend port 8421
 - **API dependency:** Claude API with 10s hard timeout and rules-only fallback
 - **Image hosting:** Hero/item images from Steam CDN, never self-hosted
-- **Theme:** Dark theme (#0f1419 bg) with spectral cyan (#00d4ff), Radiant teal (#6aff97), Dire red (#ff5555)
+- **Theme:** Transitioning to "Tactical Relic Editorial" design system (see DESIGN.md) — obsidian (#131313), crimson (#B22222), gold (#FFDB3C)
+- **Design spec:** `DESIGN.md` at repo root is canonical for all frontend work in v3.0+
 
 ## Key Decisions
 
@@ -101,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — v2.0 Live Game Intelligence milestone started*
+*Last updated: 2026-03-26 — v3.0 Design Overhaul & Performance milestone started*

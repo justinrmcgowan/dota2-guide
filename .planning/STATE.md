@@ -1,30 +1,30 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Live Game Intelligence
-status: v2.0 milestone complete
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-03-26T21:43:15.292Z"
+milestone: v3.0
+milestone_name: Design Overhaul & Performance
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-03-26"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-23)
+See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 14 — recommendation-quality-system-hardening
+**Current focus:** v3.0 milestone — defining requirements
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
 
 ## Performance Metrics
 
