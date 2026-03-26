@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Live Game Intelligence
-status: Ready to execute
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-03-26T19:02:54.966Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-26T19:05:13.525Z"
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 3 of 3
 | Phase 10 P03 | 15min | 4 tasks | 10 files |
 | Phase 11 P01 | 3min | 2 tasks | 6 files |
 | Phase 11 P03 | 4min | 2 tasks | 5 files |
+| Phase 11 P02 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Separate wsStatus/gsiStatus in gsiStore for precise three-state indicator control
 - [Phase 11]: Used displayRef pattern alongside useState to avoid stale closure in rAF animation hook
 - [Phase 11]: GameClock uses span for inline flow in header flex layout
+- [Phase 11]: Subscribe to gsiStore outside render cycle via useGsiStore.subscribe() to avoid cascading re-renders
+- [Phase 11]: Add-only item marking: GSI marks purchased but never unmarks to prevent flicker
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T19:02:54.964Z
-Stopped at: Completed 11-03-PLAN.md
+Last session: 2026-03-26T19:05:13.523Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None

@@ -10,17 +10,17 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 ### GSI Integration
 
 - [x] **GSI-01**: Backend receives Dota 2 GSI HTTP POST data at `/gsi` endpoint and parses game state
-- [ ] **GSI-02**: Auto-detect player's hero and suggest role when game starts from GSI data
-- [ ] **GSI-03**: Real-time gold, GPM, and net worth tracked from GSI and displayed in sidebar
+- [x] **GSI-02**: Auto-detect player's hero and suggest role when game starts from GSI data
+- [x] **GSI-03**: Real-time gold, GPM, and net worth tracked from GSI and displayed in sidebar
 - [x] **GSI-04**: Purchased items auto-detected from GSI inventory data and marked in the timeline
 - [ ] **GSI-05**: Lane result (won/even/lost) auto-determined from GPM vs role benchmarks at 10 minutes
 
 ### WebSocket & Real-Time
 
 - [x] **WS-01**: WebSocket endpoint pushes GSI state updates from backend to frontend in real-time
-- [ ] **WS-02**: Frontend WebSocket hook with auto-reconnect and connection status indicator (green/gray/red)
+- [x] **WS-02**: Frontend WebSocket hook with auto-reconnect and connection status indicator (green/gray/red)
 - [x] **WS-03**: Game clock from GSI displayed in the UI, synced with neutral item tier timing
-- [ ] **WS-04**: Live gold counter in sidebar replacing manual lane result input when GSI is active
+- [x] **WS-04**: Live gold counter in sidebar replacing manual lane result input when GSI is active
 
 ### Auto-Refresh
 
@@ -72,14 +72,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | GSI-01 | Phase 10 | Complete |
-| GSI-02 | Phase 11 | Pending |
-| GSI-03 | Phase 11 | Pending |
+| GSI-02 | Phase 11 | Complete |
+| GSI-03 | Phase 11 | Complete |
 | GSI-04 | Phase 11 | Complete |
 | GSI-05 | Phase 12 | Pending |
 | WS-01 | Phase 10 | Complete |
-| WS-02 | Phase 11 | Pending |
+| WS-02 | Phase 11 | Complete |
 | WS-03 | Phase 11 | Complete |
-| WS-04 | Phase 11 | Pending |
+| WS-04 | Phase 11 | Complete |
 | REFRESH-01 | Phase 12 | Pending |
 | REFRESH-02 | Phase 12 | Pending |
 | REFRESH-03 | Phase 12 | Pending |
