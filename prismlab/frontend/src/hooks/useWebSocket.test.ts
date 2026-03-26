@@ -70,7 +70,7 @@ describe("useWebSocket", () => {
   });
 
   it("reconnects with exponential backoff after close", () => {
-    const { result } = renderHook(() => useWebSocket("ws://localhost/ws"));
+    renderHook(() => useWebSocket("ws://localhost/ws"));
     expect(MockWebSocket.instances).toHaveLength(1);
 
     // First close triggers reconnect after 1s
@@ -98,7 +98,7 @@ describe("useWebSocket", () => {
   });
 
   it("resets reconnect attempts after successful connection", () => {
-    const { result } = renderHook(() => useWebSocket("ws://localhost/ws"));
+    renderHook(() => useWebSocket("ws://localhost/ws"));
 
     // Close and reconnect
     act(() => {
