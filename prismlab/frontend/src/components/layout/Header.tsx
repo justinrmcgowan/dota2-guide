@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { api, type DataFreshness } from "../../api/client";
 import GsiStatusIndicator from "./GsiStatusIndicator";
+import GameClock from "../clock/GameClock";
 
 function formatRelativeTime(isoString: string): string {
   const now = Date.now();
@@ -73,6 +74,10 @@ function Header({ onOpenSettings }: HeaderProps) {
 
       <div className="ml-4">
         <GsiStatusIndicator />
+      </div>
+
+      <div className="ml-2">
+        <GameClock />
       </div>
 
       <div className="ml-auto flex items-center gap-3">
