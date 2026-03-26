@@ -90,7 +90,7 @@ async def test_recommend_endpoint(test_client):
         response = await test_client.post("/api/recommend", json={
             "hero_id": 1,
             "role": 1,
-            "playstyle": "farming",
+            "playstyle": "Farm-first",
             "side": "radiant",
             "lane": "safe",
             "lane_opponents": [69],  # Bristleback (spell-spammer)
@@ -114,8 +114,99 @@ async def test_recommend_endpoint_validation(test_client):
     response = await test_client.post("/api/recommend", json={
         "hero_id": 1,
         "role": 6,  # Invalid: must be 1-5
-        "playstyle": "farming",
+        "playstyle": "Aggressive",
         "side": "radiant",
         "lane": "safe",
     })
     assert response.status_code == 422
+
+
+class TestDamageProfileValidation:
+    @pytest.mark.asyncio
+    async def test_damage_profile_sum_not_100_returns_422(self, test_client):
+        """Damage profile that doesn't sum to 100% returns 422."""
+        response = await test_client.post("/api/recommend", json={
+            "hero_id": 1,
+            "role": 1,
+            "playstyle": "Aggressive",
+            "side": "radiant",
+            "lane": "safe",
+            "damage_profile": {"physical": 50, "magical": 30, "pure": 10},
+        })
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_damage_profile_sum_100_accepted(self, test_client):
+        """Damage profile summing to 100% is accepted (2xx or valid response)."""
+        from unittest.mock import patch, AsyncMock
+        from engine.llm import FallbackReason
+        import api.routes.recommend as rec_mod
+
+        with patch.object(rec_mod._recommender, "llm") as mock_llm:
+            mock_llm.generate = AsyncMock(
+                return_value=(None, FallbackReason.api_error)
+            )
+            response = await test_client.post("/api/recommend", json={
+                "hero_id": 1,
+                "role": 1,
+                "playstyle": "Aggressive",
+                "side": "radiant",
+                "lane": "safe",
+                "damage_profile": {"physical": 60, "magical": 30, "pure": 10},
+            })
+        # Should NOT be 422 -- could be 200 or other (depends on LLM mock)
+        assert response.status_code != 422
+
+    @pytest.mark.asyncio
+    async def test_null_damage_profile_accepted(self, test_client):
+        """Null damage profile is accepted (optional field)."""
+        from unittest.mock import patch, AsyncMock
+        from engine.llm import FallbackReason
+        import api.routes.recommend as rec_mod
+
+        with patch.object(rec_mod._recommender, "llm") as mock_llm:
+            mock_llm.generate = AsyncMock(
+                return_value=(None, FallbackReason.api_error)
+            )
+            response = await test_client.post("/api/recommend", json={
+                "hero_id": 1,
+                "role": 1,
+                "playstyle": "Aggressive",
+                "side": "radiant",
+                "lane": "safe",
+            })
+        assert response.status_code != 422
+
+
+class TestPlaystyleValidation:
+    @pytest.mark.asyncio
+    async def test_invalid_playstyle_for_role_returns_422(self, test_client):
+        """Playstyle not valid for the given role returns 422."""
+        response = await test_client.post("/api/recommend", json={
+            "hero_id": 1,
+            "role": 1,  # Pos 1
+            "playstyle": "Roamer",  # Not valid for Pos 1
+            "side": "radiant",
+            "lane": "safe",
+        })
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_valid_playstyle_for_role_accepted(self, test_client):
+        """Valid playstyle for the given role is accepted."""
+        from unittest.mock import patch, AsyncMock
+        from engine.llm import FallbackReason
+        import api.routes.recommend as rec_mod
+
+        with patch.object(rec_mod._recommender, "llm") as mock_llm:
+            mock_llm.generate = AsyncMock(
+                return_value=(None, FallbackReason.api_error)
+            )
+            response = await test_client.post("/api/recommend", json={
+                "hero_id": 1,
+                "role": 1,
+                "playstyle": "Farm-first",  # Valid for Pos 1
+                "side": "radiant",
+                "lane": "safe",
+            })
+        assert response.status_code != 422

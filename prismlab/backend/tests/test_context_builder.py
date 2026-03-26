@@ -12,7 +12,7 @@ def _make_request(**kwargs) -> RecommendRequest:
     defaults = dict(
         hero_id=1,
         role=1,
-        playstyle="farming",
+        playstyle="Farm-first",
         side="radiant",
         lane="safe",
         lane_opponents=[],
@@ -561,7 +561,7 @@ class TestBuildFull:
 
         assert "Anti-Mage" in result
         assert "Pos 1" in result
-        assert "farming" in result
+        assert "Farm-first" in result
         assert "radiant" in result
         assert "safe" in result
 

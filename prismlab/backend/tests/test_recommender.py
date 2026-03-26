@@ -29,7 +29,7 @@ def sample_request() -> RecommendRequest:
     return RecommendRequest(
         hero_id=1,
         role=1,
-        playstyle="farming",
+        playstyle="Farm-first",
         side="radiant",
         lane="safe",
         lane_opponents=[69],

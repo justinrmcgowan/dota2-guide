@@ -3,7 +3,16 @@
 Consumed by: rules engine, Claude API layer, hybrid orchestrator, API routes.
 """
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+VALID_PLAYSTYLES: dict[int, set[str]] = {
+    1: {"Farm-first", "Aggressive", "Split-push", "Fighting"},
+    2: {"Tempo", "Ganker", "Greedy", "Space-maker"},
+    3: {"Frontline", "Aura-carrier", "Initiator", "Greedy"},
+    4: {"Roamer", "Lane-dominator", "Greedy", "Save"},
+    5: {"Lane-protector", "Roamer", "Greedy", "Save"},
+}
 
 
 class RecommendRequest(BaseModel):
@@ -22,6 +31,29 @@ class RecommendRequest(BaseModel):
     damage_profile: dict[str, int] | None = None  # e.g. {"physical": 60, "magical": 30, "pure": 10}
     enemy_items_spotted: list[str] = Field(default_factory=list)  # e.g. ["bkb", "blink"]
     purchased_items: list[int] = Field(default_factory=list)  # item_ids already purchased
+
+    @field_validator("playstyle")
+    @classmethod
+    def validate_playstyle(cls, v: str, info) -> str:
+        """Reject playstyle that doesn't match the selected role."""
+        role = info.data.get("role")
+        if role is not None and v not in VALID_PLAYSTYLES.get(role, set()):
+            valid_options = ", ".join(sorted(VALID_PLAYSTYLES.get(role, set())))
+            raise ValueError(
+                f"Playstyle '{v}' is not valid for role {role}. Valid options: {valid_options}"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def validate_damage_profile_sum(self) -> "RecommendRequest":
+        """Reject damage profiles that don't sum to 100%."""
+        if self.damage_profile is not None:
+            total = sum(self.damage_profile.values())
+            if total != 100:
+                raise ValueError(
+                    f"Damage profile must sum to 100%, got {total}%"
+                )
+        return self
 
 
 class RuleResult(BaseModel):

@@ -3,21 +3,32 @@
 import pytest
 import pytest_asyncio
 
-from engine.schemas import RecommendRequest
+from engine.schemas import RecommendRequest, VALID_PLAYSTYLES
 from engine.rules import RulesEngine
 
 pytestmark = pytest.mark.asyncio
+
+# Default valid playstyle per role for test helpers
+_DEFAULT_PLAYSTYLE: dict[int, str] = {
+    1: "Aggressive",
+    2: "Tempo",
+    3: "Frontline",
+    4: "Roamer",
+    5: "Lane-protector",
+}
 
 
 def _make_request(
     hero_id: int = 1,
     role: int = 1,
     lane_opponents: list[int] | None = None,
-    playstyle: str = "aggressive",
+    playstyle: str | None = None,
     side: str = "radiant",
     lane: str = "safe",
 ) -> RecommendRequest:
     """Create a minimal valid RecommendRequest for testing."""
+    if playstyle is None:
+        playstyle = _DEFAULT_PLAYSTYLE.get(role, "Aggressive")
     return RecommendRequest(
         hero_id=hero_id,
         role=role,
