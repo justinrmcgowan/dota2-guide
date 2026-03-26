@@ -52,7 +52,7 @@ def _make_mock_response(data: dict) -> MagicMock:
 
 @pytest.mark.asyncio
 async def test_structured_output_mock():
-    """Mock Claude API returns valid JSON, LLMEngine parses to LLMRecommendation."""
+    """Mock Claude API returns valid JSON, LLMEngine parses to (LLMRecommendation, None) tuple."""
     mock_response = _make_mock_response(VALID_RESPONSE_DATA)
 
     with patch("engine.llm.AsyncAnthropic") as MockClient:
@@ -66,9 +66,10 @@ async def test_structured_output_mock():
         engine = LLMEngine()
         engine.client = mock_instance
 
-        result = await engine.generate("test message")
+        result, reason = await engine.generate("test message")
 
         assert result is not None
+        assert reason is None
         assert isinstance(result, LLMRecommendation)
         assert len(result.phases) == 1
         assert result.phases[0].phase == "laning"
@@ -91,9 +92,10 @@ async def test_response_validation():
 
 
 @pytest.mark.asyncio
-async def test_timeout_returns_none():
-    """APITimeoutError results in None return (triggers fallback)."""
+async def test_timeout_returns_fallback_reason():
+    """APITimeoutError results in (None, FallbackReason.timeout) tuple."""
     from anthropic import APITimeoutError
+    from engine.llm import FallbackReason
 
     with patch("engine.llm.AsyncAnthropic") as MockClient:
         mock_instance = MockClient.return_value
@@ -108,14 +110,16 @@ async def test_timeout_returns_none():
         engine = LLMEngine()
         engine.client = mock_instance
 
-        result = await engine.generate("test message")
+        result, reason = await engine.generate("test message")
         assert result is None
+        assert reason == FallbackReason.timeout
 
 
 @pytest.mark.asyncio
-async def test_connection_error_returns_none():
-    """APIConnectionError results in None return (triggers fallback)."""
+async def test_connection_error_returns_fallback_reason():
+    """APIConnectionError results in (None, FallbackReason.api_error) tuple."""
     from anthropic import APIConnectionError
+    from engine.llm import FallbackReason
 
     with patch("engine.llm.AsyncAnthropic") as MockClient:
         mock_instance = MockClient.return_value
@@ -130,14 +134,16 @@ async def test_connection_error_returns_none():
         engine = LLMEngine()
         engine.client = mock_instance
 
-        result = await engine.generate("test message")
+        result, reason = await engine.generate("test message")
         assert result is None
+        assert reason == FallbackReason.api_error
 
 
 @pytest.mark.asyncio
-async def test_api_status_error_returns_none():
-    """APIStatusError (e.g., 429 rate limited) results in None return."""
+async def test_api_status_error_returns_fallback_reason():
+    """APIStatusError (e.g., 429 rate limited) results in (None, FallbackReason.rate_limited)."""
     from anthropic import APIStatusError
+    from engine.llm import FallbackReason
 
     mock_resp = MagicMock()
     mock_resp.status_code = 429
@@ -160,10 +166,12 @@ async def test_api_status_error_returns_none():
         engine = LLMEngine()
         engine.client = mock_instance
 
-        result = await engine.generate("test message")
+        result, reason = await engine.generate("test message")
         assert result is None
+        assert reason == FallbackReason.rate_limited
 
 
+@pytest.mark.skip(reason="Prompt caching removed in compact system prompt optimization")
 @pytest.mark.asyncio
 async def test_prompt_caching_config():
     """System prompt is passed as a list with cache_control for prompt caching."""
@@ -195,6 +203,7 @@ async def test_prompt_caching_config():
         assert len(system_arg[0]["text"]) > 5000  # System prompt is substantial
 
 
+@pytest.mark.skip(reason="output_config removed in favor of prompt-instructed JSON")
 @pytest.mark.asyncio
 async def test_output_config_format():
     """output_config contains json_schema format with LLM_OUTPUT_SCHEMA."""

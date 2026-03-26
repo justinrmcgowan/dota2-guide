@@ -3,11 +3,13 @@
 Exposes the hybrid recommendation pipeline via a single endpoint.
 Accepts draft context (hero, role, playstyle, side, lane, opponents)
 and returns phased item recommendations with reasoning.
+
+Rate-limited per IP (10s cooldown). Responses cached for 5min (configurable).
 """
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.database import get_db
@@ -16,7 +18,8 @@ from engine.schemas import RecommendRequest, RecommendResponse
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine
 from engine.context_builder import ContextBuilder
-from engine.recommender import HybridRecommender
+from engine.recommender import HybridRecommender, ResponseCache
+from middleware.rate_limiter import check_rate_limit
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -27,11 +30,19 @@ _opendota = OpenDotaClient(api_key=settings.opendota_api_key)
 _rules = RulesEngine()
 _llm = LLMEngine()
 _context_builder = ContextBuilder(opendota_client=_opendota)
-_recommender = HybridRecommender(rules=_rules, llm=_llm, context_builder=_context_builder)
+_response_cache = ResponseCache(ttl_seconds=settings.response_cache_ttl_seconds)
+_recommender = HybridRecommender(
+    rules=_rules, llm=_llm, context_builder=_context_builder,
+    response_cache=_response_cache,
+)
 
 
 @router.post("/recommend", response_model=RecommendResponse)
-async def recommend(request: RecommendRequest, db: AsyncSession = Depends(get_db)):
+async def recommend(
+    request: RecommendRequest,
+    db: AsyncSession = Depends(get_db),
+    _rate_limit: None = Depends(check_rate_limit),
+):
     """Generate item recommendations for a Dota 2 draft context.
 
     Runs the hybrid engine: rules first (instant), then Claude API (structured output),

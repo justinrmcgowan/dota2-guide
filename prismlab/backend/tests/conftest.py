@@ -249,6 +249,9 @@ async def test_db_setup():
 @pytest_asyncio.fixture
 async def test_client(test_db_setup):
     """Create an async test client with database dependency override."""
+    from middleware.rate_limiter import rate_limiter
+    # Clear rate limiter state between tests to prevent 429 interference
+    rate_limiter._last_request.clear()
 
     async def override_get_db():
         async with test_async_session() as session:

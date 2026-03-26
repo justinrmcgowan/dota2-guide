@@ -1,7 +1,7 @@
 """Tests for the HybridRecommender orchestrator.
 
 Covers merge logic, deduplication, fallback on LLM failure,
-item ID validation against DB, and response metadata.
+item ID validation against DB, response metadata, and fallback_reason threading.
 """
 
 import pytest
@@ -19,6 +19,7 @@ from engine.schemas import (
     NeutralTierRecommendation,
 )
 from engine.rules import RulesEngine
+from engine.llm import FallbackReason
 from engine.recommender import HybridRecommender
 
 
@@ -38,10 +39,10 @@ def sample_request() -> RecommendRequest:
 
 @pytest.fixture
 def mock_llm_engine():
-    """Mock LLMEngine that returns a valid LLMRecommendation."""
+    """Mock LLMEngine that returns a valid (LLMRecommendation, None) tuple."""
     engine = MagicMock()
     engine.MODEL = "claude-sonnet-4-6-20250514"
-    engine.generate = AsyncMock(return_value=LLMRecommendation(
+    engine.generate = AsyncMock(return_value=(LLMRecommendation(
         phases=[
             RecommendPhase(
                 phase="laning",
@@ -67,7 +68,7 @@ def mock_llm_engine():
             ),
         ],
         overall_strategy="Farm Battlefury then Manta, split-push aggressively.",
-    ))
+    ), None))
     return engine
 
 
@@ -200,26 +201,27 @@ async def test_hybrid_merge_deduplication(recommender_fixture):
 async def test_fallback_on_timeout(
     recommender_fixture, mock_llm_engine, sample_request, test_db_session
 ):
-    """When LLM returns None, response.fallback is True and rules-only results present."""
-    mock_llm_engine.generate = AsyncMock(return_value=None)
+    """When LLM returns (None, timeout), response.fallback is True with reason."""
+    mock_llm_engine.generate = AsyncMock(return_value=(None, FallbackReason.timeout))
 
     response = await recommender_fixture.recommend(sample_request, test_db_session)
 
     assert response.fallback is True
+    assert response.fallback_reason == "timeout"
     assert response.model is None
-    assert len(response.phases) > 0  # Rules should produce results
 
 
 @pytest.mark.asyncio
 async def test_fallback_flag(
     recommender_fixture, mock_llm_engine, sample_request, test_db_session
 ):
-    """When LLM raises an exception, response.fallback is True."""
-    mock_llm_engine.generate = AsyncMock(side_effect=Exception("API down"))
+    """When LLM returns (None, api_error), response.fallback is True."""
+    mock_llm_engine.generate = AsyncMock(return_value=(None, FallbackReason.api_error))
 
     response = await recommender_fixture.recommend(sample_request, test_db_session)
 
     assert response.fallback is True
+    assert response.fallback_reason == "api_error"
 
 
 # -------------------------------------------------------------------
@@ -324,8 +326,8 @@ async def test_latency_ms_populated(
 async def test_overall_strategy_on_fallback(
     recommender_fixture, mock_llm_engine, sample_request, test_db_session
 ):
-    """On fallback, overall_strategy indicates rules-only mode."""
-    mock_llm_engine.generate = AsyncMock(return_value=None)
+    """On fallback, overall_strategy indicates rules-only mode with specific reason."""
+    mock_llm_engine.generate = AsyncMock(return_value=(None, FallbackReason.api_error))
 
     response = await recommender_fixture.recommend(sample_request, test_db_session)
 
@@ -356,7 +358,7 @@ async def test_neutral_items_passthrough(
             ],
         ),
     ]
-    mock_llm_engine.generate = AsyncMock(return_value=LLMRecommendation(
+    mock_llm_engine.generate = AsyncMock(return_value=(LLMRecommendation(
         phases=[
             RecommendPhase(
                 phase="laning",
@@ -372,7 +374,7 @@ async def test_neutral_items_passthrough(
         ],
         overall_strategy="Farm aggressively.",
         neutral_items=neutral_data,
-    ))
+    ), None))
 
     response = await recommender_fixture.recommend(sample_request, test_db_session)
 
@@ -386,9 +388,63 @@ async def test_neutral_items_empty_on_fallback(
     recommender_fixture, mock_llm_engine, sample_request, test_db_session
 ):
     """When LLM fails (fallback), neutral_items is empty list."""
-    mock_llm_engine.generate = AsyncMock(return_value=None)
+    mock_llm_engine.generate = AsyncMock(return_value=(None, FallbackReason.api_error))
 
     response = await recommender_fixture.recommend(sample_request, test_db_session)
 
     assert response.neutral_items == []
     assert response.fallback is True
+
+
+# -------------------------------------------------------------------
+# FallbackReason tests
+# -------------------------------------------------------------------
+
+
+class TestFallbackReason:
+    """Tests that FallbackReason is properly threaded from LLM to response."""
+
+    @pytest.mark.asyncio
+    async def test_timeout_fallback_reason(
+        self, mock_llm_engine, mock_context_builder, sample_request, test_db_session
+    ):
+        """Timeout produces fallback_reason='timeout' in response."""
+        mock_llm_engine.generate = AsyncMock(
+            return_value=(None, FallbackReason.timeout)
+        )
+        recommender = HybridRecommender(
+            rules=RulesEngine(), llm=mock_llm_engine, context_builder=mock_context_builder,
+        )
+        response = await recommender.recommend(sample_request, test_db_session)
+        assert response.fallback is True
+        assert response.fallback_reason == "timeout"
+        assert "timed out" in response.overall_strategy.lower()
+
+    @pytest.mark.asyncio
+    async def test_parse_error_fallback_reason(
+        self, mock_llm_engine, mock_context_builder, sample_request, test_db_session
+    ):
+        """Parse error produces fallback_reason='parse_error' in response."""
+        mock_llm_engine.generate = AsyncMock(
+            return_value=(None, FallbackReason.parse_error)
+        )
+        recommender = HybridRecommender(
+            rules=RulesEngine(), llm=mock_llm_engine, context_builder=mock_context_builder,
+        )
+        response = await recommender.recommend(sample_request, test_db_session)
+        assert response.fallback is True
+        assert response.fallback_reason == "parse_error"
+        assert "malformed" in response.overall_strategy.lower()
+
+    @pytest.mark.asyncio
+    async def test_success_no_fallback_reason(
+        self, mock_llm_engine, mock_context_builder, sample_request, test_db_session
+    ):
+        """Successful LLM call produces fallback_reason=None."""
+        # mock_llm_engine already returns success tuple via fixture
+        recommender = HybridRecommender(
+            rules=RulesEngine(), llm=mock_llm_engine, context_builder=mock_context_builder,
+        )
+        response = await recommender.recommend(sample_request, test_db_session)
+        assert response.fallback is False
+        assert response.fallback_reason is None

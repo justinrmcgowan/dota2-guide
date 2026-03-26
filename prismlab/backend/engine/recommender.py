@@ -75,23 +75,42 @@ class HybridRecommender:
         rules: RulesEngine,
         llm: LLMEngine,
         context_builder: ContextBuilder,
+        response_cache: ResponseCache | None = None,
     ):
         self.rules = rules
         self.llm = llm
         self.context_builder = context_builder
+        self.response_cache = response_cache
+
+    # Reason-specific fallback messages for the overall_strategy field
+    FALLBACK_STRATEGIES = {
+        FallbackReason.timeout: "AI timed out -- showing rules-based build. Try again in a moment.",
+        FallbackReason.parse_error: "AI response was malformed -- showing rules-based build.",
+        FallbackReason.api_error: "AI service unavailable -- showing rules-based build. Try again shortly.",
+        FallbackReason.rate_limited: "AI rate limited -- showing rules-based build. Try again in a moment.",
+    }
 
     async def recommend(
         self, request: RecommendRequest, db: AsyncSession
     ) -> RecommendResponse:
         """Run full hybrid recommendation pipeline.
 
+        0. Check response cache (return immediately on hit)
         1. Rules engine fires instantly (deterministic)
         2. Context builder assembles Claude prompt
         3. Claude API generates structured recommendations
         4. Merge rules + LLM results (rules take priority, deduplicate)
         5. Validate all item_ids against DB
-        6. Return response with metadata (fallback, model, latency_ms)
+        6. Return response with metadata (fallback, fallback_reason, model, latency_ms)
+        7. Cache the response for future identical requests
         """
+        # Step 0: Check cache
+        if self.response_cache:
+            cached = self.response_cache.get(request)
+            if cached is not None:
+                logger.info("Returning cached response for request")
+                return cached
+
         start = time.monotonic()
 
         # Step 1: Rules fire instantly (deterministic, no API call)
@@ -104,14 +123,14 @@ class HybridRecommender:
         # Step 3: Call Claude with timeout + fallback
         llm_result: LLMRecommendation | None = None
         fallback = False
-        try:
-            llm_result = await self.llm.generate(user_message)
-        except Exception as e:
-            logger.exception("LLM engine failed: %s", e)
-            fallback = True
+        fallback_reason: FallbackReason | None = None
+
+        llm_result, fallback_reason = await self.llm.generate(user_message)
 
         if llm_result is None:
             fallback = True
+            if fallback_reason is None:
+                fallback_reason = FallbackReason.api_error
 
         # Step 4: Merge results
         if llm_result and not fallback:
@@ -120,7 +139,10 @@ class HybridRecommender:
             neutral_items = llm_result.neutral_items
         else:
             phases = self._rules_only(rules_items)
-            overall_strategy = "Rules-based recommendations only. AI reasoning unavailable."
+            overall_strategy = self.FALLBACK_STRATEGIES.get(
+                fallback_reason,
+                "Rules-based recommendations only. AI reasoning unavailable.",
+            )
             neutral_items = []
 
         # Step 5: Filter purchased items (if any)
@@ -131,14 +153,21 @@ class HybridRecommender:
         phases = await self._validate_item_ids(phases, db)
 
         elapsed_ms = int((time.monotonic() - start) * 1000)
-        return RecommendResponse(
+        response = RecommendResponse(
             phases=phases,
             overall_strategy=overall_strategy,
             neutral_items=neutral_items,
             fallback=fallback,
+            fallback_reason=fallback_reason.value if fallback_reason else None,
             model=LLMEngine.MODEL if not fallback else None,
             latency_ms=elapsed_ms,
         )
+
+        # Step 7: Cache the response
+        if self.response_cache:
+            self.response_cache.set(request, response)
+
+        return response
 
     def _merge(
         self, rules_items: list[RuleResult], llm_result: LLMRecommendation
