@@ -9,7 +9,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### GSI Integration
 
-- [ ] **GSI-01**: Backend receives Dota 2 GSI HTTP POST data at `/gsi` endpoint and parses game state
+- [x] **GSI-01**: Backend receives Dota 2 GSI HTTP POST data at `/gsi` endpoint and parses game state
 - [ ] **GSI-02**: Auto-detect player's hero and suggest role when game starts from GSI data
 - [ ] **GSI-03**: Real-time gold, GPM, and net worth tracked from GSI and displayed in sidebar
 - [ ] **GSI-04**: Purchased items auto-detected from GSI inventory data and marked in the timeline
@@ -38,7 +38,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 ### Infrastructure
 
 - [x] **INFRA-01**: Nginx config updated with WebSocket upgrade headers and file upload support
-- [ ] **INFRA-02**: GSI config file generator (gamestate_integration_prismlab.cfg) with correct server IP for user's setup
+- [x] **INFRA-02**: GSI config file generator (gamestate_integration_prismlab.cfg) with correct server IP for user's setup
 
 ## Future Requirements
 
@@ -71,7 +71,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GSI-01 | Phase 10 | Pending |
+| GSI-01 | Phase 10 | Complete |
 | GSI-02 | Phase 11 | Pending |
 | GSI-03 | Phase 11 | Pending |
 | GSI-04 | Phase 11 | Pending |
@@ -88,7 +88,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCREEN-03 | Phase 13 | Pending |
 | SCREEN-04 | Phase 13 | Pending |
 | INFRA-01 | Phase 10 | Complete |
-| INFRA-02 | Phase 10 | Pending |
+| INFRA-02 | Phase 10 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 18 total

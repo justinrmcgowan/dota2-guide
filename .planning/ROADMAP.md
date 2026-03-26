@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-03-21)
 - ✅ **v1.1 Allied Synergy & Neutral Items** — Phases 7-9 (shipped 2026-03-23)
-- 🚧 **v2.0 Live Game Intelligence** — Phases 10-13 (in progress)
+- 🚧 **v2.0 Live Game Intelligence** — Phases 10-14 (in progress)
 
 ## Phases
 
@@ -33,10 +33,11 @@
 
 **Milestone Goal:** Transform Prismlab from manual-input advisor to live-game-aware system using Dota 2 GSI, screenshot parsing, and auto gold tracking -- recommendations evolve in real-time as the game progresses.
 
-- [ ] **Phase 10: GSI Receiver & WebSocket Pipeline** - Backend receives live game data from Dota 2 and pushes it to the frontend in real-time
+- [x] **Phase 10: GSI Receiver & WebSocket Pipeline** - Backend receives live game data from Dota 2 and pushes it to the frontend in real-time (completed 2026-03-26)
 - [ ] **Phase 11: Live Game Dashboard** - Frontend consumes GSI data to auto-detect hero, track gold, mark purchased items, and display game clock
 - [ ] **Phase 12: Auto-Refresh & Lane Detection** - Recommendations auto-refresh on key game events with rate limiting and auto-determined lane results
 - [ ] **Phase 13: Screenshot Parsing** - User pastes scoreboard screenshots to extract enemy hero and item data via Claude Vision
+- [ ] **Phase 14: Recommendation Quality & System Hardening** - Improve engine reliability, cache all API calls, add rate limiting, fix validation gaps, and harden error handling
 
 ## Phase Details
 
@@ -55,7 +56,7 @@
 Plans:
 - [x] 10-01-PLAN.md -- Backend GSI module (models, receiver, state manager, config generator)
 - [x] 10-02-PLAN.md -- WebSocket broadcast layer and Nginx proxy config
-- [ ] 10-03-PLAN.md -- Frontend WebSocket hook, GSI store, status indicator, settings panel
+- [x] 10-03-PLAN.md -- Frontend WebSocket hook, GSI store, status indicator, settings panel
 
 **UI hint**: yes
 
@@ -99,7 +100,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 10 -> 11 -> 12 -> 13
+Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -112,7 +113,18 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | 7. Tech Debt & Polish | v1.1 | 2/2 | Complete | 2026-03-22 |
 | 8. Allied Synergy | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
-| 10. GSI Receiver & WebSocket Pipeline | v2.0 | 2/3 | In Progress|  |
+| 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete   | 2026-03-26 |
 | 11. Live Game Dashboard | v2.0 | 0/0 | Not started | - |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 0/0 | Not started | - |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
+| 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
+
+### Phase 14: Recommendation Quality & System Hardening
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 13
+**Plans:** 3/3 plans complete
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14 to break down)
