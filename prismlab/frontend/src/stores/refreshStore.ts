@@ -19,6 +19,9 @@ interface RefreshStore {
   // Toast state (D-15, D-16, D-17)
   lastToast: { message: string; timestamp: number } | null;
 
+  // Lane auto-detection state (D-12)
+  laneAutoDetected: boolean;
+
   // Actions
   startCooldown: () => void;
   queueEvent: (event: TriggerEvent) => void;
@@ -27,6 +30,7 @@ interface RefreshStore {
   dismissToast: () => void;
   tick: (now: number) => void;
   resetCooldown: () => void;
+  setLaneAutoDetected: (v: boolean) => void;
 }
 
 export const useRefreshStore = create<RefreshStore>()((set, get) => ({
@@ -34,6 +38,7 @@ export const useRefreshStore = create<RefreshStore>()((set, get) => ({
   queuedEvent: null,
   secondsRemaining: 0,
   lastToast: null,
+  laneAutoDetected: false,
 
   startCooldown: () => set({ cooldownEnd: Date.now() + 120_000 }),
 
@@ -57,4 +62,6 @@ export const useRefreshStore = create<RefreshStore>()((set, get) => ({
 
   resetCooldown: () =>
     set({ cooldownEnd: null, queuedEvent: null, secondsRemaining: 0 }),
+
+  setLaneAutoDetected: (v) => set({ laneAutoDetected: v }),
 }));
