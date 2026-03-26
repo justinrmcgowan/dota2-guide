@@ -1,7 +1,10 @@
 import type { NeutralTierRecommendation } from "../../types/recommendation";
+import { getNextTierCountdown } from "../../utils/neutralTiers";
 
 interface NeutralItemSectionProps {
   neutralItems: NeutralTierRecommendation[];
+  currentTier?: number | null;
+  gameClock?: number | null;
 }
 
 const TIER_TIMING: Record<number, string> = {
@@ -32,7 +35,13 @@ const RANK_COLORS: Record<number, string> = {
   3: "bg-gray-700 text-gray-300",
 };
 
-function NeutralItemSection({ neutralItems }: NeutralItemSectionProps) {
+function formatCountdown(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
+
+function NeutralItemSection({ neutralItems, currentTier, gameClock }: NeutralItemSectionProps) {
   if (!neutralItems || neutralItems.length === 0) return null;
 
   const sorted = [...neutralItems].sort((a, b) => a.tier - b.tier);
@@ -52,10 +61,13 @@ function NeutralItemSection({ neutralItems }: NeutralItemSectionProps) {
             (a, b) => a.rank - b.rank,
           );
 
+          const isActive = currentTier != null && tierRec.tier === currentTier;
+          const isPast = currentTier != null && tierRec.tier < currentTier;
+
           return (
             <div
               key={tierRec.tier}
-              className="bg-bg-elevated/50 rounded-lg p-3"
+              className={`bg-bg-elevated/50 rounded-lg p-3${isActive ? " ring-1 ring-cyan-accent" : ""}${isPast ? " opacity-50" : ""}`}
             >
               {/* Tier sub-header */}
               <div className="text-gray-400 text-xs font-semibold mb-2">
@@ -109,6 +121,17 @@ function NeutralItemSection({ neutralItems }: NeutralItemSectionProps) {
           );
         })}
       </div>
+
+      {/* Next tier countdown */}
+      {gameClock != null && (() => {
+        const nextTier = getNextTierCountdown(gameClock);
+        if (!nextTier) return null;
+        return (
+          <p className="text-text-muted text-xs mt-2 text-center">
+            Next: Tier {nextTier.tier} in {formatCountdown(nextTier.secondsRemaining)}
+          </p>
+        );
+      })()}
     </div>
   );
 }

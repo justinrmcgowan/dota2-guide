@@ -1,6 +1,8 @@
 import type { RecommendResponse } from "../../types/recommendation";
 import PhaseCard from "./PhaseCard";
 import NeutralItemSection from "./NeutralItemSection";
+import { useGsiStore } from "../../stores/gsiStore";
+import { getCurrentTier } from "../../utils/neutralTiers";
 
 interface ItemTimelineProps {
   data: RecommendResponse;
@@ -9,6 +11,12 @@ interface ItemTimelineProps {
 }
 
 function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps) {
+  const gsiStatus = useGsiStore((s) => s.gsiStatus);
+  const gameClock = useGsiStore((s) => s.liveState?.game_clock ?? null);
+  const currentTier = gsiStatus === "connected" && gameClock != null
+    ? getCurrentTier(gameClock)
+    : null;
+
   return (
     <div className="flex flex-col gap-4">
       {/* Overall strategy summary */}
@@ -35,7 +43,11 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
 
       {/* Neutral items section below purchasable timeline */}
       {data.neutral_items && data.neutral_items.length > 0 && (
-        <NeutralItemSection neutralItems={data.neutral_items} />
+        <NeutralItemSection
+          neutralItems={data.neutral_items}
+          currentTier={currentTier}
+          gameClock={gsiStatus === "connected" ? gameClock : null}
+        />
       )}
     </div>
   );
