@@ -1,299 +1,343 @@
-# Feature Research: v2.0 Live Game Intelligence
+# Feature Research: v3.0 Design Overhaul & Performance
 
-**Domain:** Dota 2 real-time game integration (GSI, screenshot parsing, auto gold tracking, WebSocket)
-**Researched:** 2026-03-23
-**Confidence:** HIGH (GSI well-documented, vision API verified, WebSocket patterns mature)
+**Domain:** Design system migration (Tailwind v4 retheme), in-memory data caching, store/hook consolidation, integration gap fixes
+**Researched:** 2026-03-26
+**Confidence:** HIGH (Tailwind v4 @theme already in use, caching patterns well-understood, codebase fully audited)
 
 ## Feature Landscape
 
-### Table Stakes (Users Expect These)
+### Table Stakes (Must Ship for the Milestone to Matter)
 
-Features that any GSI-powered Dota 2 tool must have. Dotabuff App and Dota Plus already set user expectations here.
+Features that must land for v3.0 to feel like a coherent release rather than random patches.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| GSI endpoint receives game state | Valve official mechanism; Dotabuff App, Dota Plus, Overwolf all use it | MEDIUM | FastAPI POST endpoint at /api/gsi. Dota 2 POSTs JSON to a configurable URI every 0.1-5s depending on throttle settings. Must validate auth token from cfg file |
-| Auto-detect own hero from GSI | GSI provides hero.name in console format (e.g., npc_dota_hero_antimage). Every GSI tool auto-populates the hero | LOW | Map console name to hero_id in DB. Fires during DOTA_GAMERULES_STATE_PRE_GAME or DOTA_GAMERULES_STATE_GAME_IN_PROGRESS |
-| Auto-detect own items/inventory | GSI provides items.slot0-slot5.name, items.stash0-stash5.name, items.backpack0-backpack2.name. Dotabuff App tracks gold progress toward next item | LOW | Parse item names from console format. Cross-reference with purchased items in recommendationStore. Auto-mark items as purchased |
-| Auto-track gold/net worth | GSI exposes player.gold, player.gold_reliable, player.gold_unreliable, player.gpm, player.net_worth. Core to any real-time advisor | LOW | Direct field reads from GSI payload. Update gameStore with current gold. Display gold progress toward next recommended item |
-| Game clock sync | GSI exposes map.clock_time and map.game_time. Users expect the app to know what phase of the game they are in | LOW | Use clock_time for phase detection: 0-10 min = laning, 10-25 min = midgame, 25+ = lategame. Current phase already exists in gameStore |
-| WebSocket push to frontend | GSI data arrives at backend; frontend needs real-time updates without polling. All modern game overlays use push-based updates | MEDIUM | FastAPI WebSocket endpoint /ws/game-state. Backend receives GSI POST, processes, pushes to connected frontend clients. Single connection per browser tab |
-| GSI connection status indicator | Users need to know if the Dota client is actually sending data. Dotabuff App shows connection status prominently | LOW | Heartbeat-based: GSI config supports heartbeat field. Display connected/disconnected in frontend header. Timeout after 2x heartbeat interval |
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| "Tactical Relic Editorial" full retheme | The entire v3.0 milestone is defined by this. Shipping partial retheme leaves a Frankenstein UI -- half obsidian monolith, half cyan SaaS. Users notice inconsistency more than ugliness | HIGH | Tailwind v4 @theme in globals.css (already exists), Google Fonts (Newsreader + Manrope), all ~30 frontend components | Current globals.css uses oklch cyan/radiant/dire palette with Inter + JetBrains Mono fonts. New system: obsidian #131313 base, crimson #B22222 primary, gold #FFDB3C secondary, Newsreader display + Manrope body. Every component touches color classes. See "Migration Strategy" section below |
+| In-memory hero/item data cache | Currently the recommend hot path hits SQLite 6-8 times per request: hero lookup, opponent lookups, item catalog, neutral items, item popularity, item validation. With auto-refresh firing every 2 min during live games, this is unnecessary I/O. Hero and item data changes once per 6h refresh cycle | MEDIUM | Backend lifespan startup, refresh pipeline, context_builder.py, recommender.py, matchup_service.py, heroes.py route, items.py route, screenshot.py route | Load all heroes and items into module-level dicts at startup. Invalidate and reload after refresh_all_data() completes. Every DB query for Hero/Item on the hot path gets replaced with dict lookup. Matchup data stays in SQLite (it is per-pair, large, and fetched on-demand) |
+| Store subscription consolidation (useGsiSync + useAutoRefresh) | Both hooks independently subscribe to gsiStore via `.subscribe()` in separate useEffects. Both fire on every GSI tick (1Hz). Both read from gameStore and recommendationStore. This creates duplicate subscription overhead and makes the data flow hard to reason about | MEDIUM | useGsiSync.ts, useAutoRefresh.ts, App.tsx | Merge into single useGsiOrchestrator hook with one gsiStore.subscribe() call that handles hero detection, item auto-marking, lane detection, and event-trigger detection in a single pass. Reduces subscription count from 3 to 1 (the third is the recommendationStore subscription in useAutoRefresh) |
+| TriggerEvent type deduplication | TriggerEvent interface is defined identically in both triggerDetection.ts (line 17) and refreshStore.ts (line 3). This is a maintenance hazard -- if one is updated without the other, runtime bugs appear | LOW | triggerDetection.ts, refreshStore.ts | Single source of truth: export from triggerDetection.ts, import in refreshStore.ts. One-line fix plus import update |
+| refresh_lookups() session safety | refresh_all_data() calls `_rules.refresh_lookups(session)` using the same session that just committed the refresh. If the session is in a bad state after the commit (edge case with async SQLAlchemy + SQLite), the rules engine gets stale data | LOW | refresh.py, rules.py | Fix: open a fresh async_session() for the refresh_lookups call, or call init_lookups() with its own session. The current pattern works 99% of the time but is architecturally wrong |
 
-### Differentiators (Competitive Advantage)
+### Differentiators (Improve the Product Beyond Maintenance)
 
-Features that set Prismlab apart from Dotabuff App and Dota Plus. These leverage the existing hybrid recommendation engine.
+Features that actively improve the user experience beyond just "cleaning up."
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Auto-determine lane result from gold data | At ~10 min, compare own GPM/net worth against expected benchmarks for role+hero. Auto-set lane_result (won/even/lost) instead of manual toggle. No other tool does this for item recommendations | MEDIUM | Algorithm: track gold at game start and at 10 min mark. Compare against role-specific benchmarks (Pos 1 carry: 5000+ gold at 10 min = won lane; 3500-5000 = even; below 3500 = lost). GPM thresholds from OpenDota hero averages. Trigger re-evaluation automatically |
-| Screenshot parsing for enemy items via Claude Vision | User pastes scoreboard screenshot (Tab screen), Claude Vision extracts enemy hero items and maps them to enemyItemsSpotted. No manual item-by-item entry. Unique to Prismlab because the app already has Claude API integration | HIGH | Send screenshot as base64 to Claude API with structured output schema. Identify all items for each enemy hero. ~1600 tokens per 1MP screenshot at ~$0.005/image. Must handle: scoreboard layout variations, item icon recognition at small sizes, mapping to internal item names. Rate-limit: max 1 screenshot parse per 60s |
-| Auto-refresh recommendations on key events | When GSI detects: (a) new item purchased, (b) 10-min mark crossed, (c) significant gold milestone reached, (d) death -- auto-queue a re-evaluation instead of requiring manual Re-Evaluate click. Rate-limited to max 1 per 2 minutes | HIGH | Event detection from GSI diff (compare previous vs current state). Queue system with 2-min cooldown. Claude API call is expensive so batching events is critical. Must not disrupt user if they are mid-action |
-| Gold progress bar toward next item | Visual progress (e.g., 2100/4150 gold toward BKB) using real-time gold from GSI. Dotabuff App does this but Prismlab ties it to the hybrid engine specific recommendation with reasoning | LOW | Calculate: current_gold / next_recommended_item_cost. Account for reliable vs unreliable gold. Component cost breakdown |
-| Draft auto-detection from GSI | GSI exposes draft.team2.pick0_id through pick4_id and draft.team3.pick0_id through pick4_id. Auto-populate all 10 hero slots during the draft phase without manual entry | MEDIUM | GSI sends draft data during DOTA_GAMERULES_STATE_HERO_SELECTION. Map pick IDs to heroes. Auto-fill allies[] and opponents[] in gameStore. Challenge: draft data only fully available to spectators; player mode may only see own pick plus already-revealed picks |
-| Automatic game phase progression | Instead of user manually managing phases, detect phase transitions from GSI clock + events: pre-game to laning to mid-game to late game. Collapse/expand timeline phases automatically | LOW | Clock thresholds + event triggers. Already have phase concept in UI; wire to GSI clock data |
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Auto-suggest playstyle when GSI detects hero+role | Currently GSI auto-detects hero and infers role via inferRole(), but playstyle stays null. The user must manually select playstyle before recommendations work. During a live game, every click matters. Auto-suggesting the most common playstyle for that hero+role removes one friction point | LOW | useGsiSync.ts, gameStore.ts, PLAYSTYLE_OPTIONS constant | After GSI sets hero and role, auto-set playstyle to the first option for that role from PLAYSTYLE_OPTIONS. The user set their preference to "Aggressive" in PROJECT.md context -- could also use a stored preference per hero. Implementation: 3-5 lines in the GSI sync hero detection block |
+| Feed KDA/level from screenshots into recommendation context | Screenshots already parse kills, deaths, assists, and level per hero (ParsedHero has these fields). But the data is currently display-only in the confirmation UI. Feeding enemy KDA/level into the Claude prompt gives much richer recommendation context: "Enemy PA is 8-1-3 and level 16 -- she is snowballing, you need defensive items NOW" | MEDIUM | schemas.py (RecommendRequest), context_builder.py, screenshotStore.ts, ScreenshotParser.tsx, gameStore.ts | Requires: (1) new optional field on RecommendRequest for enemy_hero_stats, (2) gameStore field to hold parsed enemy stats, (3) ScreenshotParser "Apply" action writes stats to gameStore, (4) context_builder builds "Enemy Status" section from stats. The Claude prompt already handles mid-game context well -- this is additive |
+| Design system "parchment texture" noise overlay | DESIGN.md explicitly calls for "low-opacity noise overlay or subtle grain texture to prevent the UI from feeling sterile." This is a small visual touch that elevates the entire experience from "dark theme" to "editorial artifact." Differentiates from every other Dota tool | LOW | New CSS pseudo-element or small SVG noise asset on body/root | A repeating SVG noise pattern at 3-5% opacity over the #131313 background. No JS needed -- pure CSS. ~2KB SVG asset. Performant because it's a single compositing layer |
+| "Blood-glass" tactical overlays | DESIGN.md specifies: primary_container (#B22222) with 20-40% opacity and backdrop-blur 12px for tactical overlays. This creates a premium, atmospheric feel for modals, toast notifications, and the screenshot parser overlay | LOW | SettingsPanel.tsx, AutoRefreshToast.tsx, ScreenshotParser.tsx, ErrorBanner.tsx | CSS-only change on 3-4 overlay/modal components. backdrop-filter: blur(12px) is well-supported in modern browsers. Performance: GPU-composited, no layout thrash |
+| Gold-leaf accent strips on hero/item cards | DESIGN.md: "If the card represents a Hero or Legendary item, apply a 2px left-side accent strip of secondary_fixed (#FFE16D)." Visual hierarchy improvement that makes important items pop | LOW | PhaseCard.tsx, ItemCard.tsx, NeutralItemSection.tsx | CSS border-left addition. Conditional: only on core/luxury priority items. Trivial implementation |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+### Anti-Features (Do NOT Build in v3.0)
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Real-time enemy item tracking via GSI | Just read enemy items from game data | GSI in player mode (not spectator) only exposes YOUR OWN data. Enemy items are NOT available through GSI. Anti-cheat restriction by Valve. Reading game memory is bannable | Screenshot parsing via Claude Vision. User opens scoreboard (Tab), takes screenshot, pastes into app. Slower but VAC-safe |
-| Clipboard monitoring / auto-capture screenshots | Auto-detect when I open scoreboard and capture it | Requires OS-level hooks, raises anti-cheat concerns, platform-specific. Too invasive | Manual paste only for v2.0. User presses PrtScn, Ctrl+V into app. Clean, explicit, cross-platform |
-| In-game overlay via GSI | Display item recommendations as overlay on top of game | Requires injecting into game rendering pipeline or overlay SDK (Overwolf). VAC risk, heavy development, platform-specific | Prismlab stays as second-monitor/alt-tab web app. Updates real-time via WebSocket |
-| Auto-detect enemy heroes from GSI during game | Fill in opponent heroes automatically | Player-mode GSI does not reliably expose all 10 heroes. Only your own pick and revealed enemy picks visible. Full enemy team only guaranteed for spectators | Hybrid: auto-detect what GSI reveals, let user fill gaps manually |
-| Re-evaluate on every GSI tick | Update recommendations constantly | GSI sends every 0.1-1s. Claude API calls take 3-10s and cost ~$0.01 each. Would cost $6/hour and create poor UX with constantly shifting recommendations | Rate-limit to max 1 per 2 minutes. Batch events. Only trigger on meaningful state changes |
-| Voice coaching / TTS callouts | Tell me what to buy next via audio | Significant scope expansion. Not core to v2.0 goal | Text-only for v2.0. Voice is v3.0 feature |
+| Feature | Why It Seems Useful | Why Avoid | What to Do Instead |
+|---------|--------------------|-----------|--------------------|
+| Component library extraction (Storybook/design system package) | "We have a design system spec, let's build a proper component library" | Over-engineering for a single-app project with ~30 components. Storybook adds build complexity, maintenance burden, and slows development velocity for zero multi-project benefit | Keep components co-located in src/components/. The DESIGN.md IS the design system documentation. Components follow its rules directly |
+| CSS-in-JS migration (styled-components, Emotion) | "Design tokens should live in JS for type safety" | Tailwind v4 @theme already provides CSS-native design tokens with utility class generation. CSS-in-JS adds runtime overhead, bundle size, and fights Tailwind's compilation model | Continue using Tailwind v4 @theme for tokens. Use CSS custom properties for any dynamic values |
+| Dark/light theme toggle | "Professional apps need theme switching" | DESIGN.md is explicitly dark-only ("infinite obsidian void"). A light theme would require a completely separate color system, contradict the creative direction, and add significant testing surface | Single dark theme. The obsidian aesthetic IS the brand |
+| Redis/Memcached for caching | "In-memory dict won't scale" | This is a single-user desktop app deployed on a personal Unraid server. Total hero count is ~130, total items ~250. A Python dict holds this trivially. Redis adds container complexity and a network hop for no benefit | Module-level Python dict, invalidated on refresh cycle. Total memory: ~200KB |
+| Animated page transitions (Framer Motion / React Spring) | "The editorial design needs cinematic transitions" | Adds 30-50KB bundle, complex animation orchestration, and interferes with the app's primary use case (quick reference during a live game). Users alt-tab to check items -- they need instant rendering, not page transitions | CSS transitions for hover states and panel reveals (already in use). No page-level animation |
+| Micro-frontend architecture for design system | "Isolate the old theme from the new theme during migration" | The app has ~30 components in a single Vite build. Micro-frontends add routing complexity, build pipeline changes, and module federation config for a migration that takes days, not months | Component-by-component migration within the single Vite app. Use a Tailwind v4 @theme swap to toggle all design tokens at once |
+
+## Migration Strategy: Design System Retheme
+
+The DESIGN.md retheme is the largest feature in v3.0. The correct migration approach depends on the codebase structure.
+
+### Why Component-by-Component is WRONG for This Project
+
+Research shows component-by-component migration works best for apps with 200+ components, multi-team ownership, or month-long migration timelines (source: frontendmastery.com). Prismlab has ~30 components, one developer, and a migration that involves swapping CSS custom properties rather than changing frameworks.
+
+### Why Token Swap + Component Pass is RIGHT
+
+**Step 1: Swap @theme tokens in globals.css (1 change, affects everything)**
+
+The current globals.css already uses Tailwind v4 @theme. The migration is:
+- Replace `--color-cyan-accent` with crimson/gold tokens from DESIGN.md
+- Replace `--color-bg-primary/secondary/elevated` with obsidian surface hierarchy
+- Replace `--font-body` (Inter) with Manrope, add `--font-display` (Newsreader)
+- Add surface hierarchy tokens: surface, surface-dim, surface-container-low/high/highest
+- Add the full DESIGN.md color palette as custom properties
+
+After this single file change, every Tailwind utility class referencing these tokens updates globally. This handles ~60% of the visual migration instantly.
+
+**Step 2: Component audit pass (systematic, not incremental)**
+
+Walk through each component and:
+- Replace hardcoded color classes (e.g., `text-cyan-accent` becomes `text-primary`, `bg-bg-secondary` becomes `bg-surface-container-low`)
+- Remove all `rounded-lg` and `rounded` classes (DESIGN.md mandates 0px corners)
+- Remove all `border` classes that create visible borders (DESIGN.md "No-Line Rule")
+- Add Newsreader font to headlines (`font-display`)
+- Add gold-leaf accent strips where appropriate
+
+**Step 3: Add new design elements**
+- Parchment noise texture on body
+- Blood-glass overlays on modals/toasts
+- Ambient glow shadows (crimson tint, 5% opacity, 32px blur)
+- Ghost borders on interactive elements (outline_variant at 15% opacity)
+
+### Font Loading Strategy
+
+Both Newsreader and Manrope are variable fonts on Google Fonts. Variable fonts store all weights in a single file, reducing HTTP requests.
+
+**Recommended approach:**
+1. Self-host via `@fontsource/newsreader` and `@fontsource/manrope` npm packages (eliminates Google Fonts network dependency, critical for Unraid deployment)
+2. Load Newsreader 400/700 weights only (display text: regular + bold)
+3. Load Manrope 400/500/600/700 weights (body text needs more weight range)
+4. Use `font-display: swap` to prevent FOIT (flash of invisible text)
+5. Preload the two main weight files in index.html
+
+Total font payload: ~80KB (both variable font files combined). Acceptable for desktop-first app.
+
+## In-Memory Cache Architecture
+
+### What Gets Cached
+
+| Data | Current Location | Size | Refresh Frequency | Cache Strategy |
+|------|-----------------|------|-------------------|----------------|
+| All heroes (~130) | SQLite Hero table, queried per-request | ~50KB as dicts | Every 6h (refresh pipeline) | Module-level dict[int, Hero], keyed by hero_id |
+| All items (~250) | SQLite Item table, queried per-request | ~100KB as dicts | Every 6h (refresh pipeline) | Module-level dict[int, Item], keyed by item_id |
+| Hero name lookups | RulesEngine._hero_name_to_id etc. | ~10KB | Already cached at startup | Already done -- model for new caches |
+| Matchup data | SQLite MatchupData table | ~50KB per hero pair | On-demand, stale-while-revalidate | KEEP IN SQLITE -- per-pair, large total, on-demand fetching is correct |
+| Item popularity | SQLite HeroItemPopularity table | ~5KB per hero | On-demand, stale-while-revalidate | KEEP IN SQLITE -- per-hero, fetched on-demand |
+
+### Hot Path DB Queries Eliminated
+
+Per recommendation request, the following DB queries are replaced with dict lookups:
+
+1. `context_builder._get_hero()` -- called 1 + N times (player hero + each opponent/ally) -- SELECT Hero WHERE id = ?
+2. `context_builder._build_popularity_section()` -- SELECT all Items (full table scan to build name map)
+3. `context_builder._extract_top_items()` -- SELECT all Items (another full scan for ally build names)
+4. `matchup_service.get_relevant_items()` -- SELECT Items WHERE not recipe, not neutral, cost > 0
+5. `matchup_service.get_neutral_items_by_tier()` -- SELECT Items WHERE is_neutral AND tier IS NOT NULL
+6. `recommender._validate_item_ids()` -- SELECT Item.id, Item.cost, Item.internal_name (full scan)
+7. `heroes.list_heroes()` -- SELECT all Heroes ordered by name (frontend hero picker)
+8. `items.list_items()` -- SELECT all Items ordered by name (frontend API)
+
+Queries 1-6 fire on every `/api/recommend` call. With auto-refresh during live games (every 2 min), that is 6-8 SQLite queries that could be pure Python dict lookups.
+
+### Implementation Pattern
+
+```python
+# data/cache.py -- new module
+class DataCache:
+    """In-memory cache for hero and item data. Loaded at startup, refreshed on pipeline cycle."""
+
+    def __init__(self):
+        self._heroes: dict[int, Hero] = {}
+        self._items: dict[int, Item] = {}
+        self._items_by_name: dict[str, Item] = {}
+        self._loaded = False
+
+    async def load(self, session: AsyncSession):
+        """Load all heroes and items from DB into memory."""
+        ...
+
+    def get_hero(self, hero_id: int) -> Hero | None: ...
+    def get_item(self, item_id: int) -> Item | None: ...
+    def all_heroes(self) -> list[Hero]: ...
+    def all_items(self) -> list[Item]: ...
+    def relevant_items(self, role: int) -> list[dict]: ...
+    def neutral_items_by_tier(self) -> dict[int, list[dict]]: ...
+
+# Singleton
+data_cache = DataCache()
+```
+
+Load in lifespan after seed_if_empty(). Reload after refresh_all_data(). Pass to ContextBuilder, Recommender, routes via dependency injection or direct import.
+
+## Store Subscription Consolidation
+
+### Current Problem
+
+```
+App.tsx
+  useGsiSync(heroes)      -> subscribes to gsiStore (1 subscription)
+  useAutoRefresh()         -> subscribes to gsiStore (1 subscription)
+                           -> subscribes to recommendationStore (1 subscription)
+                           -> runs 1Hz setInterval
+```
+
+Both hooks subscribe to gsiStore independently. On every GSI tick (1Hz):
+- useGsiSync fires: checks hero detection, checks item matching
+- useAutoRefresh fires: checks game events, checks lane detection, checks cooldown
+
+Both read from gameStore and recommendationStore inside their callbacks, creating implicit cross-store dependencies.
+
+### Consolidated Design
+
+```
+App.tsx
+  useGsiOrchestrator(heroes) -> single gsiStore subscription (1 subscription)
+                              -> single recommendationStore subscription (1 subscription)
+                              -> single 1Hz setInterval
+```
+
+Single subscription callback handles:
+1. Hero auto-detection (from useGsiSync)
+2. Item auto-marking (from useGsiSync)
+3. Playstyle auto-suggestion (NEW -- from v3.0 feature)
+4. Lane result auto-detection (from useAutoRefresh)
+5. Event trigger detection (from useAutoRefresh)
+6. Cooldown management (from useAutoRefresh)
+
+Benefits:
+- One subscription instead of two -- halves the callback overhead per tick
+- Single data flow path -- easier to debug
+- Natural place to add playstyle auto-suggest without a third subscription
+- The recommendationStore subscription (for manual recommend cooldown tracking) stays separate since it triggers on a different store
+
+### Playstyle Auto-Suggest Integration
+
+When GSI detects a hero and infers a role, the consolidated hook also sets playstyle:
+
+```typescript
+// Inside the hero detection block:
+if (role !== null) {
+  useGameStore.getState().setRole(role);
+  // Auto-suggest first playstyle for this role
+  const defaultPlaystyle = PLAYSTYLE_OPTIONS[role]?.[0];
+  if (defaultPlaystyle) {
+    useGameStore.getState().setPlaystyle(defaultPlaystyle);
+  }
+}
+```
+
+This is 3 lines of code but eliminates a manual step during live games.
+
+## Screenshot KDA Feed-Through
+
+### Current State
+
+The screenshot parser extracts KDA and level per enemy hero (ParsedHero.kills/deaths/assists/level). The confirmation UI displays these values. When the user clicks "Apply," the items are written to gameStore.enemyItemsSpotted. But KDA/level data is discarded.
+
+### Required Changes
+
+1. **RecommendRequest schema** -- add optional `enemy_hero_stats` field:
+   ```python
+   enemy_hero_stats: list[dict] | None = None
+   # e.g. [{"hero_name": "Anti-Mage", "kills": 8, "deaths": 1, "assists": 3, "level": 16}]
+   ```
+
+2. **gameStore** -- add `enemyHeroStats` field and `setEnemyHeroStats` action
+
+3. **ScreenshotParser "Apply" action** -- write parsed hero stats to gameStore.enemyHeroStats
+
+4. **context_builder** -- build "Enemy Status" section when enemy_hero_stats is present:
+   ```
+   ## Enemy Status (from scoreboard)
+   - Anti-Mage: 8/1/3, Level 16 (snowballing, high farm priority)
+   - Lion: 2/5/7, Level 11 (behind, likely limited to support items)
+   ```
+
+5. **useRecommendation + useAutoRefresh** -- include enemyHeroStats in request payload
+
+### Impact on Recommendations
+
+This gives Claude significantly more context. Current prompt only knows "enemy has BKB." With KDA data, Claude can reason about:
+- Snowballing enemies (high K/low D) -> prioritize defensive items
+- Feeding enemies (low K/high D) -> can afford greedier build
+- Level disparity -> timing window analysis
+- Enemy team's economic state -> predict what items they can afford
 
 ## Feature Dependencies
 
-\`\`\`
-[GSI Endpoint (backend)]
-    +-- requires --> [GSI Config File Setup (user action)]
-    +-- enables --> [WebSocket Push to Frontend]
-    |                   +-- enables --> [GSI Connection Status Indicator]
-    |                   +-- enables --> [Real-time Gold/Item Display]
-    |                   +-- enables --> [Auto Game Phase Progression]
-    +-- enables --> [Auto-detect Own Hero]
-    |                   +-- enables --> [Draft Auto-detection]
-    |                                       +-- enables --> [Auto-fill Allies/Opponents]
-    +-- enables --> [Auto-detect Own Items]
-    |                   +-- enables --> [Auto-mark Purchased Items]
-    |                   +-- enables --> [Gold Progress Bar]
-    |                   +-- enables --> [Auto-refresh on Key Events]
-    |                                       +-- requires --> [Rate Limiter (2-min cooldown)]
-    +-- enables --> [Auto-track Gold/Net Worth]
-    |                   +-- enables --> [Auto-determine Lane Result]
-    +-- enables --> [Game Clock Sync]
-                        +-- enables --> [Auto Game Phase Progression]
-                        +-- enables --> [Auto-determine Lane Result (at 10 min)]
+```
+@theme Token Swap (globals.css)
+    |
+    v
+Component Audit Pass (all ~30 components)
+    |
+    +-- Parchment Texture (CSS-only, on body)
+    +-- Blood-Glass Overlays (CSS-only, on modals)
+    +-- Gold-Leaf Accent Strips (CSS-only, on cards)
+    +-- Ambient Glow Shadows (CSS-only, on floats)
+    +-- 0px Corner Enforcement (remove all rounded-*)
+    +-- Newsreader/Manrope Font Integration (npm + CSS)
 
-[Screenshot Parsing (Claude Vision)]
-    +-- requires --> [Paste/Upload UI Component]
-    +-- requires --> [Claude Vision API Integration (backend)]
-    +-- requires --> [Item Name Mapping (console name -> DB)]
-    +-- enables --> [Auto-fill Enemy Items Spotted]
-    +-- independent of GSI (works without GSI enabled)
+In-Memory Data Cache (data/cache.py)
+    |
+    +-- Replace context_builder DB queries
+    +-- Replace recommender._validate_item_ids DB query
+    +-- Replace heroes.list_heroes DB query
+    +-- Replace items.list_items DB query
+    +-- Replace matchup_service helper DB queries
+    +-- Wire into lifespan startup + refresh pipeline
 
-[Existing Manual Controls]
-    +-- remain as fallback for everything GSI automates
-    +-- user can override any auto-detected value
-\`\`\`
+Store Consolidation (useGsiOrchestrator)
+    |
+    +-- Merge useGsiSync logic
+    +-- Merge useAutoRefresh logic
+    +-- Add playstyle auto-suggest (NEW)
+    |
+    +-- TriggerEvent type dedup (prerequisite cleanup)
 
-### Dependency Notes
+Screenshot KDA Feed-Through
+    |
+    +-- RecommendRequest schema update (backend)
+    +-- gameStore field addition (frontend)
+    +-- ScreenshotParser Apply action update (frontend)
+    +-- context_builder Enemy Status section (backend)
+    +-- useRecommendation payload update (frontend)
+```
 
-- **GSI Endpoint requires GSI Config File:** User must place a .cfg file in their Dota 2 installation directory and add -gamestateintegration to launch options.
-- **WebSocket requires GSI Endpoint:** WebSocket only has data to push if GSI is actively sending. Connect on page load but display no-game-data until GSI connects.
-- **Screenshot Parsing is independent of GSI:** Even without GSI, users can paste screenshots. Standalone feature feeding enemyItemsSpotted.
-- **Auto-refresh requires Rate Limiter:** 2-minute cooldown is a hard requirement to avoid Claude API cost explosion.
-- **Draft Auto-detection has data limitations:** Player mode may not expose all enemy picks. Handle partial data gracefully, allow manual overrides.
-- **Auto-determine Lane Result requires Gold Baseline:** Need role+hero-specific GPM benchmarks at 10 minutes from OpenDota.
+Note: The design retheme and in-memory cache are fully independent workstreams. They can be developed in parallel. Store consolidation depends on TriggerEvent dedup (trivial prerequisite). Screenshot KDA requires both frontend and backend changes but has no dependency on other v3.0 features.
 
-## MVP Definition
+## MVP Recommendation
 
-### Launch With (v2.0 Core)
+### Must-ship (defines the milestone):
+1. **@theme token swap + component audit** -- This IS v3.0. Ship the design system or the milestone has no identity.
+2. **In-memory data cache** -- Eliminates 6-8 unnecessary DB queries per recommendation. Measurable perf win during live games.
+3. **Store consolidation** -- Architectural cleanup that makes the playstyle auto-suggest possible and halves subscription overhead.
 
-- [ ] GSI endpoint (/api/gsi) receiving and parsing Dota 2 game state -- foundation for everything
-- [ ] GSI config file generation/instructions -- user must be able to set this up easily
-- [ ] WebSocket endpoint (/ws/game-state) pushing processed game state to frontend
-- [ ] Frontend WebSocket hook with reconnection -- receives and applies game state updates to Zustand stores
-- [ ] GSI connection status indicator in header
-- [ ] Auto-detect own hero from GSI -- eliminates first manual step
-- [ ] Auto-detect own items and auto-mark purchased -- biggest time-saver during live games
-- [ ] Auto-track gold/net worth -- enables gold progress toward next item
-- [ ] Game clock sync and auto-phase progression -- removes manual phase management
-- [ ] Screenshot paste for enemy items via Claude Vision -- killer feature for enemy intel
-- [ ] Manual controls remain as overrides and fallbacks -- nothing breaks if GSI is not enabled
+### Should-ship (high value, low cost):
+4. **TriggerEvent dedup** -- One-line fix. No reason to defer.
+5. **refresh_lookups session safety** -- Two-line fix. No reason to defer.
+6. **Playstyle auto-suggest** -- Three lines inside the consolidated hook. Huge UX win during live games.
+7. **Parchment texture + blood-glass overlays** -- CSS-only. Elevates the design from "dark theme" to "editorial artifact."
 
-### Add After Validation (v2.x)
+### Can-defer (higher complexity, lower urgency):
+8. **Screenshot KDA feed-through** -- Useful but requires schema changes across the stack. Can ship in a point release.
 
-- [ ] Auto-determine lane result from gold data at 10 min -- requires tuning benchmarks
-- [ ] Gold progress bar toward next recommended item with component breakdown
-- [ ] Auto-refresh recommendations on key events with 2-min rate limit
-- [ ] Draft auto-detection from GSI draft data -- complex due to player-mode limitations
+## Complexity Estimates
 
-### Future Consideration (v3+)
+| Feature | Frontend LOC | Backend LOC | Test LOC | Risk |
+|---------|-------------|-------------|----------|------|
+| @theme token swap | ~30 (globals.css) | 0 | 0 | LOW -- single file change |
+| Component audit pass | ~400 (class changes across 30 files) | 0 | ~50 (snapshot updates) | MEDIUM -- tedious but mechanical |
+| Font integration | ~20 (CSS + npm) | 0 | 0 | LOW |
+| Parchment texture | ~10 (CSS) | 0 | 0 | LOW |
+| Blood-glass overlays | ~30 (CSS on 4 components) | 0 | 0 | LOW |
+| In-memory data cache | 0 | ~150 (new module + wiring) | ~80 | MEDIUM -- must verify cache invalidation works |
+| Store consolidation | ~200 (merge 2 hooks) | 0 | ~100 (migrate existing tests) | MEDIUM -- complex logic merge |
+| TriggerEvent dedup | ~5 | 0 | 0 | TRIVIAL |
+| Session safety fix | 0 | ~10 | ~20 | LOW |
+| Playstyle auto-suggest | ~10 | 0 | ~30 | LOW |
+| Screenshot KDA feed | ~50 | ~60 | ~80 | MEDIUM -- cross-stack schema change |
 
-- [ ] Docker networking optimization for remote Dota clients
-- [ ] Multiple simultaneous game tracking -- party/coaching mode
-- [ ] Voice coaching / TTS callouts for item timing reminders
-- [ ] Hotkey-triggered screenshot capture (OS-level integration)
-- [ ] Match history saving with GSI game data for post-game review
-
-## Feature Prioritization Matrix
-
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| GSI endpoint + config setup | HIGH | MEDIUM | P1 |
-| WebSocket push to frontend | HIGH | MEDIUM | P1 |
-| GSI connection status indicator | MEDIUM | LOW | P1 |
-| Auto-detect own hero | HIGH | LOW | P1 |
-| Auto-detect own items / auto-mark purchased | HIGH | LOW | P1 |
-| Auto-track gold/net worth | HIGH | LOW | P1 |
-| Game clock sync + auto-phase progression | MEDIUM | LOW | P1 |
-| Screenshot parsing for enemy items (Claude Vision) | HIGH | HIGH | P1 |
-| Manual controls remain as fallback | HIGH | LOW | P1 |
-| Auto-determine lane result | MEDIUM | MEDIUM | P2 |
-| Gold progress bar toward next item | MEDIUM | LOW | P2 |
-| Auto-refresh on key events | HIGH | HIGH | P2 |
-| Draft auto-detection | MEDIUM | HIGH | P2 |
-| Docker networking for remote Dota | LOW | MEDIUM | P3 |
-| Voice coaching | LOW | HIGH | P3 |
-
-## Competitor Feature Analysis
-
-| Feature | Dotabuff App | Dota Plus (Valve) | Prismlab v2.0 |
-|---------|-------------|-------------------|---------------|
-| GSI data integration | Yes -- reads hero, items, gold | Yes -- native integration | Yes -- same GSI mechanism |
-| Item suggestions | Static builds from win-rate data | Three suggested builds, lane-specific | Hybrid engine: rules + Claude reasoning with per-item matchup explanations |
-| Gold progress tracking | Shows gold toward next item | Shows item completion progress | Gold progress + component breakdown + reliable/unreliable split |
-| Enemy item detection | No | No -- in-game only (Tab screen) | Claude Vision screenshot parsing -- unique differentiator |
-| Natural language reasoning | No -- data only | No -- percentages only | Yes -- contextual explanations referencing hero abilities and matchup dynamics |
-| Adaptive re-evaluation | Limited -- adjusts to draft | Adjusts to purchased items | Full re-evaluation with lane result, damage profile, enemy items, gold state |
-| Lane result detection | Post-game analytics only | No | Auto-detect at 10 min from gold data |
-| Setup friction | Desktop app install + Steam login | Built into game client | Config file in Dota folder + launch option flag + open web app |
-
-**Key competitive insight:** Dotabuff App and Dota Plus provide data-driven suggestions but neither explains why. Prismlab differentiator is the hybrid reasoning engine. GSI integration means the reasoning engine gets better inputs automatically. Screenshot parsing for enemy items is genuinely unique.
-
-## GSI Technical Details (Research Findings)
-
-### What GSI Exposes in Player Mode
-
-When playing (not spectating), Dota 2 GSI exposes ONLY the local player data.
-
-**Available to players (HIGH confidence -- verified across multiple GSI libraries):**
-- hero.name -- own hero, console format (e.g., npc_dota_hero_antimage)
-- hero.level, hero.health, hero.max_health, hero.mana, hero.max_mana
-- hero.alive, hero.respawn_seconds, hero.buyback_cost, hero.buyback_cooldown
-- hero.xpos, hero.ypos -- map coordinates (usable for lane detection)
-- player.gold, player.gold_reliable, player.gold_unreliable
-- player.gpm, player.xpm, player.net_worth
-- player.kills, player.deaths, player.assists, player.last_hits, player.denies
-- items.slot0-slot5.name, items.stash0-stash5.name, items.backpack0-backpack2.name
-- items.slot0-slot5.cooldown, items.slot0-slot5.charges
-- abilities.ability0-abilityN.name, level, cooldown
-- map.clock_time, map.game_time, map.daytime, map.game_state, map.matchid
-
-**NOT available to players (anti-cheat restriction):**
-- Other players hero data, items, gold, position
-- Enemy team draft picks (only revealed picks visible during pick phase)
-- Building health for enemy structures (unconfirmed)
-
-**Game state values (HIGH confidence):**
-- DOTA_GAMERULES_STATE_WAIT_FOR_PLAYERS_TO_LOAD
-- DOTA_GAMERULES_STATE_HERO_SELECTION
-- DOTA_GAMERULES_STATE_STRATEGY_TIME
-- DOTA_GAMERULES_STATE_PRE_GAME
-- DOTA_GAMERULES_STATE_GAME_IN_PROGRESS
-- DOTA_GAMERULES_STATE_POST_GAME
-
-### GSI Configuration
-
-\`\`\`
-"prismlab Configuration"
-{
-    "uri"           "http://localhost:8420/api/gsi"
-    "timeout"       "5.0"
-    "buffer"        "0.5"
-    "throttle"      "1.0"
-    "heartbeat"     "30.0"
-    "data"
-    {
-        "provider"      "1"
-        "map"           "1"
-        "player"        "1"
-        "hero"          "1"
-        "abilities"     "1"
-        "items"         "1"
-        "draft"         "1"
-    }
-    "auth"
-    {
-        "token"         "prismlab_gsi_token"
-    }
-}
-\`\`\`
-
-**Key settings:** buffer 0.5 (aggregate events over 0.5s), throttle 1.0 (max 1 update/sec), heartbeat 30.0 (ping every 30s when idle).
-
-### Docker Networking
-
-Dota 2 runs on the gaming PC. Prismlab runs in Docker on Unraid. The GSI config uri must point to the Unraid server IP, not localhost:
-- Config file URI: http://UNRAID_IP:8420/api/gsi
-- Backend must accept POSTs from external IPs
-- CORS/firewall must allow Dota client to reach the backend
-
-### VAC Safety
-
-GSI is Valve official API. It does NOT read game memory, inject code, or interact with the game process. Multiple community applications (Dotabuff App, Overwolf apps, casting overlays) use GSI without VAC issues. The -gamestateintegration launch option is officially supported. **Using GSI is safe.** (MEDIUM confidence -- no explicit Valve statement, but wide community usage without bans is strong evidence.)
-
-## Screenshot Parsing Technical Details
-
-### Claude Vision API for Enemy Items
-
-**Approach:** User opens scoreboard (Tab key), takes screenshot (PrtScn or Win+Shift+S), pastes into Prismlab. Backend sends base64 image to Claude Vision API with structured output request.
-
-**Cost:** ~1600 tokens per 1MP image at $3/M input tokens = ~$0.005 per parse. Negligible.
-
-**Accuracy considerations (MEDIUM confidence):**
-- Dota 2 scoreboard item icons are ~32x32 pixels in a 1920x1080 screenshot
-- Claude Vision accuracy diminishes with small icons and dense layouts
-- Mitigation: crop scoreboard region, provide reference list of valid item names, use structured output
-- Scoreboard layout is consistent (same structure every game), aiding reliable extraction
-
-**Extraction strategy:**
-- Include reference list of all valid Dota 2 item names from items DB
-- Ask Claude to identify each enemy hero items by scoreboard row
-- Structured output schema: {heroes: [{name: string, items: string[]}]}
-- Validate returned item names against DB before applying
-
-**Limitations:**
-- Items in backpack/stash not visible in scoreboard
-- Screenshot must be clear and unobstructed
-- Works best at 1080p+ resolution
-- Captures a moment in time only
-
-**Recommendation: Use Claude Vision over template matching.** Cost is negligible, accuracy is sufficient, and it leverages existing API integration. Template matching (OpenCV) breaks on patch icon changes and resolution variations.
-
-## Lane Result Auto-Detection Algorithm
-
-Use GPM at the 10-minute mark vs role-specific benchmarks from OpenDota.
-
-| Role | Won Lane GPM | Even Lane GPM | Lost Lane GPM |
-|------|-------------|---------------|---------------|
-| Pos 1 (Carry) | >550 | 400-550 | below 400 |
-| Pos 2 (Mid) | >550 | 400-550 | below 400 |
-| Pos 3 (Offlane) | >450 | 300-450 | below 300 |
-| Pos 4 (Soft Support) | >300 | 200-300 | below 200 |
-| Pos 5 (Hard Support) | >250 | 150-250 | below 150 |
-
-**Why GPM not net worth:** Net worth includes starting gold, less normalized. GPM at 10 min reflects actual farm efficiency.
-
-**Implementation:** Record gold at game start. At map.clock_time >= 600, calculate GPM. Compare against thresholds. Auto-set laneResult. Trigger re-evaluation if cooldown permits. User can always override.
+**Total estimated:** ~750 frontend LOC, ~220 backend LOC, ~360 test LOC.
 
 ## Sources
 
-### GSI Documentation and Libraries
-- [Dota2GSI C# Library](https://github.com/antonpup/Dota2GSI) -- most comprehensive field docs
-- [dota2-gsi Node.js Library](https://github.com/xzion/dota2-gsi) -- event-driven interface
-- [dota2gsipy Python Library](https://github.com/Daniel-EST/dota2gsipy) -- Python implementation
-- [dota2-gsi JVM Library](https://mrbean355.github.io/dota2-gsi/) -- typed data model
-- [GSI Intro](https://auo.nu/posts/game-state-integration-intro/) -- configuration walkthrough
+### Design System Migration
+- [Tailwind CSS v4 Migration Best Practices (2026)](https://www.digitalapplied.com/blog/tailwind-css-v4-2026-migration-best-practices)
+- [Tailwind CSS v4 Theme Variables (Official Docs)](https://tailwindcss.com/docs/theme)
+- [Design Tokens in Tailwind v4 + CSS Variables (2026)](https://www.maviklabs.com/blog/design-tokens-tailwind-v4-2026)
+- [Frontend Migration Guide](https://frontendmastery.com/posts/frontend-migration-guide/)
+- [Tailwind CSS v4.0 Announcement](https://tailwindcss.com/blog/tailwindcss-v4)
 
-### Claude Vision API
-- [Claude Vision Documentation](https://platform.claude.com/docs/en/build-with-claude/vision) -- official
-- [Claude Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+### Font Loading
+- [Newsreader on Google Fonts](https://fonts.google.com/specimen/Newsreader)
+- [Manrope on Google Fonts](https://fonts.google.com/specimen/Manrope)
+- [@fontsource/newsreader on npm](https://www.npmjs.com/package/@fontsource/newsreader)
 
-### Competitor Analysis
-- [Dotabuff App Adaptive Items](https://www.dotabuff.com/blog/2021-06-23-announcing-the-dotabuff-apps-new-adaptive-items-module)
-- [Dota Plus](https://www.dota2.com/plus)
+### Caching Patterns
+- [FastAPI Application Events & Startup Logic](https://www.fastapiinteractive.com/fastapi-advanced-patterns/09-events-and-signals/theory)
+- [FastAPI Response Caching Patterns](https://www.fastapiinteractive.com/fastapi-advanced-patterns/07-caching-patterns)
 
-### WebSocket Patterns
-- [FastAPI WebSocket Docs](https://fastapi.tiangolo.com/advanced/websockets/)
-
-### Game Analytics
-- [STRATZ Lane Outcomes](https://stratz.com/knowledge-base/General/How%20are%20lane%20outcomes%20calculated)
-- [Dotabuff Laning Analysis](https://www.dotabuff.com/blog/2017-10-09-analyze-your-laning-stage)
-
----
-*Feature research for: Dota 2 Live Game Intelligence (v2.0)*
-*Researched: 2026-03-23*
+### Zustand Store Patterns
+- [Working with Zustand (TkDodo)](https://tkdodo.eu/blog/working-with-zustand)
+- [Zustand Architecture Patterns at Scale](https://brainhub.eu/library/zustand-architecture-patterns-at-scale)
+- [Cross-Store Reactivity Discussion (#1586)](https://github.com/pmndrs/zustand/discussions/1586)
+- [Multiple Stores vs Single Store Discussion (#2496)](https://github.com/pmndrs/zustand/discussions/2496)

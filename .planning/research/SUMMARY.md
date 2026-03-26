@@ -1,218 +1,156 @@
 # Project Research Summary
 
-**Project:** Prismlab v2.0 - Live Game Intelligence
-**Domain:** Real-time Dota 2 game state integration (GSI, WebSocket, Claude Vision, auto-recommendation)
-**Researched:** 2026-03-23
+**Project:** Prismlab v3.0 — Design Overhaul & Performance
+**Domain:** Design system migration, in-memory caching, store/hook consolidation, integration gap fixes
+**Researched:** 2026-03-26
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Prismlab v2.0 adds live game intelligence to the existing hybrid recommendation engine. The core mechanism is Dota 2's Game State Integration (GSI) -- a first-party Valve feature where the game client sends HTTP POST requests with structured JSON to a configured URI at configurable intervals. This is VAC-safe, well-documented, and used by every major Dota 2 companion tool (Dotabuff App, Overwolf, Dota Plus). The stack additions are minimal: only 2 new Python packages (pillow, python-multipart) and zero new frontend packages, built entirely on top of the existing FastAPI + React 19 + Zustand + anthropic SDK stack. The recommended build order is: GSI receiver + WebSocket pipeline first (proves the real-time data flow end-to-end), then frontend integration, then auto-refresh logic, then screenshot parsing for enemy items.
+Prismlab v3.0 is a focused overhaul of an existing, shipping Dota 2 item advisor. It replaces the "spectral cyan" design language with a "Tactical Relic Editorial" aesthetic: obsidian surfaces, crimson/gold accents, Newsreader serif display type, Manrope body text, and 0px sharp corners throughout. Research confirms this is entirely achievable within the existing stack (React 19, Vite 8, Tailwind v4.2, FastAPI, SQLite) with zero net new dependencies. Two npm font packages are swapped and no backend packages are added. The `@theme` block in `globals.css` is the single highest-leverage file in the migration — rewriting it propagates the design change to every component simultaneously, after which a systematic component sweep replaces old class names with new ones across roughly 30 components.
 
-The single most important architectural constraint in this research: GSI in player mode (non-spectator) exposes ONLY your own hero data -- gold, items, level, KDA, game clock. Enemy items, enemy heroes, and allied hero data are explicitly blocked by Valve to prevent cheating. This drives the entire v2.0 architecture. Two separate data pipelines must exist: GSI for player data (automated), and Claude Vision screenshot parsing for enemy items (manual trigger). Any architecture that conflates these two sources will produce state management conflicts that cannot be fixed without a full refactor. This constraint must be understood before any code is written.
+The two performance work items are equally well-scoped. The backend currently makes 12-20 SQLite queries per recommendation request for hero and item data that only changes every 6 hours. A Python dict singleton (`DataCache`) loaded at startup eliminates those to 1-5 queries per request, with atomic reload after each pipeline cycle. On the frontend, two hooks (`useGsiSync` and `useAutoRefresh`) independently subscribe to `gsiStore` on every 1Hz GSI tick. Merging them into a single `useGameIntelligence` hook halves subscription overhead, enforces correct ordering (hero is set before event detection checks for it), and provides the natural insertion point for the new playstyle auto-suggest feature.
 
-The differentiator for Prismlab v2.0 over competitors is the combination of automated GSI state feeding into the existing hybrid reasoning engine, plus Claude Vision enemy item parsing from scoreboard screenshots. Dotabuff App provides data-driven suggestions but no natural language reasoning and no enemy item parsing. Dota Plus provides in-client suggestions but no adaptive reasoning engine. Neither competitor explains the reasoning behind their recommendations. Prismlab's unique position -- real-time game data plus AI reasoning that sounds like an 8K+ MMR coach -- is preserved and strengthened in v2.0.
+The primary execution risk is sequencing. The design migration touches every component file, the store consolidation touches all hooks and top-level `App.tsx`, and doing both simultaneously creates unmergeable diffs and undiagnosable regressions. Research is emphatic: finish behavioral changes (tech debt, store consolidation) before any visual migration begins. Cache work is backend-only and can run independently. The most dangerous technical pitfalls are stale-cache coherence after pipeline refresh — three cache layers must invalidate in the right order — and cross-store write cycles during hook consolidation, where Zustand's synchronous subscribe API can cascade if a subscription callback writes back to a subscribed store.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing validated stack (React 19 + Vite 8 + Tailwind v4 + Zustand 5, Python 3.13 + FastAPI + SQLAlchemy + SQLite, Claude Sonnet 4.6, anthropic SDK v0.86) requires minimal additions for v2.0. FastAPI's built-in WebSocket support is already available via uvicorn[standard] which is already installed. The anthropic SDK v0.86 already supports Claude Vision image content blocks with no upgrade needed. Only two new Python packages are required. The research explicitly rejects all third-party GSI libraries (dota2gsipy, dota2gsi -- both abandoned, conflict with FastAPI), react-use-websocket (uncertain React 19 compatibility, unmaintained since 2023), and python-socketio/socket.io-client (unnecessary abstraction). All WebSocket work uses a custom ~60-line useGSI hook with the browser native WebSocket API.
+The existing stack requires no structural changes. The two font packages (`@fontsource/inter`, `@fontsource/jetbrains-mono`) are replaced with variable-font equivalents (`@fontsource-variable/newsreader`, `@fontsource-variable/manrope`). Variable fonts serve all weights from a single file, reducing the current 6 font CSS imports to 2 and gaining the `opsz` optical sizing axis required for Newsreader at display scale. Every other design system requirement — surface hierarchy, ambient glow shadows, backdrop blur, noise texture, ghost borders, 0px radius — maps directly to existing Tailwind v4 capabilities and requires only `@theme` configuration values, not new tooling.
 
-**Core technologies (new additions only):**
-- FastAPI POST endpoint (custom): Receives Dota 2 GSI HTTP POST payloads -- no new dependency
-- Pydantic GSIPayload models (custom): Validates and types the deeply nested GSI JSON -- no new dependency
-- FastAPI WebSocket (built-in): Pushes GSI state to frontend in real-time -- already included via uvicorn[standard]
-- Custom useGSI hook: Browser native WebSocket API wrapped in a React hook -- zero new npm packages
-- pillow>=12.1.0: Resizes screenshots before Vision API calls, reduces token cost ~40% -- NEW package
-- python-multipart>=0.0.20: Required by FastAPI for UploadFile endpoints -- NEW package
-- Claude Vision (existing SDK): Extracts enemy item data from scoreboard screenshots -- no upgrade needed
+The backend data cache uses Python's stdlib `dict` as a module-level singleton. This is the correct tool: single-process uvicorn, approximately 2MB of data, atomic refresh on a 6-hour schedule, and no need for per-key TTL eviction. Redis, `cachetools`, and `fastapi-cache` are all explicitly ruled out as over-engineering for this use case. The pattern is already proven twice in this codebase (`RulesEngine` lookup dicts and `ResponseCache`). Zustand's `.subscribe()` API for hook consolidation requires no new packages — the existing stores stay separate per Zustand's recommended separation of concerns, and only the subscription hooks collapse.
 
-**Total new dependencies: 2 Python packages. Zero frontend packages.**
+**Core technologies (v3.0 changes only):**
+- `@fontsource-variable/newsreader` v5.2.10: Display/headline font — variable font with `opsz` axis, single file replaces multiple weight imports
+- `@fontsource-variable/manrope` v5.2.8: Body/label/stat font — replaces Inter + JetBrains Mono, supports `tnum` feature setting for stat displays
+- Tailwind v4.2 `@theme` block: All design tokens (surfaces, accents, shadows, typography, radius reset) — already in use, values and token names swapped
+- Python stdlib `dict` singleton (`DataCache`): In-memory hero/item data cache — eliminates 8+ DB queries per recommendation request, zero new pip packages
+- Zustand v5 `.subscribe()`: Single consolidated hook subscription — no new API, behavioral refactor only
+
 ### Expected Features
 
-**Must have (table stakes -- every GSI tool does these):**
-- GSI endpoint receiving and parsing Dota 2 game state -- foundational for all v2.0 features
-- Auto-detect own hero from GSI during pre-game -- eliminates first manual step
-- Auto-detect own items and auto-mark purchased -- biggest friction reduction in live games
-- Auto-track gold and net worth in real-time -- enables gold progress bar toward next item
-- Game clock sync and automatic phase progression -- removes manual phase management
-- WebSocket push to frontend with reconnection logic -- required for sub-second updates
-- GSI connection status indicator -- users must know if the game client is connected
-- Manual controls remain as fallbacks and overrides -- progressive enhancement, not replacement
+**Must have (table stakes — defines the milestone):**
+- "Tactical Relic Editorial" full retheme — incomplete migration leaves a visual Frankenstein; all ~30 components must be updated; `@theme` token swap in `globals.css` handles ~60% of the visual change instantly
+- In-memory hero/item data cache — eliminates 6-8 unnecessary SQLite queries per recommendation; measurable latency reduction during live games with 2-minute auto-refresh cycling
+- Store subscription consolidation (`useGsiSync` + `useAutoRefresh` -> `useGameIntelligence`) — halves 1Hz GSI subscription overhead and fixes a latent ordering bug where auto-refresh can fire before hero detection completes
 
-**Should have (Prismlab differentiators):**
-- Screenshot parsing for enemy items via Claude Vision -- leverages existing API, no competitor does this
-- Auto-determine lane result from gold data at the 10-minute mark with confirmation prompt
-- Gold progress bar toward next recommended item with component cost breakdown
-- Auto-refresh recommendations on key game events with hard 2-minute rate limit
-- Draft auto-detection from GSI draft data during hero selection (partial -- player mode limits visibility)
+**Should have (high value, low implementation cost):**
+- TriggerEvent type deduplication — identical interface defined in two files; one-line fix, an active maintenance hazard if deferred
+- `refresh_lookups()` session safety fix — using the same SQLAlchemy AsyncSession for upsert and lookup reload violates the "AsyncSession per task" contract; two-line fix
+- Playstyle auto-suggest on GSI hero+role detection — three lines inside the consolidated hook; removes a mandatory manual step during live games
+- Parchment noise texture and blood-glass overlays — CSS-only additions; elevates the aesthetic from dark theme to the intended editorial artifact
 
-**Defer (v2.x or v3+):**
-- Auto-refresh recommendations in v2.x after validation and threshold tuning
-- Multiple simultaneous game tracking (party/coaching mode)
-- Voice coaching and TTS callouts
-- Hotkey-triggered screenshot capture requiring OS-level hooks
-- Clipboard monitoring for auto-capture (VAC risk concern)
-- Docker networking optimization for remote Dota clients
+**Defer to v3.x point release:**
+- Screenshot KDA feed-through — feeds parsed enemy KDA/level into Claude context for snowball/deficit itemization reasoning; requires coordinated schema changes across `RecommendRequest`, `gameStore`, `ScreenshotParser`, and `context_builder`; high value but disproportionate coordination cost to include in the same release as the design overhaul
 
 ### Architecture Approach
 
-The v2.0 architecture extends the existing system with four new backend components (GSIListener, ConnectionManager, VisionEngine, AutoRefreshManager) and three new frontend components (useGSI hook, ScreenshotUpload, GSIStatus) while leaving the existing HybridRecommender, LLMEngine, recommendationStore, and all existing routes completely unchanged. The design principle is progressive enhancement: if GSI is not connected, the app functions exactly as v1.1 with manual inputs. The Zustand gameStore is extended with GSI-sourced fields; every auto-detectable field gets a source property (gsi | manual | screenshot) to prevent conflicts between input modes. This source-tracking requirement is architectural -- it must be built in Phase 1, not retrofitted.
-
-Nginx must be updated with WebSocket proxy headers (proxy_http_version 1.1, Upgrade, Connection, proxy_read_timeout 3600s) and a new /gsi location. No changes to docker-compose.yml are needed since GSI traffic uses the existing backend port (8420). The GSI config file pointing to the Unraid server LAN IP (not localhost) must be generated and downloadable from the setup UI.
+The three main work streams are structurally independent and can be sequenced without merge conflicts, provided behavioral changes (store consolidation, tech debt) are completed before the design migration sweep. Cache work is entirely backend and can be reviewed independently from any frontend work. The design migration is frontend-only (one CSS file plus ~30 component class updates). The store consolidation is hooks and stores only, with no component class changes involved. This independence is the central scheduling insight for the roadmap.
 
 **Major components:**
-1. GSIListener -- Receives Dota 2 HTTP POST every 0.5s, parses with Pydantic, detects state change events, returns HTTP 200 immediately before any async processing
-2. ConnectionManager -- In-memory WebSocket manager, broadcasts compact ~200-byte GSI state to all connected frontends; no Redis needed for single-user deployment
-3. VisionEngine -- Accepts base64 screenshot, preprocesses with Pillow (crop + resize), calls Claude Vision API with structured output, returns validated enemy item list; separate from LLMEngine
-4. AutoRefreshManager -- Hard 2-minute cooldown between Claude API calls, event-based triggers only (phase_change, death, major_purchase, lane_result_detected)
-5. useGSI hook -- Browser native WebSocket with exponential backoff reconnection, dispatches typed messages to gameStore; replaces manual input for all GSI-available fields
-6. ScreenshotUpload -- Single paste action (Ctrl+V), immediate preprocessing, calls /api/parse-screenshot, shows parsed results for user confirmation before affecting recommendations
+1. `globals.css @theme block` — single source of truth for all design tokens; rewriting it propagates the full visual change globally; the most leveraged file in v3.0
+2. `DataCache` at `backend/data/cache.py` (new) — singleton holding all heroes and items as frozen dataclasses; serves `ContextBuilder`, `Recommender`, `RulesEngine`, and API routes; invalidates atomically after each data pipeline cycle; eliminates the `RulesEngine.init_lookups()` and `refresh_lookups()` methods entirely
+3. `useGameIntelligence` at `src/hooks/useGameIntelligence.ts` (new) — replaces `useGsiSync` and `useAutoRefresh`; single subscription callback with explicit step ordering: hero detection, role inference, playstyle suggest, item marking, game state guard, lane detection, event trigger, refresh dispatch
 
 ### Critical Pitfalls
 
-1. **GSI cannot see enemy items -- the core data gap** -- Design two separate data flows from the start: GSI for player data (automated), screenshot parsing or manual input for enemy data. Never put enemy item fields in GSI Pydantic models. This is an architectural constraint that must be understood before any code is written in Phase 1.
+1. **Three-cache coherence after pipeline refresh** — After `refresh_all_data()` completes, all three cache layers must invalidate in order: DataCache reloads from a fresh DB session, RulesEngine reads from DataCache (no separate reload step needed), ResponseCache clears entirely. Skipping any step or using the pipeline's existing session for the reload causes stale data. Prevention: explicit ordered reload sequence in `refresh.py`; DataCache always creates its own `AsyncSession` and never accepts the pipeline's session.
 
-2. **Docker container cannot receive GSI localhost POSTs** -- The GSI .cfg file URI must point to the Unraid server LAN IP (e.g., http://192.168.X.X:8420/api/gsi), not localhost. Generate the .cfg file dynamically from the setup UI with the detected server IP. Validate end-to-end against actual Docker-on-Unraid deployment in Phase 1.
+2. **Cross-store subscription cascade in consolidated hook** — Writing to Store B from inside a Store A subscription callback triggers Store B subscribers synchronously within the same microtask. `fireRefresh()` writes to `recommendationStore`; if the consolidated hook also subscribes to `recommendationStore` in the same callback path, a render loop results. Prevention: keep `gsiStore` subscription and `recommendationStore` subscription as separate `useEffect` blocks even within the same hook file; use `getState()` to read from a store without subscribing.
 
-3. **Claude API call flood from uncontrolled auto-refresh** -- Build a three-layer rate control: (1) hard 2-minute backend cooldown in AutoRefreshManager that cannot be bypassed, (2) significance filter accepting only phase_change/death/major_purchase/lane_result events, (3) per-session API call counter in logs. GSI sends 2 updates/second; a single 30-minute game with naive triggers could cost /usr/bin/bash.50+ in API calls.
+3. **Font swap causes layout thrash on dense UI elements** — Newsreader has dramatically different metrics than Inter. Elements with hard-coded pixel widths (e.g., `max-w-[56px]` on ItemCard gold costs) will overflow when Newsreader loads. FOUT from a CDN round-trip amplifies this. Prevention: self-host fonts via `@fontsource-variable/*` packages (no external CDN dependency at Docker runtime); add `font-display: swap` with `size-adjust` fallback metrics; preload font files in `index.html`; test with network throttling before shipping.
 
-4. **WebSocket silent disconnection showing stale data** -- Build heartbeat (backend ping every 10s, frontend shows disconnected after 30s silence) and exponential backoff reconnection into the initial WebSocket implementation. On reconnect, send full current state so the frontend replaces rather than merges stale state. Nginx config update is a prerequisite.
+4. **Color token removal causes silent invisible text** — Tailwind v4 purges utilities for tokens not in `@theme` at build time without any compile error. Removing `--color-cyan-accent` before all components are migrated renders `text-cyan-accent` as no-match (transparent) silently. Prevention: two-stage migration — add all new tokens alongside old ones first; grep confirms zero old-token references; only then remove old tokens.
 
-5. **Manual and GSI inputs conflicting in state** -- Add source tracking (gsi | manual | screenshot) to every auto-detectable field in gameStore. Manual override wins and persists; GSI does not overwrite explicit user input. Retrofitting this is expensive -- must be built in Phase 1.
-
-6. **Screenshot parsing cost and reliability** -- Crop screenshots to the scoreboard item grid region (~400x200px) before sending to Vision API for a 25x cost reduction. Always show parsed results to the user for confirmation before applying to recommendations. Include the full valid item list in the prompt to prevent hallucination. Rate-limit to 1 parse per 3 minutes.
+5. **Cache startup ordering on cold deploy** — If `DataCache.load()` fires before `seed_if_empty()` completes, the cache loads empty dicts and the first recommendation request sends Claude a prompt with "Hero #X" and "Item #Y" instead of real names. Prevention: strict lifespan sequence in `main.py`: `create_tables -> seed_if_empty -> data_cache.load -> RulesEngine(cache=data_cache) -> start_scheduler`; add a readiness gate to the `/health` endpoint.
 
 ## Implications for Roadmap
 
-V2.0 divides into 4 sequential phases driven by data flow dependencies. Everything downstream of GSI depends on the receiver working, so the pipeline must be built in order. The existing recommendation engine is never modified -- all new code is purely additive.
-### Phase 1: GSI Receiver and WebSocket Foundation
+Based on research, suggested phase structure:
 
-**Rationale:** All other v2.0 features depend on live data flowing from Dota 2 through the backend to the frontend. The architecture decisions made here (two-data-flow model, source tracking in Zustand, Nginx config) are the hardest to change later. This phase has no new pip dependencies.
+### Phase 1: Tech Debt and Store Consolidation
+**Rationale:** Behavioral changes must come first. Store consolidation, TriggerEvent dedup, and the session safety fix are small, testable, behavior-preserving changes. Completing them before the design migration means hook logic is stable and well-tested before ~30 component files change simultaneously. Debugging a Zustand render loop inside a half-migrated UI is significantly harder than debugging it in isolation against known-good visuals.
+**Delivers:** Single `useGameIntelligence` hook replacing `useGsiSync` and `useAutoRefresh`; TriggerEvent as a single source of truth; safe session handling in the refresh pipeline; playstyle auto-suggest (3 lines, natural insertion point within the consolidated hook)
+**Addresses features:** Store consolidation, TriggerEvent dedup, session safety, playstyle auto-suggest
+**Avoids:** Cross-store cascade render loop (Pitfall 5), TriggerEvent double-fire amplification during consolidation (Pitfall 11), intermediate-state flicker from batched hero+role+playstyle writes (Pitfall 15)
 
-**Delivers:** Working real-time data pipeline. Dota 2 game state appears in the frontend in real-time. GSI connection status indicator. Nginx updated for WebSocket proxying. GSI .cfg file generation in setup UI. Zustand gameStore extended with source-tracked fields.
+### Phase 2: Backend Data Cache
+**Rationale:** Entirely backend with no frontend surface area; can run in parallel with Phase 1 if two developers are available, or sequentially as a focused diff. The cache architectural change — injecting `DataCache` into `RulesEngine`, `ContextBuilder`, and `Recommender` — is significant enough to deserve its own phase and review cycle rather than being buried in a hook or design migration PR.
+**Delivers:** `DataCache` singleton with frozen dataclass hero/item storage; `RulesEngine` simplified (no `init_lookups`/`refresh_lookups` methods); context builder and recommender read from cache; DB queries per recommendation reduced from 12-20 to 1-5; `/api/heroes` and `/api/items` routes serve from cache
+**Uses:** Python stdlib dict, frozen dataclasses, async SQLAlchemy (fresh session per task per SQLAlchemy docs)
+**Implements:** DataCache architecture component; correct refresh lifecycle ordering across three cache layers
+**Avoids:** Stale cache after pipeline refresh (Pitfall 3), session sharing between pipeline and reload (Pitfall 4), empty cache on cold start (Pitfall 8), context builder bypassing cache and negating the performance gain (Pitfall 10)
 
-**Addresses:**
-- Table stakes: GSI endpoint, WebSocket push, connection status indicator, game clock sync
-- Manual controls preserved as fallbacks
+### Phase 3: Design System Migration
+**Rationale:** Comes last because it touches every component file. With Phase 1 (hooks stable and tested) and Phase 2 (backend stable) complete, the design migration is a pure visual change with no behavioral risk. The `@theme` token swap in `globals.css` is the single highest-leverage change — one file edit, instant global effect. The subsequent component sweep is mechanical class-name substitution and low cognitive load.
+**Delivers:** Full "Tactical Relic Editorial" visual identity; Newsreader/Manrope fonts self-hosted; obsidian surface hierarchy (7 tones); crimson/gold accent system; 0px corners throughout (with documented exceptions); parchment noise texture on body; blood-glass overlays on modals; gold-leaf accent strips on item cards; ambient glow shadows on floated elements
+**Build order within phase:** Install fonts -> rewrite `globals.css` -> `App.tsx` root container -> layout shell (Header, Sidebar, MainPanel) -> interactive primitives (GetBuildButton, pickers) -> content components (ItemCard, PhaseCard, NeutralItemsSection) -> modals and overlays (ScreenshotParser, SettingsPanel) -> status indicators (GsiStatusIndicator, GameClock, AutoRefreshToast, LiveStatsBar) -> `constants.ts` color strings
+**Avoids:** Invisible text from premature token removal (Pitfall 6), layout thrash from font swap (Pitfall 1), functional roundedness broken by blanket 0px enforcement (Pitfall 2), wrong surface-level nesting making elements invisible (Pitfall 7), backdrop-blur frame drops on 1Hz-updated elements (Pitfall 13)
 
-**Avoids:**
-- Docker GSI networking pitfall (validated against actual Unraid deployment, not local dev)
-- WebSocket silent disconnect pitfall (heartbeat and reconnection built in from the start)
-- Manual/GSI state conflict pitfall (source tracking added to gameStore before any GSI data flows)
-- GSI enemy data pitfall (architecture explicitly separates player data from enemy data channels)
-
-**Research flag:** Standard patterns. GSI POST receiver, FastAPI WebSocket, ConnectionManager are all well-documented with official sources. Low unknown surface area.
-
-### Phase 2: Frontend GSI Integration
-
-**Rationale:** Proves the full end-to-end pipeline visible to the user. No Claude API calls involved -- pure data display. Validates Phase 1 work before building on it.
-
-**Delivers:** Auto-detected hero populates hero selector. Real-time gold display. Own items auto-marked as purchased. Game phase transitions automatically. GSIStatus indicator in header. GoldTracker component with progress toward next recommended item.
-
-**Addresses:**
-- Table stakes: auto-detect own hero, auto-detect own items, auto-track gold/net worth, auto-phase progression
-- Extends gameStore with GSI fields: gsi_connected, gold, net_worth, game_time, own_items, hero_level, is_alive
-
-**Avoids:**
-- Frontend re-render jank: separate GSI display state from recommendation state using Zustand selectors to prevent cross-store re-renders
-
-**Research flag:** Standard patterns. Zustand store extension, custom React hook, TypeScript discriminated union for WebSocket message types are all well-documented.
-
-### Phase 3: Auto-Refresh Pipeline
-
-**Rationale:** The core hands-free value of v2.0. Must be built after Phase 2 proves the data flows correctly end-to-end. The rate limiter must be built FIRST within this phase before any trigger logic.
-
-**Delivers:** AutoRefreshManager with hard 2-minute cooldown. Event detection (phase_change, death, major_purchase, lane_result_detected). Auto-determine lane result from GPM data at 10-minute mark with user confirmation prompt. Countdown timer in UI. Per-session Claude API call counter in logs.
-
-**Addresses:**
-- Differentiators: auto-determine lane result, auto-refresh on key events
-- P2 features from feature research: lane result auto-detection, auto-refresh
-
-**Avoids:**
-- Claude API call flood pitfall (hard rate limiter built before any trigger logic)
-- Auto-updating recommendations without user consent (notification pattern, user confirms)
-
-**Research flag:** Needs attention during planning. Lane result GPM thresholds require validation against current patch OpenDota averages. The definition of major purchase (recommended: >2000g item) needs explicit decision before implementation.
-
-### Phase 4: Screenshot Parsing for Enemy Items
-
-**Rationale:** Independent of the GSI pipeline -- uses the existing Claude API SDK via a different endpoint pattern. Scheduled last to allow Phases 1-3 to stabilize. This is the highest-impact differentiator feature and the only automated source of enemy item data.
-
-**Delivers:** VisionEngine class (separate from LLMEngine). POST /api/parse-screenshot endpoint with file upload support. ScreenshotUpload React component with Ctrl+V paste. Image preprocessing (crop + resize to max 1200px wide) to control token costs. Parsed result shown for user confirmation before affecting recommendations. Rate limit: 1 parse per 3 minutes.
-
-**Addresses:**
-- Differentiators: screenshot parsing for enemy items (Claude Vision), feeds enemyItemsSpotted into existing recommendation context
-
-**Avoids:**
-- Screenshot parsing reliability pitfall (user confirmation before applying, item name validation against DB)
-- Screenshot cost explosion pitfall (aggressive cropping reduces cost ~25x, rate limit enforced)
-
-**Research flag:** Needs iteration during execution. Claude Vision accuracy for small item icons (~30x30px on a 1080p scoreboard) is MEDIUM confidence per research. Plan for a prompt-tuning cycle based on real Dota 2 scoreboard screenshots. Target >85% per-item identification accuracy.
+### Phase 4: Screenshot KDA Feed-Through (deferred point release)
+**Rationale:** The only cross-stack schema change in v3.0. Deferred because it requires coordinated changes across `RecommendRequest`, `gameStore`, `ScreenshotParser`, `context_builder`, and the recommendation hook — touching the full data path simultaneously. The value is real (richer Claude context for snowball/deficit itemization: "Enemy PA is 8-1-3 and level 16 — she is snowballing, prioritize defensive items") but the coordination cost is disproportionate to include in the same release as the design overhaul and cache refactor.
+**Delivers:** `RecommendRequest.enemy_hero_stats` optional field; `gameStore.enemyHeroStats` and `setEnemyHeroStats` action; `ScreenshotParser` Apply action writes parsed stats to game store; "Enemy Status" section in `context_builder` (kills/deaths/assists/level per enemy hero); richer Claude reasoning about enemy economic state and timing windows
 
 ### Phase Ordering Rationale
 
-- Phase 1 before Phase 2: Cannot display data that is not being received. The backend pipeline must work before building frontend components that consume it.
-- Phase 1 before Phase 3: AutoRefreshManager triggers HybridRecommender after detecting GSI events. GSI events do not exist until Phase 1 is built.
-- Phase 2 before Phase 3: Auto-refresh shows users that recommendations changed. The frontend integration must prove the recommendation display pipeline before auto-refresh can deliver visible value.
-- Phase 4 is independent: Uses the existing Claude API SDK with a different endpoint. Scheduled last to allow the GSI pipeline to stabilize, but can overlap with Phase 3 if bandwidth allows.
-- Existing /api/recommend endpoint and HybridRecommender are never touched -- all new code is additive.
+- Behavioral-first, visual-last: the design migration creates the largest diff volume in the codebase; having stable, tested behavior underneath prevents visual regressions from masking logic bugs, and keeps the design review focused on aesthetics rather than debugging
+- Cache work is backend-isolated: no frontend surface area means it can be reviewed and deployed independently without understanding design context
+- TriggerEvent dedup is a hard prerequisite for safe store consolidation: the consolidation refactors the exact code path that uses this type, and having two definitions during that refactor would introduce ambiguity
+- Playstyle auto-suggest belongs in Phase 1 because it requires the consolidated hook's explicit step ordering to work correctly; inserting it into the existing dual-subscription architecture would be placing it in the wrong hook
+- Screenshot KDA is isolated in Phase 4 because it requires simultaneous changes to both the backend request schema and frontend state shape; earlier phases can be reviewed without understanding the full cross-stack flow
 
 ### Research Flags
 
-Phases needing deeper attention during planning or execution:
-- **Phase 3 (Auto-Refresh):** Lane result GPM thresholds need validation against current patch OpenDota averages before hardcoding. The exact major purchase gold threshold needs explicit decision. Consider making thresholds configurable in the admin panel for patch resilience.
-- **Phase 4 (Screenshot Parsing):** Claude Vision accuracy with 30x30px Dota 2 item icons is an open empirical question. Build with user confirmation gate from day one. Plan for a tuning iteration cycle after initial implementation.
+Phases likely needing deeper research during planning:
+- **Phase 1 (Store Consolidation):** The exact subscription callback structure for `useGameIntelligence` requires careful design review to avoid the cascade pitfall. Existing tests for `useGsiSync` and `useAutoRefresh` need a migration plan since some test cases may not map 1:1 to the consolidated hook's combined behavior.
+- **Phase 3 (Design Migration):** The DESIGN.md specification for surface-level assignment per component (which of the 7 surface tiers each UI element gets) must be resolved before implementation starts. PITFALLS.md recommends producing a component-to-surface mapping document as a prerequisite to the migration sweep.
 
-Phases with standard patterns (can skip deeper research):
-- **Phase 1 (GSI + WebSocket):** FastAPI WebSocket ConnectionManager pattern is extensively documented. GSI JSON structure is fully documented via Dota2GSI C# reference. The exact Nginx WebSocket config block is provided in ARCHITECTURE.md.
-- **Phase 2 (Frontend Integration):** Zustand store extension, TypeScript discriminated union message protocol, and custom React hook patterns are all standard and well-documented.
+Phases with standard patterns (skip research-phase):
+- **Phase 2 (Backend Cache):** Architecture fully specified in ARCHITECTURE.md with concrete class signatures, frozen dataclass definitions, file-level integration points, and startup lifecycle. No open unknowns.
+- **Phase 4 (Screenshot KDA):** Data flow fully mapped in FEATURES.md with schema field names, store action names, and context builder section format. Standard schema-extension pattern with no novel integrations.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Existing stack fully validated in v1.1. New additions (pillow, python-multipart) are mature packages. All alternatives explicitly evaluated and rejected with clear rationale. Official sources for all recommendations. |
-| Features | HIGH | GSI data availability verified against multiple independent GSI library implementations (C#, Node.js, Python). Player-mode data restriction confirmed by multiple sources. Feature scope is realistic given the data constraints. |
-| Architecture | HIGH | Existing codebase fully audited against research. All integration points identified. WebSocket + ConnectionManager pattern from official FastAPI documentation. Code examples provided for all major components in ARCHITECTURE.md. |
-| Pitfalls | HIGH | Sourced from official Valve GSI docs, Claude Vision API docs, FastAPI WebSocket docs, and community issue reports. Enemy data restriction confirmed by multiple GSI library maintainers. Docker networking constraint verified against deployment topology. |
+| Stack | HIGH | All packages verified on npm registry. Tailwind v4 `@theme` capabilities verified against official docs. Python dict cache pattern proven twice in this codebase already. No speculative dependencies. |
+| Features | HIGH | Codebase fully audited — feature list is based on direct code inspection, not domain speculation. Complexity estimates and LOC counts are grounded in actual file structure and existing component sizes. |
+| Architecture | HIGH | Integration points fully specified with file names, function signatures, and method-level change descriptions. Build order within each phase is explicit. No hand-wavy "then we integrate" steps. |
+| Pitfalls | HIGH | Most pitfalls are derived from the actual codebase (known tech debt from PROJECT.md, existing code patterns) rather than generic domain research. The Zustand cascade and SQLAlchemy session pitfalls are confirmed by official documentation and existing issue reports. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Claude Vision accuracy for small item icons:** Rated MEDIUM confidence. Dota 2 item icons at ~30x30px on a 1080p scoreboard are at the edge of reliable Vision recognition per the official API docs. Validate with 10+ real scoreboard screenshots before Phase 4 is marked complete.
-
-- **Lane result GPM thresholds:** The research provides role-specific GPM benchmarks based on OpenDota/Stratz historical data. These shift with patch changes. Verify thresholds against current patch averages before hardcoding. Consider storing in the DB with the hero data refresh pipeline so they update automatically.
-
-- **GSI draft data availability in player mode:** Draft fields exist in the GSI spec but their availability in player mode is inconsistent across community sources. The draft auto-detection feature (deferred to v2.x) should be prototyped against real match data before being committed to any phase plan.
-
-- **WebSocket through Cloudflare Tunnel or Nginx Proxy Manager:** The Unraid deployment uses an external reverse proxy layer. WebSocket proxying through Cloudflare Tunnel has specific requirements (connection timeout handling, HTTP upgrade passthrough). Validate the full proxy chain in Phase 1 end-to-end testing, not just the Docker-internal Nginx layer.
+- **Component-to-surface mapping:** PITFALLS.md flags that assigning the wrong surface tier to a component causes elements to become invisible against their background. This mapping (Sidebar -> `surface-container-lowest`, MainPanel -> `surface`, PhaseCard -> `surface-container-low`, Modal -> `surface-container-highest`, etc.) must be explicitly resolved before Phase 3 begins. Produce this as a short planning artifact before writing any component code.
+- **Functional roundedness exceptions:** DESIGN.md mandates 0px corners but the purchased-item checkmark and GSI status indicator dot use `rounded-full` for semantic meaning (circle = completed). These exceptions need to be catalogued before the component sweep so they are not accidentally removed. PITFALLS.md recommends a `DESIGN_EXCEPTIONS.md` file documenting each intentional deviation with rationale.
+- **WCAG contrast on elevated surfaces:** `on_surface` (#E5E2E1) on `surface-container-highest` (#353534) is approximately 4.1:1, which fails WCAG AA for small text (requires 4.5:1). An `on-surface-high-contrast` token should be defined for text on the highest surface tiers. Must be resolved before Phase 3 ships dense data components like ItemCard captions.
+- **Playstyle hero mapping completeness:** The `suggestPlaystyle()` utility requires a `HERO_PLAYSTYLE_MAP` covering common heroes (~50-80 entries per ARCHITECTURE.md). This is data authoring work, not code work, and is not captured in the LOC estimates. Allocate explicit time for it within Phase 1.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Anthropic Vision Documentation](https://platform.claude.com/docs/en/build-with-claude/vision) -- Image content block format, base64 encoding, token costs, size limits, known limitations for small icons
-- [FastAPI WebSocket Documentation](https://fastapi.tiangolo.com/advanced/websockets/) -- Built-in WebSocket support, ConnectionManager pattern, dependency injection
-- [Dota2GSI C# Library](https://github.com/antonpup/Dota2GSI) -- Most comprehensive GSI data structure reference, confirms player-mode restriction on enemy data
-- [Pillow Documentation](https://pillow.readthedocs.io/en/stable/) -- Python 3.13 support confirmed in v12.1.1
-- [uvicorn PyPI](https://pypi.org/project/uvicorn/) -- v0.42.0 standard extras include websockets package
-- [Claude API Rate Limits](https://platform.claude.com/docs/en/api/rate-limits) -- Token bucket algorithm, per-minute and daily limits
-- [Nginx WebSocket Proxying](https://nginx.org/en/docs/http/websocket.html) -- Required proxy headers for WebSocket passthrough
-- [FastAPI WebSocket Scaling Techniques](https://hexshift.medium.com/top-ten-advanced-techniques-for-scaling-websocket-applications-with-fastapi-a5af1e5e901f) -- Task cleanup on disconnect, background task leak prevention
+- [Tailwind v4 Theme Variables](https://tailwindcss.com/docs/theme) — `@theme` directive, `--color-*`, `--font-*`, `--shadow-*`, `--radius-*` namespaces, companion `--font-*--font-variation-settings` syntax
+- [Tailwind v4 Font Family](https://tailwindcss.com/docs/font-family) — `--font-*` custom font pattern and `@font-face` integration
+- [Tailwind v4 Box Shadow](https://tailwindcss.com/docs/box-shadow) — custom `--shadow-*` definitions, shadow-color composition
+- [Tailwind v4 Backdrop Filter](https://tailwindcss.com/docs/backdrop-filter-blur) — confirms `backdrop-blur-md` = 12px
+- [@fontsource-variable/newsreader on npm](https://www.npmjs.com/package/@fontsource-variable/newsreader) — v5.2.10 confirmed via `npm info`
+- [@fontsource-variable/manrope on npm](https://www.npmjs.com/package/@fontsource-variable/manrope) — v5.2.8 confirmed via `npm info`
+- [SQLAlchemy Async Documentation](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html) — AsyncSession per-task requirement; `expire_on_commit=False` behavior
+- [Zustand GitHub](https://github.com/pmndrs/zustand) — store separation patterns; `.subscribe()` synchronous firing behavior
 
 ### Secondary (MEDIUM confidence)
-- [GSI Configuration Guide](https://auo.nu/posts/game-state-integration-intro/) -- Config file format, URI setup, data sections -- corroborated by multiple community sources
-- [STRATZ Lane Outcomes](https://stratz.com/knowledge-base) -- GPM thresholds for lane result detection algorithm
-- [Dotabuff Adaptive Items](https://www.dotabuff.com/blog/2021-06-23-announcing-the-dotabuff-apps-new-adaptive-items-module) -- Competitor feature analysis, confirms gap in natural language reasoning
-- [react-use-websocket GitHub](https://github.com/robtaussig/react-use-websocket) -- Confirmed last activity Sept 2023, React 19 compatibility unverified
-- [dota2gsipy Python Library](https://github.com/Daniel-EST/dota2gsipy) -- Confirmed abandoned (last commit Jan 2023, 11 total commits)
+- [FastAPI Caching Discussion #3044](https://github.com/fastapi/fastapi/issues/3044) — confirms dict-based caching is safe in single-process FastAPI
+- [CSS Grainy Gradients (CSS-Tricks)](https://css-tricks.com/grainy-gradients/) — SVG `feTurbulence` noise texture approach for parchment effect
+- [Frontend Migration Guide (frontendmastery.com)](https://frontendmastery.com/posts/frontend-migration-guide/) — component-by-component vs token-swap migration strategy analysis; confirms token-swap is correct for <50 component codebases
+- [Zustand Cross-Store Reactivity Discussion #1586](https://github.com/pmndrs/zustand/discussions/1586) — subscription cascade risk pattern
+- [Font Loading: FOIT and FOUT](https://dev.to/ibn_abubakre/font-loading-strategies-foit-and-fout-393b) — `font-display: swap` and `size-adjust` fallback font metric matching
+- [How to Implement Cache Invalidation in FastAPI](https://oneuptime.com/blog/post/2026-02-02-fastapi-cache-invalidation/view) — ordering guarantees for multi-layer cache invalidation
 
-### Tertiary (LOW confidence -- needs validation)
-- GSI draft data availability in player mode -- referenced in GSI spec but community reports are inconsistent; needs real-match testing before committing to draft auto-detection feature
-- Cloudflare Tunnel WebSocket passthrough behavior -- limited documentation on timeout and upgrade header handling for persistent WebSocket connections
+### Tertiary (LOW confidence)
+- [Tailwind CSS v4 Migration Best Practices (2026)](https://www.digitalapplied.com/blog/tailwind-css-v4-2026-migration-best-practices) — confirms two-stage token migration approach; single blog source
 
 ---
-*Research completed: 2026-03-23*
+*Research completed: 2026-03-26*
 *Ready for roadmap: yes*
