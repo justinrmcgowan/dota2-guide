@@ -23,6 +23,7 @@ function MainPanel() {
           message="AI reasoning unavailable"
           onDismiss={() => {}}
           type="fallback"
+          fallbackReason={data.fallback_reason}
         />
       )}
 

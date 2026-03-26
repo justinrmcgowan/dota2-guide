@@ -1,26 +1,46 @@
 import { useEffect } from "react";
 
+const FALLBACK_MESSAGES: Record<string, string> = {
+  timeout:
+    "AI timed out \u2014 showing rules-based build. Try again in a moment.",
+  parse_error: "AI response was malformed \u2014 showing rules-based build.",
+  api_error:
+    "AI service unavailable \u2014 showing rules-based build. Try again shortly.",
+  rate_limited:
+    "AI rate limited \u2014 showing rules-based build. Try again in a moment.",
+};
+
 interface ErrorBannerProps {
   message: string;
   onDismiss: () => void;
   type: "error" | "fallback";
+  fallbackReason?: string | null;
 }
 
-function ErrorBanner({ message, onDismiss, type }: ErrorBannerProps) {
+function ErrorBanner({
+  message,
+  onDismiss,
+  type,
+  fallbackReason,
+}: ErrorBannerProps) {
   useEffect(() => {
-    if (type !== "error") return;
-    const timer = setTimeout(() => {
-      onDismiss();
-    }, 5000);
-    return () => clearTimeout(timer);
+    if (type === "error" || type === "fallback") {
+      const timer = setTimeout(() => {
+        onDismiss();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
   }, [type, onDismiss]);
 
   if (type === "fallback") {
+    const displayMessage = fallbackReason
+      ? (FALLBACK_MESSAGES[fallbackReason] ??
+        "AI reasoning unavailable \u2014 showing basic recommendations")
+      : "AI reasoning unavailable \u2014 showing basic recommendations";
+
     return (
       <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg px-4 py-3 mb-4">
-        <p className="text-amber-400/80 text-xs">
-          AI reasoning unavailable &mdash; showing basic recommendations
-        </p>
+        <p className="text-amber-400/80 text-xs">{displayMessage}</p>
       </div>
     );
   }

@@ -25,6 +25,19 @@ async function postJson<TReq, TRes>(url: string, body: TReq): Promise<TRes> {
     body: JSON.stringify(body),
   });
   if (!response.ok) {
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("Retry-After");
+      const seconds = retryAfter ? parseInt(retryAfter, 10) : 10;
+      throw new Error(
+        `Please wait ${seconds} seconds before requesting again.`,
+      );
+    }
+    if (response.status === 422) {
+      const detail = await response.json().catch(() => null);
+      const msg =
+        detail?.detail?.[0]?.msg ?? detail?.detail ?? "Validation error";
+      throw new Error(String(msg));
+    }
     throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
   return response.json();

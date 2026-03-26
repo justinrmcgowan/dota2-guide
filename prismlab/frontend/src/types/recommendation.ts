@@ -31,6 +31,7 @@ export interface RecommendResponse {
   phases: RecommendPhase[];
   overall_strategy: string | null;
   fallback: boolean;
+  fallback_reason: "timeout" | "parse_error" | "api_error" | "rate_limited" | null;
   model: string | null;
   latency_ms: number | null;
   neutral_items: NeutralTierRecommendation[];

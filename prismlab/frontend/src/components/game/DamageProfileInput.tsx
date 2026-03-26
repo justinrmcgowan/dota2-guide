@@ -21,9 +21,36 @@ function DamageProfileInput() {
 
   const handleSliderChange = (
     key: "physical" | "magical" | "pure",
-    value: number,
+    newValue: number,
   ) => {
-    setDamageProfile({ ...current, [key]: value });
+    const others = SLIDER_CONFIG.map((s) => s.key).filter(
+      (k) => k !== key,
+    ) as ("physical" | "magical" | "pure")[];
+
+    const remaining = 100 - newValue;
+    const otherSum = others.reduce((sum, k) => sum + current[k], 0);
+
+    const updated = { ...current, [key]: newValue };
+
+    if (otherSum === 0) {
+      // Split remaining equally if others are both 0
+      updated[others[0]] = Math.round(remaining / 2);
+      updated[others[1]] = remaining - updated[others[0]];
+    } else {
+      // Proportional redistribution
+      let allocated = 0;
+      for (let i = 0; i < others.length; i++) {
+        const k = others[i];
+        if (i === others.length - 1) {
+          updated[k] = remaining - allocated; // Last one gets remainder (avoids rounding errors)
+        } else {
+          updated[k] = Math.round((current[k] / otherSum) * remaining);
+          allocated += updated[k];
+        }
+      }
+    }
+
+    setDamageProfile(updated);
   };
 
   return (
