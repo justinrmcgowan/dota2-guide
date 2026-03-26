@@ -108,7 +108,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 13-01-PLAN.md -- Backend Vision endpoint, schemas, prompt engineering, name matching, nginx config
+- [x] 13-01-PLAN.md -- Backend Vision endpoint, schemas, prompt engineering, name matching, nginx config
 - [x] 13-02-PLAN.md -- Frontend screenshot types, screenshotStore, gameStore extension, API client, paste hook
 - [ ] 13-03-PLAN.md -- Screenshot parser modal UI, confirmation editing, sidebar button, App wiring
 
@@ -133,7 +133,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 13. Screenshot Parsing | v2.0 | 1/3 | In Progress|  |
+| 13. Screenshot Parsing | v2.0 | 2/3 | In Progress|  |
 | 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
 
 ### Phase 14: Recommendation Quality & System Hardening
@@ -141,7 +141,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 13
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 14 to break down)

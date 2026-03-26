@@ -32,8 +32,8 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 - [x] **SCREEN-01**: User can paste/upload a scoreboard screenshot and backend parses it via Claude Vision
 - [x] **SCREEN-02**: Parsed results show enemy item builds (all 5 enemies) with confirmation UI before applying
-- [ ] **SCREEN-03**: Enemy hero identification extracted from scoreboard screenshot
-- [ ] **SCREEN-04**: Kill/death scores extracted from scoreboard screenshot for game state assessment
+- [x] **SCREEN-03**: Enemy hero identification extracted from scoreboard screenshot
+- [x] **SCREEN-04**: Kill/death scores extracted from scoreboard screenshot for game state assessment
 
 ### Infrastructure
 
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REFRESH-03 | Phase 12 | Complete |
 | SCREEN-01 | Phase 13 | Complete |
 | SCREEN-02 | Phase 13 | Complete |
-| SCREEN-03 | Phase 13 | Pending |
-| SCREEN-04 | Phase 13 | Pending |
+| SCREEN-03 | Phase 13 | Complete |
+| SCREEN-04 | Phase 13 | Complete |
 | INFRA-01 | Phase 10 | Complete |
 | INFRA-02 | Phase 10 | Complete |
 
