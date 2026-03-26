@@ -98,6 +98,96 @@ async def test_db_setup():
                 primary_attr="str", attack_type="Melee",
                 roles=["Initiator", "Disabler"],
             ),
+            Hero(
+                id=26, name="Lion", localized_name="Lion",
+                internal_name="npc_dota_hero_lion",
+                primary_attr="int", attack_type="Ranged",
+                roles=["Support", "Disabler"],
+            ),
+            Hero(
+                id=40, name="Venomancer", localized_name="Venomancer",
+                internal_name="npc_dota_hero_venomancer",
+                primary_attr="agi", attack_type="Ranged",
+                roles=["Support", "Nuker"],
+            ),
+            Hero(
+                id=84, name="Ogre Magi", localized_name="Ogre Magi",
+                internal_name="npc_dota_hero_ogre_magi",
+                primary_attr="str", attack_type="Melee",
+                roles=["Support", "Nuker"],
+            ),
+            Hero(
+                id=110, name="Skywrath Mage", localized_name="Skywrath Mage",
+                internal_name="npc_dota_hero_skywrath_mage",
+                primary_attr="int", attack_type="Ranged",
+                roles=["Support", "Nuker"],
+            ),
+            Hero(
+                id=47, name="Faceless Void", localized_name="Faceless Void",
+                internal_name="npc_dota_hero_faceless_void",
+                primary_attr="agi", attack_type="Melee",
+                roles=["Carry", "Initiator"],
+            ),
+            Hero(
+                id=93, name="Slark", localized_name="Slark",
+                internal_name="npc_dota_hero_slark",
+                primary_attr="agi", attack_type="Melee",
+                roles=["Carry", "Escape"],
+            ),
+            Hero(
+                id=72, name="Alchemist", localized_name="Alchemist",
+                internal_name="npc_dota_hero_alchemist",
+                primary_attr="str", attack_type="Melee",
+                roles=["Carry", "Durable"],
+            ),
+            Hero(
+                id=67, name="Clinkz", localized_name="Clinkz",
+                internal_name="npc_dota_hero_clinkz",
+                primary_attr="agi", attack_type="Ranged",
+                roles=["Carry", "Escape"],
+            ),
+            Hero(
+                id=94, name="Weaver", localized_name="Weaver",
+                internal_name="npc_dota_hero_weaver",
+                primary_attr="agi", attack_type="Ranged",
+                roles=["Carry", "Escape"],
+            ),
+            Hero(
+                id=11, name="Sven", localized_name="Sven",
+                internal_name="npc_dota_hero_sven",
+                primary_attr="str", attack_type="Melee",
+                roles=["Carry", "Disabler"],
+            ),
+            Hero(
+                id=44, name="Phantom Lancer", localized_name="Phantom Lancer",
+                internal_name="npc_dota_hero_phantom_lancer",
+                primary_attr="agi", attack_type="Melee",
+                roles=["Carry", "Escape"],
+            ),
+            Hero(
+                id=18, name="Juggernaut", localized_name="Juggernaut",
+                internal_name="npc_dota_hero_juggernaut",
+                primary_attr="agi", attack_type="Melee",
+                roles=["Carry"],
+            ),
+            Hero(
+                id=91, name="Wraith King", localized_name="Wraith King",
+                internal_name="npc_dota_hero_skeleton_king",
+                primary_attr="str", attack_type="Melee",
+                roles=["Carry", "Durable"],
+            ),
+            Hero(
+                id=120, name="Huskar", localized_name="Huskar",
+                internal_name="npc_dota_hero_huskar",
+                primary_attr="str", attack_type="Ranged",
+                roles=["Carry", "Durable"],
+            ),
+            Hero(
+                id=103, name="Necrophos", localized_name="Necrophos",
+                internal_name="npc_dota_hero_necrolyte",
+                primary_attr="int", attack_type="Ranged",
+                roles=["Nuker", "Durable"],
+            ),
         ]
         session.add_all(extra_heroes)
 
@@ -135,6 +225,13 @@ async def test_db_setup():
             Item(id=352, name="Spider Legs", internal_name="spider_legs",
                  cost=0, is_neutral=True, tier=5,
                  active_desc="Grants free pathing and 25% move speed"),
+            # Items for new rules (Phase 14)
+            Item(id=56, name="Infused Raindrops", internal_name="infused_raindrop", cost=225),
+            Item(id=187, name="Mekansm", internal_name="mekansm", cost=1775),
+            Item(id=231, name="Pipe of Insight", internal_name="pipe", cost=3475),
+            Item(id=190, name="Orchid Malevolence", internal_name="orchid", cost=3475),
+            Item(id=168, name="Heaven's Halberd", internal_name="heavens_halberd", cost=3550),
+            Item(id=185, name="Ghost Scepter", internal_name="ghost", cost=1500),
             # Expensive item to test budget filtering
             Item(id=302, name="Divine Rapier", internal_name="rapier", cost=5950),
         ]

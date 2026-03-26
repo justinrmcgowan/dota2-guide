@@ -7,9 +7,10 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from data.database import engine, Base
+from data.database import engine, Base, async_session
 from data.seed import seed_if_empty
 from data.refresh import refresh_all_data
+from api.routes.recommend import _rules
 from api.routes.heroes import router as heroes_router
 from api.routes.items import router as items_router
 from api.routes.recommend import router as recommend_router
@@ -29,6 +30,11 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await seed_if_empty()
+
+    # Initialize rules engine lookups from DB
+    async with async_session() as session:
+        await _rules.init_lookups(session)
+    logger.info("Rules engine lookups initialized from DB.")
 
     # Start data refresh scheduler — every 6h to catch patches same day
     scheduler = AsyncIOScheduler()

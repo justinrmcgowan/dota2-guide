@@ -1,9 +1,12 @@
 """Unit tests for the deterministic rules engine."""
 
 import pytest
+import pytest_asyncio
 
 from engine.schemas import RecommendRequest
-from engine.rules import RulesEngine, HERO_NAMES
+from engine.rules import RulesEngine
+
+pytestmark = pytest.mark.asyncio
 
 
 def _make_request(
@@ -25,13 +28,15 @@ def _make_request(
     )
 
 
-@pytest.fixture
-def engine() -> RulesEngine:
-    return RulesEngine()
+@pytest_asyncio.fixture
+async def engine(test_db_session) -> RulesEngine:
+    eng = RulesEngine()
+    await eng.init_lookups(test_db_session)
+    return eng
 
 
 class TestMagicStickRule:
-    def test_magic_stick_vs_spammer(self, engine: RulesEngine):
+    async def test_magic_stick_vs_spammer(self, engine: RulesEngine):
         """Magic Stick recommended against Bristleback (spell-spammer)."""
         req = _make_request(lane_opponents=[69])
         results = engine.evaluate(req)
@@ -41,14 +46,14 @@ class TestMagicStickRule:
         assert stick_results[0].phase == "laning"
         assert stick_results[0].priority == "core"
 
-    def test_magic_stick_vs_zeus(self, engine: RulesEngine):
+    async def test_magic_stick_vs_zeus(self, engine: RulesEngine):
         """Magic Stick recommended against Zeus."""
         req = _make_request(lane_opponents=[22])
         results = engine.evaluate(req)
         stick_results = [r for r in results if r.item_id == 36]
         assert len(stick_results) >= 1
 
-    def test_magic_stick_vs_non_spammer(self, engine: RulesEngine):
+    async def test_magic_stick_vs_non_spammer(self, engine: RulesEngine):
         """Magic Stick NOT recommended against non-spell-spammer."""
         req = _make_request(lane_opponents=[1])  # Anti-Mage is not a spell-spammer
         results = engine.evaluate(req)
@@ -57,7 +62,7 @@ class TestMagicStickRule:
 
 
 class TestNoMatchReturnsEmpty:
-    def test_no_match_returns_empty(self, engine: RulesEngine):
+    async def test_no_match_returns_empty(self, engine: RulesEngine):
         """No opponent-specific rules fire when lane_opponents is empty."""
         req = _make_request(lane_opponents=[], role=1, hero_id=999)
         results = engine.evaluate(req)
@@ -69,7 +74,7 @@ class TestNoMatchReturnsEmpty:
 
 
 class TestBkbRule:
-    def test_bkb_vs_magic_heavy(self, engine: RulesEngine):
+    async def test_bkb_vs_magic_heavy(self, engine: RulesEngine):
         """BKB recommended against Zeus (magic-heavy hero)."""
         req = _make_request(lane_opponents=[22], role=1)
         results = engine.evaluate(req)
@@ -81,7 +86,7 @@ class TestBkbRule:
 
 
 class TestMkbRule:
-    def test_mkb_vs_evasion(self, engine: RulesEngine):
+    async def test_mkb_vs_evasion(self, engine: RulesEngine):
         """MKB recommended against PA (evasion hero) for cores."""
         req = _make_request(lane_opponents=[12], role=1)
         results = engine.evaluate(req)
@@ -91,7 +96,7 @@ class TestMkbRule:
         assert mkb_results[0].phase == "core"
         assert mkb_results[0].priority == "situational"
 
-    def test_mkb_not_for_supports(self, engine: RulesEngine):
+    async def test_mkb_not_for_supports(self, engine: RulesEngine):
         """MKB NOT recommended for supports (role 4-5)."""
         req = _make_request(lane_opponents=[12], role=5)
         results = engine.evaluate(req)
@@ -100,7 +105,7 @@ class TestMkbRule:
 
 
 class TestDustSentriesRule:
-    def test_dust_for_support_vs_invis(self, engine: RulesEngine):
+    async def test_dust_for_support_vs_invis(self, engine: RulesEngine):
         """Dust/Sentries recommended for supports against Riki."""
         req = _make_request(lane_opponents=[32], role=5)
         results = engine.evaluate(req)
@@ -110,7 +115,7 @@ class TestDustSentriesRule:
         # Should recommend both Dust and Sentries
         assert 40 in detection_ids or 43 in detection_ids
 
-    def test_dust_not_for_cores(self, engine: RulesEngine):
+    async def test_dust_not_for_cores(self, engine: RulesEngine):
         """Dust NOT recommended for cores (role 1-3) even against invis heroes."""
         req = _make_request(lane_opponents=[32], role=1)
         results = engine.evaluate(req)
@@ -119,7 +124,7 @@ class TestDustSentriesRule:
 
 
 class TestBootsRule:
-    def test_boots_by_role_carry(self, engine: RulesEngine):
+    async def test_boots_by_role_carry(self, engine: RulesEngine):
         """Power Treads recommended for carries (role 1)."""
         req = _make_request(role=1)
         results = engine.evaluate(req)
@@ -127,7 +132,7 @@ class TestBootsRule:
         assert len(boots_results) >= 1
         assert boots_results[0].item_name == "Power Treads"
 
-    def test_boots_by_role_offlane(self, engine: RulesEngine):
+    async def test_boots_by_role_offlane(self, engine: RulesEngine):
         """Phase Boots recommended for offlaners (role 3)."""
         req = _make_request(role=3)
         results = engine.evaluate(req)
@@ -135,7 +140,7 @@ class TestBootsRule:
         assert len(boots_results) >= 1
         assert boots_results[0].item_name == "Phase Boots"
 
-    def test_boots_by_role_support(self, engine: RulesEngine):
+    async def test_boots_by_role_support(self, engine: RulesEngine):
         """Arcane Boots recommended for supports (role 4-5)."""
         req = _make_request(role=5)
         results = engine.evaluate(req)
@@ -145,7 +150,7 @@ class TestBootsRule:
 
 
 class TestReasoningNamesEnemy:
-    def test_reasoning_names_enemy(self, engine: RulesEngine):
+    async def test_reasoning_names_enemy(self, engine: RulesEngine):
         """Every opponent-triggered RuleResult reasoning names the enemy hero."""
         test_cases = [
             (69, 1, "Bristleback"),   # Magic Stick vs Bristleback
@@ -167,7 +172,7 @@ class TestReasoningNamesEnemy:
 
 
 class TestSilverEdgeRule:
-    def test_silver_edge_vs_bristleback(self, engine: RulesEngine):
+    async def test_silver_edge_vs_bristleback(self, engine: RulesEngine):
         """Silver Edge recommended against Bristleback (critical passive)."""
         req = _make_request(lane_opponents=[69], role=1)
         results = engine.evaluate(req)
@@ -177,7 +182,7 @@ class TestSilverEdgeRule:
 
 
 class TestSpiritVesselRule:
-    def test_spirit_vessel_vs_alchemist(self, engine: RulesEngine):
+    async def test_spirit_vessel_vs_alchemist(self, engine: RulesEngine):
         """Spirit Vessel recommended for offlaners against Alchemist."""
         req = _make_request(lane_opponents=[72], role=3)
         results = engine.evaluate(req)
@@ -187,7 +192,7 @@ class TestSpiritVesselRule:
 
 
 class TestQuellingBladeRule:
-    def test_quelling_blade_for_melee_carry(self, engine: RulesEngine):
+    async def test_quelling_blade_for_melee_carry(self, engine: RulesEngine):
         """Quelling Blade recommended for Anti-Mage (melee carry, Pos 1)."""
         req = _make_request(hero_id=1, role=1)
         results = engine.evaluate(req)
@@ -195,7 +200,7 @@ class TestQuellingBladeRule:
         assert len(qb_results) >= 1
         assert qb_results[0].phase == "starting"
 
-    def test_quelling_blade_not_for_supports(self, engine: RulesEngine):
+    async def test_quelling_blade_not_for_supports(self, engine: RulesEngine):
         """Quelling Blade NOT recommended for support role."""
         req = _make_request(hero_id=1, role=5)
         results = engine.evaluate(req)
@@ -204,6 +209,6 @@ class TestQuellingBladeRule:
 
 
 class TestRuleCount:
-    def test_minimum_rule_count(self, engine: RulesEngine):
+    async def test_minimum_rule_count(self, engine: RulesEngine):
         """Engine has at least 10 rules registered."""
         assert len(engine._rules) >= 10

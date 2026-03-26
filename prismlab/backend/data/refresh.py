@@ -117,6 +117,11 @@ async def refresh_all_data() -> DataRefreshLog:
             session.add(log_entry)
             await session.commit()
 
+            # Refresh rules engine lookup cache
+            from api.routes.recommend import _rules
+            await _rules.refresh_lookups(session)
+            logger.info("Rules engine lookups refreshed.")
+
             logger.info(
                 "Data refresh completed: %d heroes, %d items updated.",
                 hero_count,
