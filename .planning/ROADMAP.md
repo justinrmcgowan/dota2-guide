@@ -130,7 +130,7 @@ Plans:
 
 Plans:
 - [ ] 14-01-PLAN.md -- Rate limiting, response caching, LLM error categorization, system prompt hardening
-- [ ] 14-02-PLAN.md -- Rules engine DB migration and 6 new targeted rules
+- [x] 14-02-PLAN.md -- Rules engine DB migration and 6 new targeted rules
 - [ ] 14-03-PLAN.md -- Validation gaps (damage profile, playstyle-role) and frontend error transparency
 
 ## Progress
@@ -153,4 +153,4 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 13. Screenshot Parsing | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 14. Recommendation Quality & System Hardening | v2.0 | 0/3 | Not started | - |
+| 14. Recommendation Quality & System Hardening | v2.0 | 1/3 | In Progress|  |

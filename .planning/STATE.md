@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Live Game Intelligence
-status: Ready to plan
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-03-26T20:43:22.552Z"
+status: Ready to execute
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-26T21:11:01.183Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 13 — screenshot-parsing
+**Current focus:** Phase 14 — recommendation-quality-system-hardening
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
+Phase: 14 (recommendation-quality-system-hardening) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Plan: Not started
 | Phase 13 P02 | 2min | 2 tasks | 5 files |
 | Phase 13 P01 | 3min | 2 tasks | 7 files |
 | Phase 13 P03 | 5min | 3 tasks | 5 files |
+| Phase 14 P02 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - [Phase 13]: SequenceMatcher 0.7 threshold for fuzzy name matching; confidence = Vision certainty x match ratio
 - [Phase 13]: parseAttempted ref prevents double-parse on modal open state transitions
 - [Phase 13]: Items list for ItemEditPicker fetched lazily from /api/items; failure silently ignored
+- [Phase 14]: Removed HERO_NAMES dict entirely in favor of DB-backed lookup helpers (_hero_id, _item_id, _hero_ids)
+- [Phase 14]: Merged BKB timing rule into existing _bkb_rule by expanding hero set -- 6 new rules (not 7)
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T20:36:20.937Z
-Stopped at: Completed 13-03-PLAN.md
+Last session: 2026-03-26T21:11:01.180Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None
