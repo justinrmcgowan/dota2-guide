@@ -65,28 +65,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DESIGN-01 | TBD | Pending |
-| DESIGN-02 | TBD | Pending |
-| DESIGN-03 | TBD | Pending |
-| DESIGN-04 | TBD | Pending |
-| DESIGN-05 | TBD | Pending |
-| DESIGN-06 | TBD | Pending |
-| DESIGN-07 | TBD | Pending |
-| DESIGN-08 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| INT-01 | TBD | Pending |
-| INT-02 | TBD | Pending |
-| INT-03 | TBD | Pending |
-| INT-04 | TBD | Pending |
-| INT-05 | TBD | Pending |
-| INT-06 | TBD | Pending |
+| DESIGN-01 | Phase 17 | Pending |
+| DESIGN-02 | Phase 17 | Pending |
+| DESIGN-03 | Phase 17 | Pending |
+| DESIGN-04 | Phase 17 | Pending |
+| DESIGN-05 | Phase 17 | Pending |
+| DESIGN-06 | Phase 17 | Pending |
+| DESIGN-07 | Phase 17 | Pending |
+| DESIGN-08 | Phase 17 | Pending |
+| PERF-01 | Phase 16 | Pending |
+| PERF-02 | Phase 16 | Pending |
+| PERF-03 | Phase 16 | Pending |
+| INT-01 | Phase 15 | Pending |
+| INT-02 | Phase 15 | Pending |
+| INT-03 | Phase 18 | Pending |
+| INT-04 | Phase 15 | Pending |
+| INT-05 | Phase 16 | Pending |
+| INT-06 | Phase 16 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 17 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 17
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-26*
+*Traceability updated: 2026-03-26*
