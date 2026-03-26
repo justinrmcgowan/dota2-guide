@@ -37,7 +37,7 @@
 - [x] **Phase 11: Live Game Dashboard** - Frontend consumes GSI data to auto-detect hero, track gold, mark purchased items, and display game clock (completed 2026-03-26)
 - [x] **Phase 12: Auto-Refresh & Lane Detection** - Recommendations auto-refresh on key game events with rate limiting and auto-determined lane results (completed 2026-03-26)
 - [x] **Phase 13: Screenshot Parsing** - User pastes scoreboard screenshots to extract enemy hero and item data via Claude Vision (completed 2026-03-26)
-- [ ] **Phase 14: Recommendation Quality & System Hardening** - Improve engine reliability, cache all API calls, add rate limiting, fix validation gaps, and harden error handling
+- [x] **Phase 14: Recommendation Quality & System Hardening** - Improve engine reliability, cache all API calls, add rate limiting, fix validation gaps, and harden error handling (completed 2026-03-26)
 
 ## Phase Details
 
@@ -131,7 +131,7 @@ Plans:
 Plans:
 - [x] 14-01-PLAN.md -- Rate limiting, response caching, LLM error categorization, system prompt hardening
 - [x] 14-02-PLAN.md -- Rules engine DB migration and 6 new targeted rules
-- [ ] 14-03-PLAN.md -- Validation gaps (damage profile, playstyle-role) and frontend error transparency
+- [x] 14-03-PLAN.md -- Validation gaps (damage profile, playstyle-role) and frontend error transparency
 
 ## Progress
 
@@ -153,4 +153,4 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 13. Screenshot Parsing | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 14. Recommendation Quality & System Hardening | v2.0 | 2/3 | In Progress|  |
+| 14. Recommendation Quality & System Hardening | v2.0 | 3/3 | Complete   | 2026-03-26 |
