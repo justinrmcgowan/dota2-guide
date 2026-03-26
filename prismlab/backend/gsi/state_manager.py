@@ -9,7 +9,7 @@ import dataclasses
 import time
 from dataclasses import dataclass, field
 
-from gsi.models import GsiPayload
+from gsi.models import GsiBuilding, GsiPayload
 
 
 @dataclass
@@ -32,6 +32,9 @@ class ParsedGsiState:
     game_state: str = ""
     team_side: str = ""
     is_alive: bool = True
+    roshan_state: str = "alive"
+    radiant_tower_count: int = 11
+    dire_tower_count: int = 11
     timestamp: float = 0.0
 
 
@@ -50,6 +53,11 @@ def _normalize_hero_name(raw_name: str) -> str:
     if raw_name.startswith(prefix):
         return raw_name[len(prefix):]
     return raw_name
+
+
+def _count_alive_towers(buildings: dict[str, GsiBuilding]) -> int:
+    """Count alive towers (health > 0) from a buildings dict, excluding rax/fort."""
+    return sum(1 for key, b in buildings.items() if "tower" in key and b.health > 0)
 
 
 class GsiStateManager:
@@ -100,9 +108,18 @@ class GsiStateManager:
         # Extract map info
         game_clock = 0
         game_state = ""
+        roshan_state = "alive"
         if payload.map:
             game_clock = int(payload.map.clock_time)
             game_state = payload.map.game_state
+            roshan_state = payload.map.roshan_state or "alive"
+
+        # Extract buildings / tower counts
+        radiant_tower_count = 11
+        dire_tower_count = 11
+        if payload.buildings is not None:
+            radiant_tower_count = _count_alive_towers(payload.buildings.radiant)
+            dire_tower_count = _count_alive_towers(payload.buildings.dire)
 
         # Extract items
         items_inventory: list[str] = []
@@ -139,6 +156,9 @@ class GsiStateManager:
             game_state=game_state,
             team_side=team_side,
             is_alive=is_alive,
+            roshan_state=roshan_state,
+            radiant_tower_count=radiant_tower_count,
+            dire_tower_count=dire_tower_count,
             timestamp=time.time(),
         )
         self._last_update = time.time()

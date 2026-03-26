@@ -26,6 +26,7 @@ GSI_CONFIG_TEMPLATE = '''"gamestate_integration_prismlab"
         "hero"          "1"
         "abilities"     "1"
         "items"         "1"
+        "buildings"     "1"
     }}
     "auth"
     {{

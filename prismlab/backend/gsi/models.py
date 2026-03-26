@@ -29,6 +29,8 @@ class GsiMap(BaseModel):
     daytime: bool = True
     game_state: str = ""
     paused: bool = False
+    roshan_state: str = "alive"
+    roshan_state_end_seconds: float = 0
 
     model_config = ConfigDict(extra="allow")
 
@@ -91,6 +93,22 @@ class GsiItems(BaseModel):
     neutral0: GsiItemSlot = Field(default_factory=GsiItemSlot)
 
 
+class GsiBuilding(BaseModel):
+    """A single building (tower, rax, fort) in the GSI buildings payload."""
+
+    health: int = 0
+    max_health: int = 0
+
+
+class GsiBuildings(BaseModel):
+    """Buildings data from GSI, keyed by building name per team."""
+
+    radiant: dict[str, GsiBuilding] = {}
+    dire: dict[str, GsiBuilding] = {}
+
+    model_config = ConfigDict(extra="allow")
+
+
 class GsiPayload(BaseModel):
     """Top-level GSI JSON payload (player mode, flat structure).
 
@@ -102,6 +120,7 @@ class GsiPayload(BaseModel):
     player: GsiPlayer | None = None
     hero: GsiHero | None = None
     items: GsiItems | None = None
+    buildings: GsiBuildings | None = None
     auth: dict | None = None
 
     model_config = ConfigDict(extra="allow")
