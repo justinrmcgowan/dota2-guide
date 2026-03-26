@@ -9,6 +9,7 @@ import LaneSelector from "../draft/LaneSelector";
 import LaneOpponentPicker from "../draft/LaneOpponentPicker";
 import GetBuildButton from "../draft/GetBuildButton";
 import GameStatePanel from "../game/GameStatePanel";
+import LiveStatsBar from "../game/LiveStatsBar";
 import { useGameStore } from "../../stores/gameStore";
 import { useRecommendationStore } from "../../stores/recommendationStore";
 
@@ -96,6 +97,9 @@ function Sidebar() {
           Lane Opponents
         </h2>
         <LaneOpponentPicker />
+
+        {/* Live Stats -- visible when GSI is connected and in-game */}
+        <LiveStatsBar />
 
         {/* Game State -- appears after first recommendation */}
         {hasData && <GameStatePanel />}

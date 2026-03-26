@@ -3,10 +3,15 @@ import Header from "./components/layout/Header";
 import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
+import { useGsiSync } from "./hooks/useGsiSync";
+import { useHeroes } from "./hooks/useHeroes";
 import { useGsiStore, type GsiLiveState } from "./stores/gsiStore";
 import SettingsPanel from "./components/settings/SettingsPanel";
 
 function App() {
+  const { heroes } = useHeroes();
+  useGsiSync(heroes);
+
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const wsUrl = `ws${window.location.protocol === "https:" ? "s" : ""}://${window.location.host}/ws`;
