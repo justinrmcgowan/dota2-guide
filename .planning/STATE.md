@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Live Game Intelligence
-status: Ready to plan
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-03-26T20:00:39.525Z"
+status: Ready to execute
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-03-26T20:26:37.233Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 12
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 12 — auto-refresh-lane-detection
+**Current focus:** Phase 13 — screenshot-parsing
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
+Phase: 13 (screenshot-parsing) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: Not started
 | Phase 12 P02 | 3min | 2 tasks | 4 files |
 | Phase 12 P01 | 5min | 2 tasks | 8 files |
 | Phase 12 P03 | 5min | 2 tasks | 6 files |
+| Phase 13 P02 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase 12]: Replicate recommend() logic in useAutoRefresh via direct store access -- hooks can only be called in components
 - [Phase 12]: Lane auto-detection via single boolean flag in refreshStore; fires once, no override tracking needed
 - [Phase 12]: GSI reconnect syncs prev state to current on status transition to avoid false diff triggers
+- [Phase 13]: initialState object extracted for DRY reset/closeModal in screenshotStore
+- [Phase 13]: 6-item cap enforced in screenshotStore addItem to match Dota 2 inventory limit
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T19:54:31.146Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-03-26T20:26:37.231Z
+Stopped at: Completed 13-02-PLAN.md
 Resume file: None
