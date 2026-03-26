@@ -4,13 +4,16 @@ import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGsiSync } from "./hooks/useGsiSync";
+import { useAutoRefresh } from "./hooks/useAutoRefresh";
 import { useHeroes } from "./hooks/useHeroes";
 import { useGsiStore, type GsiLiveState } from "./stores/gsiStore";
 import SettingsPanel from "./components/settings/SettingsPanel";
+import AutoRefreshToast from "./components/toast/AutoRefreshToast";
 
 function App() {
   const { heroes } = useHeroes();
   useGsiSync(heroes);
+  useAutoRefresh(); // Phase 12: auto-refresh on game events
 
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -47,6 +50,7 @@ function App() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+      <AutoRefreshToast />
     </div>
   );
 }
