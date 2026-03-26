@@ -114,6 +114,25 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 14: Recommendation Quality & System Hardening
+**Goal:** The recommendation engine is more reliable, cost-efficient, and transparent -- rules use DB-backed lookups with 18+ targeted rules, duplicate requests are cached, rapid-fire requests are rate-limited, validation gaps are closed, and users see actionable failure reasons when AI is unavailable
+**Depends on:** Phase 13
+**Requirements**: D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11
+**Success Criteria** (what must be TRUE):
+  1. Rules engine uses DB-backed hero/item lookups that auto-refresh with the 6h data pipeline
+  2. At least 18 deterministic rules cover obvious item decisions without needing Claude API
+  3. Identical recommendation requests return cached responses for 5 minutes without an API call
+  4. Same IP is rate-limited to 1 request per 10 seconds on /api/recommend (429 with Retry-After)
+  5. Users see specific fallback reason when AI fails (timeout, parse error, API error, rate limited)
+  6. Damage profile sliders always sum to 100% and backend rejects invalid sums
+  7. Invalid playstyle-role combinations are rejected by the backend
+**Plans**: 3 plans
+
+Plans:
+- [ ] 14-01-PLAN.md -- Rate limiting, response caching, LLM error categorization, system prompt hardening
+- [ ] 14-02-PLAN.md -- Rules engine DB migration and 6 new targeted rules
+- [ ] 14-03-PLAN.md -- Validation gaps (damage profile, playstyle-role) and frontend error transparency
+
 ## Progress
 
 **Execution Order:**
@@ -134,14 +153,4 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 13. Screenshot Parsing | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
-
-### Phase 14: Recommendation Quality & System Hardening
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 13
-**Plans:** 3/3 plans complete
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 14 to break down)
+| 14. Recommendation Quality & System Hardening | v2.0 | 0/3 | Not started | - |
