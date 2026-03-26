@@ -56,8 +56,8 @@ export function useAutoRefresh(): void {
     const game = useGameStore.getState();
     const recStore = useRecommendationStore.getState();
 
-    // Guard: need hero and role
-    if (!game.selectedHero || game.role === null) return;
+    // Guard: need hero, role, and playstyle
+    if (!game.selectedHero || game.role === null || game.playstyle === null) return;
     // Guard: don't overlap with in-progress recommendation
     if (recStore.isLoading) return;
 

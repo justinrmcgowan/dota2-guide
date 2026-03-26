@@ -2,6 +2,7 @@ import { useRecommendationStore } from "../stores/recommendationStore";
 import { useGameStore } from "../stores/gameStore";
 import { api } from "../api/client";
 import type { RecommendRequest } from "../types/recommendation";
+import { PLAYSTYLE_OPTIONS } from "../utils/constants";
 
 export function useRecommendation() {
   const data = useRecommendationStore((s) => s.data);
@@ -24,10 +25,14 @@ export function useRecommendation() {
     // Get purchased item IDs for filtering
     const purchasedItemIds = store.getPurchasedItemIds();
 
+    // Use selected playstyle, or first valid option for the role
+    const playstyle =
+      game.playstyle ?? PLAYSTYLE_OPTIONS[game.role]?.[0] ?? "Farm-first";
+
     const request: RecommendRequest = {
       hero_id: game.selectedHero.id,
       role: game.role,
-      playstyle: game.playstyle ?? "balanced",
+      playstyle,
       side: game.side ?? "radiant",
       lane: game.lane ?? "safe",
       lane_opponents: game.laneOpponents.map((h) => h.id),
