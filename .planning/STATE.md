@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Live Game Intelligence
 status: Ready to execute
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-26T21:11:01.183Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-26T21:16:11.528Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 ## Current Position
 
 Phase: 14 (recommendation-quality-system-hardening) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Plan: 2 of 3
 | Phase 13 P01 | 3min | 2 tasks | 7 files |
 | Phase 13 P03 | 5min | 3 tasks | 5 files |
 | Phase 14 P02 | 6min | 2 tasks | 5 files |
+| Phase 14 P01 | 11min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 13]: Items list for ItemEditPicker fetched lazily from /api/items; failure silently ignored
 - [Phase 14]: Removed HERO_NAMES dict entirely in favor of DB-backed lookup helpers (_hero_id, _item_id, _hero_ids)
 - [Phase 14]: Merged BKB timing rule into existing _bkb_rule by expanding hero set -- 6 new rules (not 7)
+- [Phase 14]: FallbackReason str Enum for JSON-serializable error categories in LLM generate() tuple return
+- [Phase 14]: ResponseCache uses SHA-256 of model_dump_json for deterministic request deduplication
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T21:11:01.180Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-26T21:16:11.525Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
