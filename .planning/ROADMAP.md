@@ -75,7 +75,7 @@ Plans:
 Plans:
 - [x] 11-01-PLAN.md -- Utility functions (neutralTiers, itemMatching) and useAnimatedValue hook
 - [ ] 11-02-PLAN.md -- useGsiSync hook, LiveStatsBar component, Sidebar/App wiring
-- [ ] 11-03-PLAN.md -- GameClock component, NeutralItemSection tier highlighting, Header wiring
+- [x] 11-03-PLAN.md -- GameClock component, NeutralItemSection tier highlighting, Header wiring
 
 **UI hint**: yes
 
@@ -120,7 +120,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 8. Allied Synergy | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 11. Live Game Dashboard | v2.0 | 1/3 | In Progress|  |
+| 11. Live Game Dashboard | v2.0 | 2/3 | In Progress|  |
 | 12. Auto-Refresh & Lane Detection | v2.0 | 0/0 | Not started | - |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
 | 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
@@ -130,7 +130,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 13
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 14 to break down)
