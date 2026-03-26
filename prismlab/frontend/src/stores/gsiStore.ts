@@ -18,6 +18,9 @@ export interface GsiLiveState {
   team_side: string;
   is_alive: boolean;
   timestamp: number;
+  roshan_state: string;
+  radiant_tower_count: number;
+  dire_tower_count: number;
 }
 
 interface GsiStore {

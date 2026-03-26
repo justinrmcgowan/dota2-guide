@@ -19,6 +19,9 @@ const mockLiveState: GsiLiveState = {
   team_side: "radiant",
   is_alive: true,
   timestamp: 1700000000,
+  roshan_state: "alive",
+  radiant_tower_count: 11,
+  dire_tower_count: 11,
 };
 
 describe("gsiStore", () => {
@@ -70,6 +73,20 @@ describe("gsiStore", () => {
     // Now disconnect WS -- gsiStatus should go to "lost"
     useGsiStore.getState().setWsStatus("disconnected");
     expect(useGsiStore.getState().gsiStatus).toBe("lost");
+  });
+
+  it("updateLiveState preserves roshan_state and tower counts", () => {
+    const stateWithTowers: GsiLiveState = {
+      ...mockLiveState,
+      roshan_state: "respawn_base",
+      radiant_tower_count: 9,
+      dire_tower_count: 10,
+    };
+    useGsiStore.getState().updateLiveState(stateWithTowers);
+    const state = useGsiStore.getState();
+    expect(state.liveState?.roshan_state).toBe("respawn_base");
+    expect(state.liveState?.radiant_tower_count).toBe(9);
+    expect(state.liveState?.dire_tower_count).toBe(10);
   });
 
   it("clearLiveState resets liveState and gsiStatus to idle", () => {
