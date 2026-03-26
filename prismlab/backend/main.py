@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +15,7 @@ from api.routes.items import router as items_router
 from api.routes.recommend import router as recommend_router
 from api.routes.admin import router as admin_router
 from api.routes.settings import router as settings_router
+from api.routes.screenshot import router as screenshot_router
 from gsi.receiver import router as gsi_router
 from gsi.ws_manager import ws_manager
 from gsi.state_manager import gsi_state_manager
@@ -28,17 +30,18 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     await seed_if_empty()
 
-    # Start daily data refresh scheduler
+    # Start data refresh scheduler — every 6h to catch patches same day
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         refresh_all_data,
         "interval",
-        hours=24,
-        id="daily_refresh",
+        hours=6,
+        id="data_refresh",
         replace_existing=True,
+        next_run_time=datetime.now(timezone.utc),
     )
     scheduler.start()
-    logger.info("Daily data refresh scheduler started (24h interval).")
+    logger.info("Data refresh scheduler started (6h interval).")
 
     # Start WebSocket broadcast loop (1Hz throttle)
     broadcast_task = asyncio.create_task(ws_manager.start_broadcast_loop(gsi_state_manager))
@@ -81,6 +84,7 @@ app.include_router(recommend_router, prefix="/api")
 app.include_router(admin_router)
 app.include_router(gsi_router)  # /gsi at root, no prefix
 app.include_router(settings_router, prefix="/api")
+app.include_router(screenshot_router, prefix="/api")
 
 
 @app.websocket("/ws")
