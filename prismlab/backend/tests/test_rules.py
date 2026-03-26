@@ -68,7 +68,10 @@ class TestNoMatchReturnsEmpty:
         results = engine.evaluate(req)
         # Only role-based rules (boots, quelling blade) should fire
         # No opponent-dependent rules should produce results
-        opponent_item_ids = {36, 116, 225, 235, 119, 102, 271, 40, 43, 249}
+        opponent_item_ids = {
+            36, 116, 225, 235, 119, 102, 271, 40, 43, 249,
+            56, 190, 231, 168, 185,  # New rule item IDs
+        }
         opponent_results = [r for r in results if r.item_id in opponent_item_ids]
         assert len(opponent_results) == 0
 
@@ -162,7 +165,10 @@ class TestReasoningNamesEnemy:
             req = _make_request(lane_opponents=[opponent_id], role=role)
             results = engine.evaluate(req)
             # Find opponent-triggered results (exclude role-only results like boots)
-            opponent_item_ids = {36, 116, 225, 235, 119, 102, 271, 40, 43, 249}
+            opponent_item_ids = {
+                36, 116, 225, 235, 119, 102, 271, 40, 43, 249,
+                56, 190, 231, 168, 185,  # New rule item IDs
+            }
             opponent_results = [r for r in results if r.item_id in opponent_item_ids]
             for result in opponent_results:
                 assert hero_name in result.reasoning, (
@@ -208,7 +214,70 @@ class TestQuellingBladeRule:
         assert len(qb_results) == 0
 
 
+class TestRaindropsRule:
+    async def test_raindrops_vs_zeus(self, engine: RulesEngine):
+        """Infused Raindrops recommended against Zeus (magic harass)."""
+        req = _make_request(lane_opponents=[22], role=1)
+        results = engine.evaluate(req)
+        raindrop = [r for r in results if r.item_name == "Infused Raindrops"]
+        assert len(raindrop) >= 1
+        assert raindrop[0].phase == "laning"
+
+
+class TestOrchidRule:
+    async def test_orchid_vs_slark(self, engine: RulesEngine):
+        """Orchid recommended against Slark (escape hero) for cores."""
+        req = _make_request(lane_opponents=[93], role=2)
+        results = engine.evaluate(req)
+        orchid = [r for r in results if r.item_name == "Orchid Malevolence"]
+        assert len(orchid) >= 1
+        assert orchid[0].phase == "core"
+
+    async def test_orchid_not_for_supports(self, engine: RulesEngine):
+        """Orchid NOT recommended for supports (role 4-5)."""
+        req = _make_request(lane_opponents=[93], role=5)
+        results = engine.evaluate(req)
+        orchid = [r for r in results if r.item_name == "Orchid Malevolence"]
+        assert len(orchid) == 0
+
+
+class TestMekansmRule:
+    async def test_mek_for_frontline_offlaner(self, engine: RulesEngine):
+        """Mekansm recommended for Frontline offlaner."""
+        req = _make_request(role=3, playstyle="Frontline")
+        results = engine.evaluate(req)
+        mek = [r for r in results if r.item_name == "Mekansm"]
+        assert len(mek) >= 1
+
+
+class TestPipeRule:
+    async def test_pipe_vs_magic_lineup(self, engine: RulesEngine):
+        """Pipe of Insight recommended vs magic-heavy enemy (Zeus) for offlaner."""
+        req = _make_request(lane_opponents=[22], role=3)
+        results = engine.evaluate(req)
+        pipe = [r for r in results if r.item_name == "Pipe of Insight"]
+        assert len(pipe) >= 1
+
+
+class TestHalberdRule:
+    async def test_halberd_vs_pa(self, engine: RulesEngine):
+        """Heaven's Halberd recommended against PA for offlaner."""
+        req = _make_request(lane_opponents=[12], role=3)
+        results = engine.evaluate(req)
+        halberd = [r for r in results if r.item_name == "Heaven's Halberd"]
+        assert len(halberd) >= 1
+
+
+class TestGhostScepterRule:
+    async def test_ghost_vs_riki_support(self, engine: RulesEngine):
+        """Ghost Scepter recommended for supports against Riki."""
+        req = _make_request(lane_opponents=[32], role=5)
+        results = engine.evaluate(req)
+        ghost = [r for r in results if r.item_name == "Ghost Scepter"]
+        assert len(ghost) >= 1
+
+
 class TestRuleCount:
     async def test_minimum_rule_count(self, engine: RulesEngine):
-        """Engine has at least 10 rules registered."""
-        assert len(engine._rules) >= 10
+        """Engine has at least 17 rules registered."""
+        assert len(engine._rules) >= 17

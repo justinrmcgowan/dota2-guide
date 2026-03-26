@@ -74,6 +74,7 @@ class RulesEngine:
             self._magic_stick_rule,
             self._quelling_blade_rule,
             self._boots_rule,
+            self._raindrops_rule,
             self._bkb_rule,
             self._mkb_rule,
             self._armor_rule,
@@ -83,6 +84,11 @@ class RulesEngine:
             self._dust_sentries_rule,
             self._anti_heal_rule,
             self._silver_edge_rule,
+            self._orchid_rule,
+            self._mekansm_rule,
+            self._pipe_rule,
+            self._halberd_rule,
+            self._ghost_scepter_rule,
         ]
 
     # ------------------------------------------------------------------
@@ -461,3 +467,150 @@ class RulesEngine:
                 ))
                 break
         return results
+
+    # ------------------------------------------------------------------
+    # New targeted rules (Phase 14)
+    # ------------------------------------------------------------------
+
+    def _raindrops_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Infused Raindrops vs heavy magic damage in lane."""
+        magic_harass = self._hero_ids(
+            "Zeus", "Skywrath Mage", "Ogre Magi", "Lion",
+            "Venomancer", "Lina", "Lich", "Witch Doctor",
+        )
+        raindrop_id = self._item_id("infused_raindrop")
+        if raindrop_id is None:
+            return []
+        for op_id in req.lane_opponents:
+            if op_id in magic_harass:
+                return [RuleResult(
+                    item_id=raindrop_id,
+                    item_name="Infused Raindrops",
+                    reasoning=(
+                        f"Against {self._hero_name(op_id)}'s magic damage harass, "
+                        f"Raindrops block 120 magic damage per charge. "
+                        f"At 225g, the most cost-efficient magic protection in lane."
+                    ),
+                    phase="laning",
+                    priority="core",
+                )]
+        return []
+
+    def _orchid_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Orchid Malevolence vs heroes that rely on escape spells."""
+        escape_heroes = self._hero_ids(
+            "Anti-Mage", "Slark", "Weaver", "Ember Spirit",
+            "Faceless Void", "Puck", "Storm Spirit", "Queen of Pain",
+        )
+        orchid_id = self._item_id("orchid")
+        if orchid_id is None or req.role > 3:
+            return []
+        for op_id in req.lane_opponents:
+            if op_id in escape_heroes:
+                return [RuleResult(
+                    item_id=orchid_id,
+                    item_name="Orchid Malevolence",
+                    reasoning=(
+                        f"Against {self._hero_name(op_id)}'s escape abilities, "
+                        f"Orchid's 5s silence prevents blink/leap/ball usage. "
+                        f"The soul burn amplifies burst damage for the kill."
+                    ),
+                    phase="core",
+                    priority="situational",
+                )]
+        return []
+
+    def _mekansm_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Mekansm for frontline offlaners and active supports."""
+        mek_id = self._item_id("mekansm")
+        if mek_id is None:
+            return []
+        if req.role in (3, 4) and req.playstyle in (
+            "Frontline", "Aura-carrier", "Lane-dominator",
+        ):
+            return [RuleResult(
+                item_id=mek_id,
+                item_name="Mekansm",
+                reasoning=(
+                    "Mekansm provides a 275 HP burst heal in a 1200 radius. "
+                    "As a frontline/aura player, you'll be positioned to hit "
+                    "3-4 heroes with every activation."
+                ),
+                phase="core",
+                priority="situational",
+            )]
+        return []
+
+    def _pipe_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Pipe of Insight vs multiple magic damage enemies."""
+        magic_heroes = self._hero_ids(
+            "Zeus", "Lina", "Leshrac", "Death Prophet",
+            "Skywrath Mage", "Necrophos", "Invoker", "Lich",
+        )
+        pipe_id = self._item_id("pipe")
+        if pipe_id is None or req.role not in (3, 4):
+            return []
+        magic_count = sum(1 for op_id in req.lane_opponents if op_id in magic_heroes)
+        if magic_count >= 1:
+            return [RuleResult(
+                item_id=pipe_id,
+                item_name="Pipe of Insight",
+                reasoning=(
+                    "Against magic-heavy enemies, Pipe's barrier absorbs 450 "
+                    "magic damage for your team. The 15% magic resistance aura "
+                    "stacks with base resistance for 40% total."
+                ),
+                phase="core",
+                priority="situational",
+            )]
+        return []
+
+    def _halberd_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Heaven's Halberd vs right-click dependent carries."""
+        rightclick_carries = self._hero_ids(
+            "Phantom Assassin", "Troll Warlord", "Sven",
+            "Juggernaut", "Monkey King", "Faceless Void",
+            "Lifestealer", "Wraith King",
+        )
+        halberd_id = self._item_id("heavens_halberd")
+        if halberd_id is None or req.role != 3:
+            return []
+        for op_id in req.lane_opponents:
+            if op_id in rightclick_carries:
+                return [RuleResult(
+                    item_id=halberd_id,
+                    item_name="Heaven's Halberd",
+                    reasoning=(
+                        f"Against {self._hero_name(op_id)}'s right-click damage, "
+                        f"Halberd's 3s disarm (5s on ranged) removes their primary "
+                        f"damage source. The 25% evasion and status resist make "
+                        f"you harder to kill."
+                    ),
+                    phase="core",
+                    priority="situational",
+                )]
+        return []
+
+    def _ghost_scepter_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Ghost Scepter for supports vs physical burst heroes."""
+        physical_burst = self._hero_ids(
+            "Phantom Assassin", "Slark", "Riki", "Clinkz",
+            "Bounty Hunter", "Nyx Assassin",
+        )
+        ghost_id = self._item_id("ghost")
+        if ghost_id is None or req.role < 4:
+            return []
+        for op_id in req.lane_opponents:
+            if op_id in physical_burst:
+                return [RuleResult(
+                    item_id=ghost_id,
+                    item_name="Ghost Scepter",
+                    reasoning=(
+                        f"Against {self._hero_name(op_id)}'s physical burst, "
+                        f"Ghost Scepter's 4s ethereal form makes you immune to "
+                        f"right-clicks. Buys time for teammates to respond."
+                    ),
+                    phase="core",
+                    priority="situational",
+                )]
+        return []
