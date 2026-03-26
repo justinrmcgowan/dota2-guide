@@ -35,7 +35,7 @@
 
 - [x] **Phase 10: GSI Receiver & WebSocket Pipeline** - Backend receives live game data from Dota 2 and pushes it to the frontend in real-time (completed 2026-03-26)
 - [x] **Phase 11: Live Game Dashboard** - Frontend consumes GSI data to auto-detect hero, track gold, mark purchased items, and display game clock (completed 2026-03-26)
-- [ ] **Phase 12: Auto-Refresh & Lane Detection** - Recommendations auto-refresh on key game events with rate limiting and auto-determined lane results
+- [x] **Phase 12: Auto-Refresh & Lane Detection** - Recommendations auto-refresh on key game events with rate limiting and auto-determined lane results (completed 2026-03-26)
 - [ ] **Phase 13: Screenshot Parsing** - User pastes scoreboard screenshots to extract enemy hero and item data via Claude Vision
 - [ ] **Phase 14: Recommendation Quality & System Hardening** - Improve engine reliability, cache all API calls, add rate limiting, fix validation gaps, and harden error handling
 
@@ -93,7 +93,7 @@ Plans:
 Plans:
 - [x] 12-01-PLAN.md -- Backend GSI pipeline extension (roshan_state, buildings, tower counts) + frontend trigger detection and lane benchmark utils
 - [x] 12-02-PLAN.md -- Frontend gsiStore extension + refreshStore (cooldown, event queue, toast state)
-- [ ] 12-03-PLAN.md -- useAutoRefresh hook, AutoRefreshToast, ReEvaluateButton cooldown timer, LaneResultSelector auto-detect, App wiring
+- [x] 12-03-PLAN.md -- useAutoRefresh hook, AutoRefreshToast, ReEvaluateButton cooldown timer, LaneResultSelector auto-detect, App wiring
 
 ### Phase 13: Screenshot Parsing
 **Goal**: The player can capture enemy item builds from a scoreboard screenshot instead of manually entering them, with Claude Vision extracting the data
@@ -126,7 +126,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 12. Auto-Refresh & Lane Detection | v2.0 | 2/3 | In Progress|  |
+| 12. Auto-Refresh & Lane Detection | v2.0 | 3/3 | Complete   | 2026-03-26 |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
 | 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
 
@@ -135,7 +135,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 13
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 14 to break down)
