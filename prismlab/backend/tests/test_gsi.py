@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from gsi.models import GsiPayload, GsiItemSlot, GsiMap, GsiPlayer, GsiHero, GsiItems
+from gsi.models import GsiPayload, GsiItemSlot, GsiMap, GsiPlayer, GsiHero, GsiItems, GsiBuilding, GsiBuildings
 from gsi.state_manager import ParsedGsiState, GsiStateManager
 
 
@@ -319,6 +319,128 @@ class TestGsiStateManager:
         """to_broadcast_dict() returns None before any update."""
         manager = GsiStateManager()
         assert manager.to_broadcast_dict() is None
+
+
+# --- Roshan / Buildings data tests ---
+
+
+def _make_tower_entries(alive_count: int = 11) -> dict:
+    """Create tower building entries with specified alive count (out of 11)."""
+    towers = {}
+    tower_names = [
+        "tower1_top", "tower2_top", "tower3_top",
+        "tower1_mid", "tower2_mid", "tower3_mid",
+        "tower1_bot", "tower2_bot", "tower3_bot",
+        "tower4_top", "tower4_bot",
+    ]
+    for i, name in enumerate(tower_names):
+        if i < alive_count:
+            towers[f"dota_goodguys_{name}"] = {"health": 1800, "max_health": 1800}
+        else:
+            towers[f"dota_goodguys_{name}"] = {"health": 0, "max_health": 1800}
+    # Also add non-tower entries (rax, fort) which should NOT be counted
+    towers["dota_goodguys_melee_rax_top"] = {"health": 1500, "max_health": 1500}
+    towers["dota_goodguys_range_rax_top"] = {"health": 1200, "max_health": 1200}
+    towers["dota_goodguys_fort"] = {"health": 4200, "max_health": 4200}
+    return towers
+
+
+SAMPLE_GSI_WITH_BUILDINGS = {
+    **SAMPLE_GSI_PAYLOAD,
+    "map": {
+        **SAMPLE_GSI_PAYLOAD["map"],
+        "roshan_state": "alive",
+        "roshan_state_end_seconds": 0,
+    },
+    "buildings": {
+        "radiant": _make_tower_entries(9),  # 9 radiant towers alive, 2 destroyed
+        "dire": _make_tower_entries(11),    # all 11 dire towers alive
+    },
+}
+
+
+class TestRoshanAndBuildings:
+    """Tests for Roshan state and buildings/tower parsing."""
+
+    def test_map_parses_roshan_state(self):
+        """GsiMap parses roshan_state from map data."""
+        payload = GsiPayload.model_validate(SAMPLE_GSI_WITH_BUILDINGS)
+        assert payload.map is not None
+        assert payload.map.roshan_state == "alive"
+
+    def test_map_parses_roshan_state_end_seconds(self):
+        """GsiMap parses roshan_state_end_seconds from map data."""
+        payload = GsiPayload.model_validate(SAMPLE_GSI_WITH_BUILDINGS)
+        assert payload.map.roshan_state_end_seconds == 0
+
+    def test_buildings_model_parses_radiant_dire(self):
+        """GsiBuildings model parses radiant/dire building dicts with health/max_health."""
+        payload = GsiPayload.model_validate(SAMPLE_GSI_WITH_BUILDINGS)
+        assert payload.buildings is not None
+        assert len(payload.buildings.radiant) > 0
+        assert len(payload.buildings.dire) > 0
+        # Check a specific tower entry
+        first_key = next(k for k in payload.buildings.radiant if "tower" in k)
+        building = payload.buildings.radiant[first_key]
+        assert isinstance(building, GsiBuilding)
+        assert building.max_health == 1800
+
+    def test_payload_accepts_optional_buildings(self):
+        """GsiPayload accepts optional buildings field (None when absent)."""
+        payload = GsiPayload.model_validate(SAMPLE_GSI_PAYLOAD)
+        assert payload.buildings is None
+
+    def test_state_manager_extracts_roshan_state(self):
+        """ParsedGsiState.roshan_state populated from map data."""
+        manager = GsiStateManager()
+        manager.update(SAMPLE_GSI_WITH_BUILDINGS)
+        state = manager.get_state()
+        assert state.roshan_state == "alive"
+
+    def test_state_manager_roshan_respawn(self):
+        """ParsedGsiState.roshan_state handles respawn states."""
+        data = {
+            **SAMPLE_GSI_WITH_BUILDINGS,
+            "map": {**SAMPLE_GSI_WITH_BUILDINGS["map"], "roshan_state": "respawn_base"},
+        }
+        manager = GsiStateManager()
+        manager.update(data)
+        state = manager.get_state()
+        assert state.roshan_state == "respawn_base"
+
+    def test_state_manager_counts_alive_towers(self):
+        """Tower counts: 9 radiant alive (2 destroyed), 11 dire alive."""
+        manager = GsiStateManager()
+        manager.update(SAMPLE_GSI_WITH_BUILDINGS)
+        state = manager.get_state()
+        assert state.radiant_tower_count == 9
+        assert state.dire_tower_count == 11
+
+    def test_state_manager_defaults_towers_without_buildings(self):
+        """Without buildings in payload, both tower counts default to 11."""
+        manager = GsiStateManager()
+        manager.update(SAMPLE_GSI_PAYLOAD)  # No buildings key
+        state = manager.get_state()
+        assert state.radiant_tower_count == 11
+        assert state.dire_tower_count == 11
+
+    def test_broadcast_dict_includes_new_fields(self):
+        """to_broadcast_dict() includes roshan_state, radiant_tower_count, dire_tower_count."""
+        manager = GsiStateManager()
+        manager.update(SAMPLE_GSI_WITH_BUILDINGS)
+        d = manager.to_broadcast_dict()
+        assert d is not None
+        assert "roshan_state" in d
+        assert d["roshan_state"] == "alive"
+        assert "radiant_tower_count" in d
+        assert d["radiant_tower_count"] == 9
+        assert "dire_tower_count" in d
+        assert d["dire_tower_count"] == 11
+
+    def test_gsi_config_includes_buildings(self):
+        """GSI config template includes 'buildings' data section."""
+        from api.routes.settings import GSI_CONFIG_TEMPLATE
+        assert '"buildings"' in GSI_CONFIG_TEMPLATE
 
 
 # --- Integration tests (require test_client fixture from conftest.py) ---
