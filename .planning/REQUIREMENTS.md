@@ -13,7 +13,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 - [x] **GSI-02**: Auto-detect player's hero and suggest role when game starts from GSI data
 - [x] **GSI-03**: Real-time gold, GPM, and net worth tracked from GSI and displayed in sidebar
 - [x] **GSI-04**: Purchased items auto-detected from GSI inventory data and marked in the timeline
-- [ ] **GSI-05**: Lane result (won/even/lost) auto-determined from GPM vs role benchmarks at 10 minutes
+- [x] **GSI-05**: Lane result (won/even/lost) auto-determined from GPM vs role benchmarks at 10 minutes
 
 ### WebSocket & Real-Time
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GSI-02 | Phase 11 | Complete |
 | GSI-03 | Phase 11 | Complete |
 | GSI-04 | Phase 11 | Complete |
-| GSI-05 | Phase 12 | Pending |
+| GSI-05 | Phase 12 | Complete |
 | WS-01 | Phase 10 | Complete |
 | WS-02 | Phase 11 | Complete |
 | WS-03 | Phase 11 | Complete |

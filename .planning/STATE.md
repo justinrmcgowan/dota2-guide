@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Live Game Intelligence
 status: Ready to execute
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-26T19:44:11.904Z"
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-26T19:46:35.900Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 ## Current Position
 
 Phase: 12 (auto-refresh-lane-detection) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: 2 of 3
 | Phase 11 P03 | 4min | 2 tasks | 5 files |
 | Phase 11 P02 | 5min | 2 tasks | 6 files |
 | Phase 12 P02 | 3min | 2 tasks | 4 files |
+| Phase 12 P01 | 5min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 11]: Subscribe to gsiStore outside render cycle via useGsiStore.subscribe() to avoid cascading re-renders
 - [Phase 11]: Add-only item marking: GSI marks purchased but never unmarks to prevent flicker
 - [Phase 12]: TriggerEvent defined locally in refreshStore for parallel wave execution -- Plan 03 reconciles
+- [Phase 12]: Tower counting filters by 'tower' substring in building key names, excluding rax and fort entries
+- [Phase 12]: Phase transition thresholds checked highest-first (2100>1200>600) for multi-threshold jump handling
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T19:44:11.902Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-03-26T19:46:35.897Z
+Stopped at: Completed 12-01-PLAN.md
 Resume file: None
