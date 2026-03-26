@@ -88,7 +88,12 @@ Plans:
   2. Recommendations auto-refresh when a key event occurs (item purchase, death, tower kill, Roshan, gold swing >2000g) without the player pressing Re-Evaluate
   3. Auto-refresh never fires more than once per 2 minutes, even if multiple events occur in rapid succession
   4. A notification toast appears after each auto-refresh explaining what triggered the update
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md -- Backend GSI pipeline extension (roshan_state, buildings, tower counts) + frontend trigger detection and lane benchmark utils
+- [ ] 12-02-PLAN.md -- Frontend gsiStore extension + refreshStore (cooldown, event queue, toast state)
+- [ ] 12-03-PLAN.md -- useAutoRefresh hook, AutoRefreshToast, ReEvaluateButton cooldown timer, LaneResultSelector auto-detect, App wiring
 
 ### Phase 13: Screenshot Parsing
 **Goal**: The player can capture enemy item builds from a scoreboard screenshot instead of manually entering them, with Claude Vision extracting the data
@@ -121,7 +126,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 12. Auto-Refresh & Lane Detection | v2.0 | 0/0 | Not started | - |
+| 12. Auto-Refresh & Lane Detection | v2.0 | 0/3 | Planned | - |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
 | 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
 
