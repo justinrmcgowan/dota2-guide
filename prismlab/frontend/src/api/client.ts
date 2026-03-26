@@ -3,6 +3,10 @@ import type {
   RecommendRequest,
   RecommendResponse,
 } from "../types/recommendation";
+import type {
+  ScreenshotParseRequest,
+  ScreenshotParseResponse,
+} from "../types/screenshot";
 
 const API_BASE = "/api";
 
@@ -37,4 +41,9 @@ export const api = {
   recommend: (req: RecommendRequest) =>
     postJson<RecommendRequest, RecommendResponse>("/recommend", req),
   getDataFreshness: () => fetchJson<DataFreshness>("/data-freshness"),
+  parseScreenshot: (req: ScreenshotParseRequest) =>
+    postJson<ScreenshotParseRequest, ScreenshotParseResponse>(
+      "/parse-screenshot",
+      req,
+    ),
 };

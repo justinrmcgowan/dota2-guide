@@ -38,6 +38,7 @@ interface GameStore {
     pure: number;
   }) => void;
   toggleEnemyItem: (itemName: string) => void;
+  setEnemyItemsSpotted: (items: string[]) => void;
   clearMidGameState: () => void;
 }
 
@@ -135,6 +136,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       set({ enemyItemsSpotted: [...enemyItemsSpotted, itemName] });
     }
   },
+
+  setEnemyItemsSpotted: (items) => set({ enemyItemsSpotted: items }),
 
   clearMidGameState: () =>
     set({ laneResult: null, damageProfile: null, enemyItemsSpotted: [] }),
