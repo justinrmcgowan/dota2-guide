@@ -5,6 +5,7 @@ import { useGameStore } from "../stores/gameStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
 import type { Hero } from "../types/hero";
 import type { RecommendResponse } from "../types/recommendation";
+import type { GsiLiveState } from "../stores/gsiStore";
 
 // Must import after stores so the mock is in scope
 vi.mock("../utils/itemMatching", () => ({
@@ -40,6 +41,29 @@ function makeHero(overrides: Partial<Hero> = {}): Hero {
     move_speed: 310,
     img_url: "",
     icon_url: "",
+    ...overrides,
+  };
+}
+
+function makeLiveState(overrides: Partial<GsiLiveState> = {}): GsiLiveState {
+  return {
+    hero_name: "npc_dota_hero_antimage",
+    hero_id: 1,
+    hero_level: 1,
+    gold: 600,
+    gpm: 0,
+    net_worth: 600,
+    kills: 0,
+    deaths: 0,
+    assists: 0,
+    items_inventory: [],
+    items_backpack: [],
+    items_neutral: "",
+    game_clock: 0,
+    game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
+    team_side: "radiant",
+    is_alive: true,
+    timestamp: Date.now(),
     ...overrides,
   };
 }
@@ -81,22 +105,26 @@ function makeRecommendations(): RecommendResponse {
 
 describe("useGsiSync", () => {
   beforeEach(() => {
-    // Reset all stores to defaults
+    // Reset all stores to clean defaults (don't pass true -- keep action methods)
     useGsiStore.setState({
       wsStatus: "disconnected",
       gsiStatus: "idle",
       lastUpdate: null,
       liveState: null,
     });
-    useGameStore.setState({
-      selectedHero: null,
-      role: null,
-      playstyle: null,
-    });
-    useRecommendationStore.setState({
-      data: null,
-      purchasedItems: new Set<string>(),
-    });
+    useGameStore.setState(
+      {
+        selectedHero: null,
+        role: null,
+        playstyle: null,
+      },
+    );
+    useRecommendationStore.setState(
+      {
+        data: null,
+        purchasedItems: new Set<string>(),
+      },
+    );
     mockFindPurchasedKeys.mockClear();
     mockFindPurchasedKeys.mockReturnValue(new Set<string>());
   });
@@ -105,241 +133,124 @@ describe("useGsiSync", () => {
     vi.restoreAllMocks();
   });
 
-  it("calls selectHero when gsiStore.liveState.hero_id changes and hero is in the list", () => {
+  it("auto-detects hero when gsiStore.liveState.hero_id matches a hero in the list", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
-    const selectHeroSpy = vi.spyOn(useGameStore.getState(), "selectHero");
 
-    renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
     act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_antimage",
-        hero_id: 1,
-        hero_level: 1,
-        gold: 600,
-        gpm: 0,
-        net_worth: 600,
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-        items_inventory: [],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 0,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
     });
 
-    expect(selectHeroSpy).toHaveBeenCalledWith(hero);
+    expect(useGameStore.getState().selectedHero).toEqual(hero);
+    unmount();
   });
 
-  it("does NOT call selectHero when hero_id is not found in heroes list", () => {
+  it("does NOT set selectedHero when hero_id is not found in heroes list", () => {
     const hero = makeHero({ id: 99 });
-    const selectHeroSpy = vi.spyOn(useGameStore.getState(), "selectHero");
 
-    renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
     act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_unknown",
-        hero_id: 999,
-        hero_level: 1,
-        gold: 600,
-        gpm: 0,
-        net_worth: 600,
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-        items_inventory: [],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 0,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 999 }));
     });
 
-    expect(selectHeroSpy).not.toHaveBeenCalled();
+    expect(useGameStore.getState().selectedHero).toBeNull();
+    unmount();
   });
 
-  it("calls setRole(1) when hero.roles includes 'Carry'", () => {
+  it("sets role to 1 when hero.roles includes 'Carry'", () => {
     const hero = makeHero({ id: 1, roles: ["Carry", "Escape"] });
-    const setRoleSpy = vi.spyOn(useGameStore.getState(), "setRole");
 
-    renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
     act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_antimage",
-        hero_id: 1,
-        hero_level: 1,
-        gold: 600,
-        gpm: 0,
-        net_worth: 600,
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-        items_inventory: [],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 0,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
     });
 
-    expect(setRoleSpy).toHaveBeenCalledWith(1);
+    expect(useGameStore.getState().role).toBe(1);
+    unmount();
   });
 
   it("suggests role 5 for a Support hero without Disabler", () => {
     const hero = makeHero({ id: 50, roles: ["Support"] });
-    const setRoleSpy = vi.spyOn(useGameStore.getState(), "setRole");
 
-    renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
     act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_chen",
-        hero_id: 50,
-        hero_level: 1,
-        gold: 600,
-        gpm: 0,
-        net_worth: 600,
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-        items_inventory: [],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 0,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 50 }));
     });
 
-    expect(setRoleSpy).toHaveBeenCalledWith(5);
+    expect(useGameStore.getState().role).toBe(5);
+    unmount();
   });
 
-  it("does NOT dispatch sync updates when gsiStatus is not 'connected'", () => {
+  it("does NOT update gameStore when gsiStatus is not 'connected'", () => {
     const hero = makeHero({ id: 1 });
-    const selectHeroSpy = vi.spyOn(useGameStore.getState(), "selectHero");
 
-    renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
-    // Set liveState directly without going through updateLiveState (which sets gsiStatus to connected)
+    // Set liveState directly without going through updateLiveState
+    // (which would set gsiStatus to "connected")
     act(() => {
       useGsiStore.setState({
         gsiStatus: "idle",
-        liveState: {
-          hero_name: "npc_dota_hero_antimage",
-          hero_id: 1,
-          hero_level: 1,
-          gold: 600,
-          gpm: 0,
-          net_worth: 600,
-          kills: 0,
-          deaths: 0,
-          assists: 0,
-          items_inventory: [],
-          items_backpack: [],
-          items_neutral: "",
-          game_clock: 0,
-          game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-          team_side: "radiant",
-          is_alive: true,
-          timestamp: Date.now(),
-        },
+        liveState: makeLiveState({ hero_id: 1 }),
       });
     });
 
-    expect(selectHeroSpy).not.toHaveBeenCalled();
+    expect(useGameStore.getState().selectedHero).toBeNull();
+    unmount();
   });
 
-  it("does NOT call selectHero again when hero_id does not change", () => {
+  it("does NOT re-select hero when hero_id does not change between updates", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
-    const selectHeroSpy = vi.spyOn(useGameStore.getState(), "selectHero");
+    // Track selectHero calls via a counter
+    let selectCount = 0;
+    const origSelectHero = useGameStore.getState().selectHero;
+    useGameStore.setState({
+      selectHero: (h: Hero) => {
+        selectCount++;
+        origSelectHero(h);
+      },
+    });
 
-    renderHook(() => useGsiSync([hero]));
-
-    const liveState = {
-      hero_name: "npc_dota_hero_antimage",
-      hero_id: 1,
-      hero_level: 1,
-      gold: 600,
-      gpm: 0,
-      net_worth: 600,
-      kills: 0,
-      deaths: 0,
-      assists: 0,
-      items_inventory: [],
-      items_backpack: [],
-      items_neutral: "",
-      game_clock: 0,
-      game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-      team_side: "radiant",
-      is_alive: true,
-      timestamp: Date.now(),
-    };
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
     // First update
     act(() => {
-      useGsiStore.getState().updateLiveState(liveState);
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
     });
+    expect(selectCount).toBe(1);
 
-    expect(selectHeroSpy).toHaveBeenCalledTimes(1);
-
-    // Second update with same hero_id
+    // Second update with same hero_id but different gold
     act(() => {
-      useGsiStore.getState().updateLiveState({ ...liveState, gold: 700 });
+      useGsiStore
+        .getState()
+        .updateLiveState(makeLiveState({ hero_id: 1, gold: 700 }));
     });
+    expect(selectCount).toBe(1); // Still 1 -- guard prevented redundant call
 
-    // Should still only have been called once
-    expect(selectHeroSpy).toHaveBeenCalledTimes(1);
+    unmount();
   });
 
   it("calls togglePurchased for items matched by findPurchasedKeys", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
-    const toggleSpy = vi.spyOn(
-      useRecommendationStore.getState(),
-      "togglePurchased",
-    );
 
     const recs = makeRecommendations();
     useRecommendationStore.setState({ data: recs });
 
     mockFindPurchasedKeys.mockReturnValue(new Set(["laning-36"]));
 
-    renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGsiSync([hero]));
 
     act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_antimage",
-        hero_id: 1,
-        hero_level: 5,
-        gold: 1500,
-        gpm: 400,
-        net_worth: 3000,
-        kills: 2,
-        deaths: 0,
-        assists: 1,
-        items_inventory: ["power_treads"],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 300,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+      useGsiStore.getState().updateLiveState(
+        makeLiveState({
+          hero_id: 1,
+          items_inventory: ["power_treads"],
+        }),
+      );
     });
 
     expect(mockFindPurchasedKeys).toHaveBeenCalledWith(
@@ -347,15 +258,12 @@ describe("useGsiSync", () => {
       [],
       recs,
     );
-    expect(toggleSpy).toHaveBeenCalledWith("laning-36");
+    expect(useRecommendationStore.getState().purchasedItems.has("laning-36")).toBe(true);
+    unmount();
   });
 
-  it("does NOT call togglePurchased when key is already in purchasedItems", () => {
+  it("does NOT toggle when key is already in purchasedItems", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
-    const toggleSpy = vi.spyOn(
-      useRecommendationStore.getState(),
-      "togglePurchased",
-    );
 
     const recs = makeRecommendations();
     useRecommendationStore.setState({
@@ -365,64 +273,42 @@ describe("useGsiSync", () => {
 
     mockFindPurchasedKeys.mockReturnValue(new Set(["laning-36"]));
 
-    renderHook(() => useGsiSync([hero]));
-
-    act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_antimage",
-        hero_id: 1,
-        hero_level: 5,
-        gold: 1500,
-        gpm: 400,
-        net_worth: 3000,
-        kills: 2,
-        deaths: 0,
-        assists: 1,
-        items_inventory: ["power_treads"],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 300,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+    // Track togglePurchased calls
+    let toggleCount = 0;
+    const origToggle = useRecommendationStore.getState().togglePurchased;
+    useRecommendationStore.setState({
+      togglePurchased: (key: string) => {
+        toggleCount++;
+        origToggle(key);
+      },
     });
 
-    expect(toggleSpy).not.toHaveBeenCalled();
+    const { unmount } = renderHook(() => useGsiSync([hero]));
+
+    act(() => {
+      useGsiStore.getState().updateLiveState(
+        makeLiveState({
+          hero_id: 1,
+          items_inventory: ["power_treads"],
+        }),
+      );
+    });
+
+    expect(toggleCount).toBe(0); // Already purchased -- skip
+    unmount();
   });
 
   it("cleans up subscription on unmount", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
-    const selectHeroSpy = vi.spyOn(useGameStore.getState(), "selectHero");
 
     const { unmount } = renderHook(() => useGsiSync([hero]));
-
     unmount();
 
     // After unmount, store updates should not trigger selectHero
     act(() => {
-      useGsiStore.getState().updateLiveState({
-        hero_name: "npc_dota_hero_antimage",
-        hero_id: 1,
-        hero_level: 1,
-        gold: 600,
-        gpm: 0,
-        net_worth: 600,
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-        items_inventory: [],
-        items_backpack: [],
-        items_neutral: "",
-        game_clock: 0,
-        game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",
-        team_side: "radiant",
-        is_alive: true,
-        timestamp: Date.now(),
-      });
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
     });
 
-    expect(selectHeroSpy).not.toHaveBeenCalled();
+    expect(useGameStore.getState().selectedHero).toBeNull();
   });
 });
