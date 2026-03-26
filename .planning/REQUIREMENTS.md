@@ -24,9 +24,9 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Auto-Refresh
 
-- [ ] **REFRESH-01**: Recommendations auto-refresh on key game events (item purchase, death, tower, Roshan, gold swing >2000g)
-- [ ] **REFRESH-02**: Rate limiter enforces max 1 auto-refresh per 2 minutes to control API costs
-- [ ] **REFRESH-03**: Auto-refresh notification toast shows reason for update (e.g., "BKB purchased -- recommendations updated")
+- [x] **REFRESH-01**: Recommendations auto-refresh on key game events (item purchase, death, tower, Roshan, gold swing >2000g)
+- [x] **REFRESH-02**: Rate limiter enforces max 1 auto-refresh per 2 minutes to control API costs
+- [x] **REFRESH-03**: Auto-refresh notification toast shows reason for update (e.g., "BKB purchased -- recommendations updated")
 
 ### Screenshot Parsing
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WS-02 | Phase 11 | Complete |
 | WS-03 | Phase 11 | Complete |
 | WS-04 | Phase 11 | Complete |
-| REFRESH-01 | Phase 12 | Pending |
-| REFRESH-02 | Phase 12 | Pending |
-| REFRESH-03 | Phase 12 | Pending |
+| REFRESH-01 | Phase 12 | Complete |
+| REFRESH-02 | Phase 12 | Complete |
+| REFRESH-03 | Phase 12 | Complete |
 | SCREEN-01 | Phase 13 | Pending |
 | SCREEN-02 | Phase 13 | Pending |
 | SCREEN-03 | Phase 13 | Pending |

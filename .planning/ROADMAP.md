@@ -92,7 +92,7 @@ Plans:
 
 Plans:
 - [ ] 12-01-PLAN.md -- Backend GSI pipeline extension (roshan_state, buildings, tower counts) + frontend trigger detection and lane benchmark utils
-- [ ] 12-02-PLAN.md -- Frontend gsiStore extension + refreshStore (cooldown, event queue, toast state)
+- [x] 12-02-PLAN.md -- Frontend gsiStore extension + refreshStore (cooldown, event queue, toast state)
 - [ ] 12-03-PLAN.md -- useAutoRefresh hook, AutoRefreshToast, ReEvaluateButton cooldown timer, LaneResultSelector auto-detect, App wiring
 
 ### Phase 13: Screenshot Parsing
@@ -126,7 +126,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 | 9. Neutral Items | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. GSI Receiver & WebSocket Pipeline | v2.0 | 3/3 | Complete    | 2026-03-26 |
 | 11. Live Game Dashboard | v2.0 | 3/3 | Complete    | 2026-03-26 |
-| 12. Auto-Refresh & Lane Detection | v2.0 | 0/3 | Planned | - |
+| 12. Auto-Refresh & Lane Detection | v2.0 | 1/3 | In Progress|  |
 | 13. Screenshot Parsing | v2.0 | 0/0 | Not started | - |
 | 14. Recommendation Quality & System Hardening | v2.0 | 0/0 | Not started | - |
 
@@ -135,7 +135,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13 -> 14
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 13
-**Plans:** 3/3 plans complete
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 14 to break down)
