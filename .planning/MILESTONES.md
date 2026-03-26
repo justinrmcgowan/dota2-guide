@@ -1,5 +1,29 @@
 # Milestones
 
+## v2.0 Live Game Intelligence (Shipped: 2026-03-26)
+
+**Phases completed:** 5 phases, 15 plans, 32 tasks
+
+**Key accomplishments:**
+
+- Dota 2 GSI receiver endpoint with Pydantic payload models, in-memory state manager parsing all D-13 fields, and VDF config file generator
+- WebSocket ConnectionManager with 1Hz throttled broadcast loop and Nginx /gsi + /ws proxy configuration with 24-hour idle timeout
+- WebSocket hook with exponential-backoff reconnect, Zustand GSI store with tri-state status tracking, header status indicator (green/gray/red dot), and settings slide-over panel with GSI config file download
+- Neutral tier calculation, GSI inventory-to-recommendation matching, and rAF counting animation hook -- all TDD with 31 tests
+- Cross-store GSI synchronization hook with auto hero/role detection, item auto-marking, and animated gold/GPM/NW/KDA stats bar
+- MM:SS game clock in header with neutral item tier highlighting (active ring, past dim, next-tier countdown) driven by GSI game clock
+- Extended GSI backend to parse roshan_state and tower counts from buildings data, created pure laneBenchmarks and triggerDetection utility modules with 59 tests total
+- Extended GsiLiveState with Roshan/tower fields and created refreshStore with 120s cooldown, queue-latest-only event buffer, and toast notification state
+- useAutoRefresh hook detecting 5 GSI event types with 120s cooldown, queue-latest-only, lane auto-detect at 10:00, toast notifications, and cooldown countdown UI
+- Claude Vision endpoint with DB-anchored prompt, fuzzy hero/item name matching, and nginx 10MB upload config
+- TypeScript types, Zustand screenshotStore with edit actions, API client parseScreenshot method, gameStore bulk action, and global clipboard paste hook
+- Screenshot parser modal with confirmation editing, global paste activation, and Apply to Build integration writing parsed opponents and items to gameStore
+- Per-IP rate limiter, SHA-256 response cache, FallbackReason error categorization, and system prompt item ID hardening
+- Migrated rules engine from hardcoded 74-entry HERO_NAMES dict to DB-backed async lookups and added 6 new deterministic rules for obvious item recommendations
+- Backend damage profile sum and playstyle-role validators with frontend auto-rebalancing sliders, reason-specific fallback banners, and friendly 429/422 handling
+
+---
+
 ## v1.1 Allied Synergy & Neutral Items (Shipped: 2026-03-23)
 
 **Phases completed:** 3 phases, 6 plans, 12 tasks
