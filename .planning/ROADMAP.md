@@ -97,13 +97,15 @@ Plans:
   3. Floating elements (modals, settings panel, screenshot parser) display ambient crimson glow shadows and blood-glass backdrop-blur overlays
   4. Hero and legendary item cards show gold left-accent strips; the base background has a parchment noise texture overlay
   5. A visual audit of all ~30 components finds zero instances of old tokens (cyan accent, #FFFFFF text, rounded corners, blue links)
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 17-01: TBD
-- [ ] 17-02: TBD
-- [ ] 17-03: TBD
+- [ ] 17-01-PLAN.md — Font swap (Newsreader + Manrope) and @theme token replacement in globals.css
+- [ ] 17-02-PLAN.md — Layout shell (App, Header, Sidebar, MainPanel) and draft-input components migration
+- [ ] 17-03-PLAN.md — Timeline components (ItemCard, PhaseCard, NeutralItems) and game-state components migration
+- [ ] 17-04-PLAN.md — Floating overlays (SettingsPanel, ScreenshotParser, Toast, ErrorBanner) with blood-glass effects
+- [ ] 17-05-PLAN.md — Parchment noise texture, deprecated token removal, full visual audit and human verification
 
 ### Phase 18: Screenshot KDA Feed-Through
 **Goal**: Parsed enemy KDA and level data from screenshots enriches Claude's recommendation reasoning about enemy power levels and timing windows
@@ -129,5 +131,5 @@ Note: Phase 16 is backend-only and could execute in parallel with Phase 15 (fron
 |-------|-----------|----------------|--------|-----------|
 | 15. Store Consolidation & Tech Debt | v3.0 | 2/2 | Complete    | 2026-03-27 |
 | 16. Backend Data Cache | v3.0 | 2/2 | Complete    | 2026-03-27 |
-| 17. Design System Migration | v3.0 | 0/3 | Not started | - |
+| 17. Design System Migration | v3.0 | 0/5 | Not started | - |
 | 18. Screenshot KDA Feed-Through | v3.0 | 0/1 | Not started | - |
