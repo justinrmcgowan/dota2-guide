@@ -22,9 +22,12 @@ const mockResponse: RecommendResponse = {
   ],
   overall_strategy: "Test strategy",
   fallback: false,
+  fallback_reason: null,
   model: "test-model",
   latency_ms: 100,
   neutral_items: [],
+  timing_data: [],
+  build_paths: [],
 };
 
 beforeEach(() => {

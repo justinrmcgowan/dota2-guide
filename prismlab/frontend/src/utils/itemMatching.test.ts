@@ -25,9 +25,12 @@ function makeRecommendations(
     })),
     overall_strategy: null,
     fallback: false,
+    fallback_reason: null,
     model: null,
     latency_ms: null,
     neutral_items: [],
+    timing_data: [],
+    build_paths: [],
   };
 }
 

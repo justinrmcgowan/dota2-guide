@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  TriggerEvent,
-  PreviousState,
-  CurrentState,
-  detectTriggers,
-} from "./triggerDetection";
+import type { TriggerEvent, PreviousState, CurrentState } from "./triggerDetection";
+import { detectTriggers } from "./triggerDetection";
 
 function makeCurrentState(overrides: Partial<CurrentState> = {}): CurrentState {
   return {
