@@ -1,261 +1,437 @@
-# Technology Stack: v3.0 Design Overhaul & Performance
+# Stack Research: v4.0 Coaching Intelligence
 
-**Project:** Prismlab v3.0
-**Researched:** 2026-03-26
+**Project:** Prismlab v4.0
+**Researched:** 2026-03-27
 **Confidence:** HIGH
-**Scope:** Stack ADDITIONS/CHANGES only for v3.0 features. Existing validated stack (React 19, Vite 8, Tailwind v4.2, Zustand 5, FastAPI, SQLAlchemy, SQLite, Claude API, WebSocket, GSI, Pillow) is NOT re-evaluated.
+**Scope:** Stack ADDITIONS/CHANGES only for v4.0 features. Existing validated stack (React 19, Vite 8, Tailwind v4, Zustand 5, FastAPI, SQLAlchemy, SQLite, Claude API, httpx, APScheduler, DataCache singleton, WebSocket/GSI) is NOT re-evaluated.
+
+---
+
+## What v4.0 Needs (Feature-to-Data Mapping)
+
+| Feature | Data Required | Source | New API Calls |
+|---------|--------------|--------|---------------|
+| Timing benchmarks | Per-hero item purchase time + win rate at each timing bucket | OpenDota `/scenarios/itemTimings` | Yes -- new endpoint |
+| Counter-item depth | Hero ability metadata (behavior, bkbpierce, dispellable, dmg_type, channeled) | OpenDota `/constants/abilities` + `/constants/hero_abilities` | Yes -- new endpoints |
+| Build path intelligence | Item component trees (which sub-items build into which final items) | OpenDota `/constants/items` (already fetched) | No -- data already in Item.components |
+| Win condition framing | Hero roles + ability properties + team damage type composition | Combination of existing hero data + new ability data | No new endpoint -- derived from above |
 
 ---
 
 ## Recommended Stack Changes
 
-### Font Packages (REPLACE existing)
+### New OpenDota API Endpoints (extend existing `OpenDotaClient`)
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `@fontsource-variable/newsreader` | ^5.2.10 | Display/headline font (DESIGN.md "chiseled engravings") | Variable font = single file serves all weights (300-700) with optical sizing (`opsz`) axis. DESIGN.md requires tight letter-spacing (-0.02em) and display-scale headlines; the `opsz` axis automatically adjusts stroke contrast and spacing at different font sizes, which fixed-weight Newsreader cannot do. Fontsource packages are already the established import pattern in this codebase. |
-| `@fontsource-variable/manrope` | ^5.2.8 | Body/label/tactical data font | Variable font supports weights 200-800 in one file. DESIGN.md specifies distinct Manrope weights for body-sm, label-md, and technical data. Variable version keeps bundle smaller than importing 6+ discrete weight CSS files. Manrope supports `tnum` (tabular numbers) feature settings for stat displays, replacing JetBrains Mono's role. |
+No new pip packages needed. The existing `httpx.AsyncClient` in `opendota_client.py` handles all new endpoints.
 
-**REMOVE:**
-- `@fontsource/inter` (^5.2.8) -- replaced by Manrope for body text
-- `@fontsource/jetbrains-mono` (^5.2.8) -- replaced by Manrope with `font-variant-numeric: tabular-nums` for stats. DESIGN.md does not specify any monospace font.
+#### 1. Item Timings: `GET /scenarios/itemTimings`
 
-**Confidence:** HIGH -- both packages verified on npm registry (latest versions confirmed via `npm info`). Variable font versions confirmed available. Project already imports `@fontsource/*` packages via Vite CSS pipeline without issues.
+**Verified working** -- tested directly against `https://api.opendota.com/api/scenarios/itemTimings?hero_id=1&item=bfury`.
 
----
-
-### CSS Architecture (NO new packages -- Tailwind v4 native)
-
-Every visual requirement in DESIGN.md maps to existing Tailwind v4 capabilities. No CSS libraries, plugins, or PostCSS tools are needed.
-
-| DESIGN.md Requirement | Tailwind v4 Implementation | Why No Package |
-|----------------------|---------------------------|----------------|
-| Custom color palette (obsidian/crimson/gold/slate) | `@theme` directive with `--color-*` variables in globals.css | Current globals.css already uses this exact pattern for `--color-cyan-accent`, `--color-radiant`, `--color-dire`, `--color-bg-primary`. Just swap values. `@theme` creates utility classes (`bg-surface`, `text-on-surface`) automatically. |
-| Surface hierarchy (7 tones from #0E0E0E to #353534) | `--color-surface-*` namespace in `@theme` | Tailwind v4 `@theme` supports arbitrary naming depth. `--color-surface-container-lowest` creates `bg-surface-container-lowest` utility. |
-| Font families (Newsreader display, Manrope body) | `--font-display` and `--font-body` in `@theme` | Already using `--font-body` and `--font-stats` in current globals.css. Same pattern, new values. |
-| Font optical sizing / variation settings | `--font-display--font-variation-settings: "opsz" 32` in `@theme` | Tailwind v4 supports companion `--font-*--font-variation-settings` and `--font-*--font-feature-settings` variables alongside each `--font-*` entry. Official docs confirm this syntax. |
-| Ambient glow shadows (crimson aura, 32px blur, 5% opacity) | `@theme` with `--shadow-*` variables | Tailwind v4 custom shadows: `--shadow-glow: 0 0 32px oklch(68% 0.08 25 / 0.05)` creates `shadow-glow` utility class. Shadow-color utilities (`shadow-red-500/50`) compose with shadow shapes. Verified in official Tailwind v4 box-shadow docs. |
-| Backdrop blur ("blood-glass" overlay, 12px blur) | `backdrop-blur-md` utility (12px) | Built into Tailwind v4 core. DESIGN.md specifies `backdrop-blur` of 12px, which is the exact value of `backdrop-blur-md`. |
-| 0px corners (sharp, non-negotiable) | Reset `--radius-*: initial` in `@theme` or apply `rounded-none` globally | Setting `--radius-*: initial` in `@theme` removes all default border-radius utilities, making `rounded-none` the only option. Alternatively, a single CSS rule `* { border-radius: 0; }` achieves this globally. |
-| Ghost borders (15% opacity outlines) | `outline` utilities with opacity modifiers | `outline outline-1 outline-[#5A403E]/15` maps directly to DESIGN.md ghost border spec. No plugin needed. |
-| Parchment noise/grain texture | SVG `feTurbulence` filter as data URI | Pure CSS: `background-image: url("data:image/svg+xml,<svg>...</svg>")` with `feTurbulence` noise at low opacity. ~200 bytes of inline SVG. Apply via `::after` pseudo-element on the base `#131313` surface. No asset, no package, no build step. |
-| "Gold leaf" shimmer gradient | `bg-gradient-to-r` + `from-secondary` + `to-secondary-fixed-dim` | Tailwind v4 gradient utilities work with custom `@theme` colors. DESIGN.md gold shimmer is a linear gradient from `secondary` to `secondary_fixed_dim`. |
-| No 1px borders (the "No-Line Rule") | Content separation via background color shifts only | This is a design discipline, not a technical requirement. Existing Tailwind background utilities (`bg-surface-container-low`, `bg-surface-container-lowest`) handle section separation. |
-
-**Confidence:** HIGH -- all capabilities verified against Tailwind v4.2 official documentation. Current globals.css already uses `@theme` for custom colors and fonts; this is a value replacement, not an architecture change.
-
----
-
-### Backend In-Memory Data Cache (NO new packages)
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Python `dict` + module-level singleton | stdlib | In-memory hero/item data cache to eliminate DB queries on hot path | Pattern already proven twice in this codebase: `RulesEngine` caches hero name-to-id and item name-to-id dicts at startup; `ResponseCache` uses a dict with TTL for recommendation responses. Extend with a dedicated `DataCache` class holding the full hero and item catalogs. |
-
-**Why no external package:**
-1. **Single-process uvicorn** -- no cross-process cache sharing needed
-2. **Data refreshes on a schedule** (every 6h via APScheduler) -- no per-key TTL eviction needed
-3. **Full dataset fits in ~2MB** (~140 heroes + ~300 items as Python dicts) -- no memory pressure concerns
-4. **Refresh is atomic** -- pipeline loads new data, then swaps the entire cache dict
-5. **`cachetools`** adds a dependency for TTL/LRU eviction we do not need
-6. **Redis** adds a Docker container, network hop, and serialization overhead for 2MB of data
-7. **`fastapi-cache`** is for response caching (which `ResponseCache` already handles)
-
-**What gets cached:**
-- `heroes_by_id: dict[int, HeroData]` -- hero ID to hero data (name, attr, roles, stats, URLs)
-- `items_by_id: dict[int, ItemData]` -- item ID to item data (name, cost, components, bonuses, URLs)
-- `items_by_internal_name: dict[str, ItemData]` -- internal name lookup (for GSI item matching)
-- `neutral_items_by_tier: dict[int, list[ItemData]]` -- pre-grouped neutral items
-
-**What changes in existing code:**
-
-| File | Current (DB query per request) | After (cache read) |
-|------|-------------------------------|-------------------|
-| `context_builder.py` `_get_hero()` | `db.execute(select(Hero).where(Hero.id == hero_id))` | `data_cache.get_hero(hero_id)` |
-| `context_builder.py` `_extract_top_items()` | `db.execute(select(Item))` -- loads ALL items every call | `data_cache.get_item_name(item_id)` |
-| `context_builder.py` `_build_popularity_section()` | `db.execute(select(Item))` -- loads ALL items again | `data_cache.get_item_name(item_id)` |
-| `context_builder.py` `_build_neutral_catalog()` | Calls `get_neutral_items_by_tier(db)` which queries DB | `data_cache.neutral_items_by_tier` |
-| `matchup_service.py` `get_relevant_items()` | `db.execute(select(Item).where(...))` with cost filter | `data_cache.get_relevant_items(role)` |
-| `matchup_service.py` `get_neutral_items_by_tier()` | `db.execute(select(Item).where(is_neutral, tier))` | `data_cache.neutral_items_by_tier` |
-
-**What does NOT change:**
-- `matchup_service.get_or_fetch_matchup()` -- hero-pair matchup data is fetched on demand from OpenDota, cached in SQLite with stale-while-revalidate. Not suitable for startup preload (would require ~140x140 = 19,600 API calls).
-- `HeroItemPopularity` -- per-hero, fetched on demand, already stale-while-revalidate cached in SQLite. Same API call concern.
-- `ResponseCache` -- stays as-is, caches full recommendation responses. Orthogonal to data cache.
-- `RulesEngine` lookups -- keep as-is. The rules engine only needs name-to-id mappings, not full hero/item objects. Extending `DataCache` to also serve the rules engine would create coupling between the data layer and the engine layer.
-
-**Lifecycle:**
-1. App startup (`lifespan()` in `main.py`): `await data_cache.load(session)` after `seed_if_empty()` and `_rules.init_lookups(session)`
-2. Data refresh (`refresh_all_data()` in `data/refresh.py`): `await data_cache.reload(session)` after `_rules.refresh_lookups(session)`
-3. Request handling: `data_cache.get_hero(id)` / `data_cache.get_item(id)` -- plain dict lookups, no async, no DB
-
-**Confidence:** HIGH -- pattern proven in codebase. No new dependencies. Python stdlib dict is the correct tool for a static dataset of this size in a single-process server.
-
----
-
-### Frontend Store/Hook Consolidation (NO new packages)
-
-| Change | Approach | Why |
-|--------|----------|-----|
-| Merge `useGsiSync` + `useAutoRefresh` into `useGsiLive` | Single hook, single `useGsiStore.subscribe()` call | Both hooks independently subscribe to `gsiStore` via `useEffect` + `.subscribe()`, both use refs for mutable state, both access `useGameStore` and `useRecommendationStore`. Two separate subscriptions means every GSI update (arriving at 2Hz from WebSocket) is processed twice by two independent listeners. Merging into one subscription halves the processing and eliminates the TriggerEvent deduplication issue (which exists because both hooks see the same state transitions independently and can race). |
-| Keep stores separate | `gsiStore`, `gameStore`, `recommendationStore`, `refreshStore` remain 4 stores | Zustand's recommended pattern is separate stores for separate domains. The problem is not the store count -- it is subscription duplication in hooks. Merging stores would create a mega-store violating single-responsibility and causing unnecessary re-renders across unrelated UI components. The Zustand slices pattern is for when you want one store with multiple concerns; that is the opposite of what is needed here. |
-
-**Confidence:** HIGH -- this is a refactoring decision, not a library decision. Zustand 5's `.subscribe()` API is stable.
-
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Fonts | `@fontsource-variable/*` | Google Fonts CDN `@import url()` | Self-hosted via npm = no external CDN dependency at runtime. Docker on Unraid has no guaranteed fast CDN access. Consistent with existing import pattern. No FOUT from DNS lookup. |
-| Fonts | `@fontsource-variable/*` | Static `@fontsource/*` (non-variable) | Would need 5+ separate CSS imports per font (400, 500, 600, 700, italic variants). Variable font = 1 file per family, smaller total bundle, optical sizing axis. |
-| CSS shadows/glows | Tailwind v4 `@theme --shadow-*` | `tailwindcss-glow` plugin | Third-party plugin for something achievable with 3 lines in `@theme`. Plugin may lag behind Tailwind v4.x releases. The glow effect is just `box-shadow` with large blur radius and tinted color. |
-| Noise texture | Inline SVG `feTurbulence` data URI | Static `noise.png` asset | SVG data URI is ~200 bytes vs PNG at 50KB+. SVG scales to any resolution. No additional asset pipeline or CDN path. |
-| Noise texture | Inline SVG `feTurbulence` data URI | CSS `background: repeating-conic-gradient(...)` | Conic gradient noise is a clever hack but produces geometric patterns, not organic grain. `feTurbulence` produces actual Perlin noise matching the "parchment" feel DESIGN.md requests. |
-| Backend cache | Python dict singleton | `cachetools.TTLCache` | TTL eviction is unnecessary -- data refreshes atomically on a schedule, not per-key. Adds dependency for unneeded functionality. |
-| Backend cache | Python dict singleton | Redis | Over-engineered. Adds Docker container, network hop, serialization for 2MB of static data in a single-process server. |
-| Backend cache | Python dict singleton | `fastapi-cache` decorator | Designed for response caching via decorator pattern. Not the right abstraction for a startup-loaded data catalog with explicit reload. |
-| Store consolidation | Merge hooks, keep stores | Merge into Zustand slices pattern | Stores are correctly separated. Problem is hook subscription duplication, not store boundaries. |
-| Design tokens | Tailwind `@theme` block | Style Dictionary / Theo | Overkill for a single-app system. The `@theme` block IS the token file. |
-| Animations | Tailwind `transition-*` + CSS `@keyframes` | Framer Motion | DESIGN.md specifies hover states and "charging" button effects, not complex animations. Framer Motion adds 32KB+ to bundle for what CSS transitions handle natively. |
-
----
-
-## Installation
-
-```bash
-# In prismlab/frontend/
-
-# Remove old fonts
-npm uninstall @fontsource/inter @fontsource/jetbrains-mono
-
-# Add new variable fonts
-npm install @fontsource-variable/newsreader @fontsource-variable/manrope
+**Response structure (confirmed):**
+```json
+[
+  {"hero_id": 1, "item": "bfury", "time": 450, "games": "6", "wins": "6"},
+  {"hero_id": 1, "item": "bfury", "time": 600, "games": "12", "wins": "7"},
+  {"hero_id": 1, "item": "bfury", "time": 720, "games": "40", "wins": "30"},
+  {"hero_id": 1, "item": "bfury", "time": 900, "games": "277", "wins": "175"},
+  {"hero_id": 1, "item": "bfury", "time": 1200, "games": "284", "wins": "114"},
+  {"hero_id": 1, "item": "bfury", "time": 1500, "games": "19", "wins": "8"},
+  {"hero_id": 1, "item": "bfury", "time": 1800, "games": "1", "wins": "0"}
+]
 ```
 
-**No backend pip changes.** No new Docker dependencies. No infrastructure changes.
+**Key facts:**
+- `time` is in seconds (450 = 7:30, 900 = 15:00, 1200 = 20:00)
+- `games` and `wins` are strings (must parse to int)
+- Time buckets are fixed: 450, 600, 720, 900, 1200, 1500, 1800 seconds
+- Returns data for ~59 items per hero (tested with Anti-Mage), ~195 total rows
+- Can query by `hero_id` alone (returns all items for that hero) or by `hero_id` + `item` (returns one item's timing data)
+- Win rate at each timing = `int(wins) / int(games)` -- earlier completion generally means higher win rate
 
-**Net dependency change:** Remove 2 npm packages, add 2 npm packages. Zero new backend packages.
+**Integration:** Add `fetch_item_timings(hero_id: int, item: str | None = None)` to `OpenDotaClient`. Cache in a new `HeroItemTimings` SQLite table. Load into DataCache at startup as `timing_benchmarks: dict[int, dict[str, list[TimingBucket]]]` keyed by `{hero_id: {item_name: [buckets]}}`.
 
----
+**Confidence:** HIGH -- endpoint verified live, response schema confirmed, data structure understood.
 
-## Integration Points
+#### 2. Hero Abilities: `GET /constants/hero_abilities`
 
-### 1. Font Imports (main.tsx)
+**Verified working** -- tested directly against `https://api.opendota.com/api/constants/hero_abilities`.
 
-**Replace:**
-```typescript
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
-import "@fontsource/jetbrains-mono/400.css";
-import "@fontsource/jetbrains-mono/500.css";
-```
-
-**With:**
-```typescript
-import "@fontsource-variable/newsreader";
-import "@fontsource-variable/manrope";
-```
-
-Two imports replace six. Variable fonts include all weights in a single file each.
-
-### 2. Theme Variables (globals.css)
-
-**Replace** the entire `@theme` block. The new block defines:
-
-```css
-@theme {
-  /* === Surface Hierarchy (DESIGN.md Section 2) === */
-  --color-surface: #131313;
-  --color-surface-dim: #131313;
-  --color-surface-bright: #3A3939;
-  --color-surface-container-lowest: #0E0E0E;
-  --color-surface-container-low: #1C1B1B;
-  --color-surface-container: #201F1F;
-  --color-surface-container-high: #2B2A29;
-  --color-surface-container-highest: #353534;
-
-  /* === Accent Colors === */
-  --color-primary: #FFB4AC;
-  --color-primary-container: #B22222;
-  --color-secondary: #FFDB3C;
-  --color-secondary-container: #FFDB3C;
-  --color-secondary-fixed: #FFE16D;
-  --color-secondary-fixed-dim: #D4A017;
-  --color-tertiary: #8DA4B8;
-  --color-tertiary-container: #4E5E6D;
-
-  /* === Game Colors (preserved) === */
-  --color-radiant: #6AFF97;
-  --color-dire: #FF5555;
-
-  /* === Text === */
-  --color-on-surface: #E5E2E1;
-  --color-on-surface-variant: #E2BEBA;
-  --color-outline-variant: #5A403E;
-
-  /* === Attribute Colors (preserved) === */
-  --color-attr-str: oklch(68% 0.19 25);
-  --color-attr-agi: oklch(75% 0.18 145);
-  --color-attr-int: oklch(70% 0.15 250);
-  --color-attr-all: oklch(80% 0.1 90);
-
-  /* === Typography === */
-  --font-display: "Newsreader Variable", Georgia, serif;
-  --font-display--font-variation-settings: "opsz" 32;
-  --font-body: "Manrope Variable", system-ui, sans-serif;
-  --font-body--font-feature-settings: "tnum";
-
-  /* === Ambient Glow Shadows === */
-  --shadow-glow: 0 0 32px rgb(255 180 172 / 0.05);
-  --shadow-glow-gold: 0 0 24px rgb(255 219 60 / 0.08);
-  --shadow-glow-active: 0 0 16px rgb(178 34 34 / 0.15);
-
-  /* === Disable all rounded corners === */
-  --radius-*: initial;
+**Response structure (confirmed):**
+```json
+{
+  "npc_dota_hero_antimage": {
+    "abilities": [
+      "antimage_mana_break",
+      "antimage_blink",
+      "antimage_counterspell",
+      "generic_hidden",
+      "antimage_persectur",
+      "antimage_mana_void"
+    ],
+    "talents": [
+      {"name": "special_bonus_hp_regen_3", "level": 1},
+      {"name": "special_bonus_unique_antimage_manavoid_aoe", "level": 1}
+    ],
+    "facets": [
+      {"id": 0, "name": "antimage_magebanes_mirror", "deprecated": "true", "title": "Magebane's Mirror", "description": "..."}
+    ]
+  }
 }
 ```
 
-**Key differences from current globals.css:**
-- 7 surface tones replace 3 background colors
-- Crimson/gold/slate accent palette replaces spectral cyan
-- Newsreader + Manrope replace Inter + JetBrains Mono
-- Custom shadow tokens for ambient glows
-- All border-radius utilities disabled via `--radius-*: initial`
-- Game colors (radiant/dire) and attribute colors preserved unchanged
+**Key facts:**
+- Maps hero internal names to their ability key list
+- `generic_hidden` entries are placeholder slots (skip these)
+- Includes talents and facets (facets may have `"deprecated": "true"`)
+- This is a constants endpoint -- data changes only on Dota 2 patches, not between matches
 
-### 3. Backend Data Cache (new file + startup wiring)
+**Integration:** Add `fetch_hero_abilities()` to `OpenDotaClient`. Fetch once during daily refresh pipeline. Store in DataCache as `hero_abilities: dict[int, list[str]]` (hero_id to ability key list). No SQLite table needed -- this is static constants data that fits in the abilities cache.
 
-**New file:** `data/cache.py` with `DataCache` class
+**Confidence:** HIGH -- endpoint verified live, response schema confirmed.
 
-**Wire into `main.py` lifespan:**
-```python
-# After seed_if_empty() and _rules.init_lookups(session)
-from data.cache import data_cache
-await data_cache.load(session)
+#### 3. Ability Details: `GET /constants/abilities`
+
+**Verified working** -- tested directly against `https://api.opendota.com/api/constants/abilities`.
+
+**Response structure (confirmed, showing Anti-Mage Mana Break):**
+```json
+{
+  "antimage_mana_break": {
+    "dname": "Mana Break",
+    "behavior": "Passive",
+    "dmg_type": "Physical",
+    "bkbpierce": "No",
+    "dispellable": null,
+    "desc": "Burns an opponent's mana on each attack...",
+    "attrib": [
+      {"key": "mana_per_hit", "header": "MANA BURNED PER HIT:", "value": ["25","30","35","40"]},
+      {"key": "percent_damage_per_burn", "header": "MANA BURNED AS DAMAGE:", "value": "50"}
+    ],
+    "mc": null,
+    "cd": null,
+    "lore": "A modified technique of the Turstarkuri monks'...",
+    "img": "/apps/dota2/images/dota_react/abilities/antimage_mana_break.png"
+  }
+}
 ```
 
-**Wire into `data/refresh.py` refresh_all_data():**
+**Counter-item relevant fields (confirmed by testing actual abilities):**
+
+| Field | Values | Counter-Item Use |
+|-------|--------|-----------------|
+| `behavior` | `"Passive"`, `"Channeled"`, `["No Target", "Channeled"]`, `["Unit Target", "Channeled"]`, etc. | Channeled = Eul's/stuns interrupt. Passive = Silver Edge Break. |
+| `bkbpierce` | `"Yes"` / `"No"` | Determines if BKB counters this ability |
+| `dispellable` | `"Yes"` / `"No"` / `"Strong Dispels Only"` / `null` | Manta/Lotus/Eul's self-dispel viability |
+| `dmg_type` | `"Magical"` / `"Physical"` / `"Pure"` | BKB/Pipe/armor item decisions |
+
+**Verified examples of counter-item-relevant abilities:**
+- `enigma_black_hole`: behavior `["AOE","Point Target","Channeled"]`, bkbpierce `"Yes"` -- BKB does NOT save you, need positioning items
+- `crystal_maiden_freezing_field`: behavior `["No Target","Channeled"]`, bkbpierce `"No"` -- BKB + interrupts counter
+- `witch_doctor_death_ward`: behavior `["Point Target","Channeled"]`, bkbpierce `"Yes"` -- stuns/Eul's interrupt
+- `pugna_life_drain`: behavior `["Unit Target","Channeled"]`, bkbpierce `"No"` -- BKB breaks drain
+- `huskar_berserkers_blood`: behavior `"Passive"` -- Silver Edge Break counters
+
+**Integration:** Add `fetch_abilities()` to `OpenDotaClient`. Fetch once during daily refresh. Store in DataCache as `abilities: dict[str, AbilityCached]` keyed by ability internal name. The `AbilityCached` frozen dataclass extracts only the fields needed for counter-item logic (dname, behavior, bkbpierce, dispellable, dmg_type) -- not the full 7-field attrib arrays or lore text.
+
+**Confidence:** HIGH -- endpoint verified live, all counter-item-relevant fields confirmed present and populated for real hero abilities.
+
+---
+
+### New Data Models (extend existing `data/models.py`)
+
+No new pip packages. Uses existing SQLAlchemy + Pydantic.
+
+#### 1. `HeroItemTimings` SQLite Table
+
 ```python
-# After _rules.refresh_lookups(session)
-from data.cache import data_cache
-await data_cache.reload(session)
+class HeroItemTimings(Base):
+    """Cached item timing benchmark data per hero from OpenDota scenarios."""
+    __tablename__ = "hero_item_timings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hero_id: Mapped[int] = mapped_column(Integer, ForeignKey("heroes.id"))
+    item_internal_name: Mapped[str] = mapped_column(String, nullable=False)
+    timing_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # timing_data structure: [{"time": 900, "games": 277, "wins": 175}, ...]
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
 ```
 
-**Modify `context_builder.py`:**
-- Remove `db` parameter from `_get_hero()`, `_extract_top_items()`, `_build_popularity_section()`, `_build_neutral_catalog()`
-- Replace SQLAlchemy queries with `data_cache.get_hero(id)` / `data_cache.get_item(id)` / `data_cache.neutral_items_by_tier`
-- `build()` method still takes `db` parameter for matchup queries (those stay DB-backed)
+**Why a DB table (not just cache):** Item timing data is per-hero AND per-item. For 140 heroes x ~20 relevant items each, that is ~2800 API calls to fully populate. Must persist across restarts and refresh incrementally. Same stale-while-revalidate pattern as `HeroItemPopularity`.
 
-### 4. Hook Consolidation
+**Why one row per hero-item pair with JSON timing data (not one row per timing bucket):** Keeps the table manageable (~2800 rows vs ~19,600) and the JSON blob is small (7 timing buckets per entry, ~200 bytes). The DataCache can parse and index it at load time.
 
-**Delete:** `useGsiSync.ts`, `useAutoRefresh.ts`
-**Create:** `useGsiLive.ts` combining both
-**Merge tests:** `useGsiSync.test.ts` + `useAutoRefresh.test.ts` into `useGsiLive.test.ts`
-**Update:** `App.tsx` (or wherever hooks are mounted) to call `useGsiLive(heroes)` instead of separate `useGsiSync(heroes)` + `useAutoRefresh()`
+#### 2. `HeroAbilityData` SQLite Table
+
+```python
+class HeroAbilityData(Base):
+    """Cached hero ability constants from OpenDota."""
+    __tablename__ = "hero_ability_data"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hero_id: Mapped[int] = mapped_column(Integer, ForeignKey("heroes.id"), unique=True)
+    abilities_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # abilities_json: {"ability_key": {"dname", "behavior", "bkbpierce", "dispellable", "dmg_type"}, ...}
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
+```
+
+**Why store per-hero (not a flat abilities table):** The hero_abilities mapping connects hero_id to ability keys, and we need to look up "what abilities does this enemy have?" during recommendation. Storing denormalized per-hero with pre-joined ability details avoids a multi-step lookup. The full abilities constants file is ~500KB of JSON; extracting only the 5 counter-item-relevant fields per ability and storing per-hero keeps each row under 2KB.
+
+---
+
+### New DataCache Entries (extend existing `data/cache.py`)
+
+No new pip packages. Extends the existing `DataCache` singleton with new frozen dataclass types and lookup methods.
+
+#### New Frozen Dataclasses
+
+```python
+@dataclass(frozen=True)
+class TimingBucket:
+    """Single time bucket from OpenDota item timing data."""
+    time: int          # seconds since game start
+    games: int
+    wins: int
+
+    @property
+    def win_rate(self) -> float:
+        return self.wins / self.games if self.games > 0 else 0.0
+
+@dataclass(frozen=True)
+class AbilityCached:
+    """Counter-item-relevant fields for a hero ability."""
+    key: str              # e.g. "enigma_black_hole"
+    dname: str            # e.g. "Black Hole"
+    behavior: tuple[str, ...]  # e.g. ("AOE", "Point Target", "Channeled")
+    bkbpierce: bool       # True if "Yes"
+    dispellable: str | None  # "Yes", "No", "Strong Dispels Only", None
+    dmg_type: str | None  # "Magical", "Physical", "Pure", None
+
+    @property
+    def is_channeled(self) -> bool:
+        return "Channeled" in self.behavior
+
+    @property
+    def is_passive(self) -> bool:
+        return "Passive" in self.behavior
+```
+
+#### New Cache Dictionaries
+
+```python
+# In DataCache.__init__:
+self._timing_benchmarks: dict[int, dict[str, list[TimingBucket]]] = {}
+# {hero_id: {item_internal_name: [TimingBucket(time=900, games=277, wins=175), ...]}}
+
+self._hero_abilities: dict[int, list[AbilityCached]] = {}
+# {hero_id: [AbilityCached(key="enigma_black_hole", dname="Black Hole", ...), ...]}
+```
+
+#### New Lookup Methods
+
+```python
+def get_timing_benchmarks(self, hero_id: int, item_name: str) -> list[TimingBucket] | None:
+    """Get timing benchmark data for a hero-item pair."""
+    hero_timings = self._timing_benchmarks.get(hero_id)
+    if hero_timings is None:
+        return None
+    return hero_timings.get(item_name)
+
+def get_hero_abilities(self, hero_id: int) -> list[AbilityCached]:
+    """Get all abilities for a hero. Returns empty list if not found."""
+    return self._hero_abilities.get(hero_id, [])
+
+def has_channeled_ability(self, hero_id: int) -> bool:
+    """Check if a hero has any channeled ability."""
+    return any(a.is_channeled for a in self.get_hero_abilities(hero_id))
+
+def has_passive_ability(self, hero_id: int) -> bool:
+    """Check if a hero has any important passive ability."""
+    return any(a.is_passive for a in self.get_hero_abilities(hero_id))
+
+def get_abilities_by_property(self, hero_id: int, bkbpierce: bool | None = None,
+                               channeled: bool | None = None, dispellable: str | None = None
+                               ) -> list[AbilityCached]:
+    """Filter hero abilities by counter-item-relevant properties."""
+    abilities = self.get_hero_abilities(hero_id)
+    result = abilities
+    if bkbpierce is not None:
+        result = [a for a in result if a.bkbpierce == bkbpierce]
+    if channeled is not None:
+        result = [a for a in result if a.is_channeled == channeled]
+    if dispellable is not None:
+        result = [a for a in result if a.dispellable == dispellable]
+    return result
+```
+
+**Memory impact:** ~140 heroes x ~4 abilities each x ~100 bytes per AbilityCached = ~56KB. Timing data for top ~20 items per hero x 7 buckets x ~30 bytes = ~600KB. Total new cache: under 1MB. Negligible.
+
+**Confidence:** HIGH -- extends proven DataCache pattern. Frozen dataclasses match existing `HeroCached`/`ItemCached` patterns.
+
+---
+
+### Build Path Intelligence (NO new data source -- derive from existing)
+
+The `Item.components` field already stores the component tree for every item. Verified:
+- `bfury` components: `["pers", "broadsword", "broadsword", "quelling_blade"]`
+- `manta` components: `["yasha", "diadem"]`
+- `desolator` components: `["mithril_hammer", "mithril_hammer", "blight_stone"]`
+
+**What's needed:** A `get_build_path(item_internal_name: str)` method on DataCache that recursively resolves component trees into a flat ordered purchase list with costs. This is pure computation over existing cached data.
+
+```python
+def get_build_path(self, item_internal_name: str) -> list[tuple[str, int]]:
+    """Recursively resolve an item's component tree into purchase order.
+
+    Returns list of (component_internal_name, cost) tuples from cheapest to most expensive,
+    representing the order a player should buy components.
+    """
+    # Implementation: BFS over components, skip recipes, sort by cost ascending
+```
+
+**No new API calls, no new tables, no new dependencies.** The component data is already fetched in `refresh.py` and stored in `Item.components`. It is already in `ItemCached.components` in the DataCache.
+
+**Confidence:** HIGH -- data already available, verified against live API.
+
+---
+
+### Win Condition Framing (NO new dependencies -- logic layer only)
+
+Win condition classification is a rules-based categorization system, not a data mining task. It uses:
+
+1. **Hero roles** (already in `HeroCached.roles`): "Carry", "Pusher", "Initiator", "Ganker", etc.
+2. **Hero ability properties** (new from abilities data): channeled ults, global abilities, summons
+3. **Team damage type composition** (derived from hero primary attributes + ability `dmg_type`): physical-heavy vs magic-heavy
+4. **Draft timing curves** (derived from hero roles): early-game vs late-game lineup
+
+**Win condition categories** (static classification, not mined):
+
+| Strategy | Detection Heuristic | Item Build Implication |
+|----------|--------------------|-----------------------|
+| 4-protect-1 | 1 hard carry (Pos 1) + 3-4 heroes with "Support"/"Disabler" roles | Pos 1 gets greedy farming items; supports get save items |
+| Deathball/Push | 2+ heroes with "Pusher" role, strong early-game heroes | Aura items (Mek, Pipe, AC), early fight items |
+| Split-push | 1+ heroes with high mobility + tower damage (AM, NP, Lone Druid) | TP/BoT, escape items, farming items |
+| Teamfight/5v5 | 2+ heroes with AoE channeled ults or big teamfight abilities | BKB priority, Refresher candidates, positioning items |
+| Pick-off/Gank | 2+ heroes with "Ganker" role or targeted lockdown chains | Smoke, Blink, Orchid, mobility items |
+
+**Implementation:** A `WinConditionClassifier` class that takes the 5 allied heroes (including player) and 5 enemy heroes, analyzes their roles and abilities, and returns a primary + secondary strategy classification. This feeds into the Claude system prompt as context, not as a deterministic recommendation.
+
+**No new pip packages, no new API calls.** This is pure domain logic over cached data.
+
+**Confidence:** HIGH -- classification logic is well-understood in Dota 2 theory. Implementation is deterministic rules, not ML.
+
+---
+
+### Rules Engine Expansion (extend existing `engine/rules.py`)
+
+The current RulesEngine has 18 rules based on hardcoded hero ID sets. The v4.0 counter-item rules will be **ability-driven** instead of hero-ID-driven, using the new `AbilityCached` data.
+
+**Example: Current approach (brittle):**
+```python
+# Current: hardcoded hero IDs for "channeled ult" heroes
+channeled_heroes = self._hero_ids("Witch Doctor", "Crystal Maiden", "Enigma", "Pugna")
+```
+
+**New approach (ability-data-driven):**
+```python
+# New: query DataCache for any hero with channeled abilities
+def _has_channeled_threat(self, opponent_id: int) -> tuple[bool, str]:
+    abilities = self.cache.get_abilities_by_property(opponent_id, channeled=True)
+    if abilities:
+        return True, abilities[0].dname  # e.g. "Black Hole"
+    return False, ""
+```
+
+This eliminates the need to maintain hero ID lists and automatically handles new heroes added to Dota 2.
+
+**New ability-driven rules to add:**
+
+| Rule | Trigger | Recommendation | Phase |
+|------|---------|---------------|-------|
+| Eul's vs Channeled | Enemy has channeled ability (not BKB-piercing) | Eul's Scepter | core |
+| BKB urgency | 3+ enemy abilities with `dmg_type: "Magical"` and `bkbpierce: "No"` | BKB (upgrade from situational to core) | core |
+| Manta/Lotus vs Dispellable | Enemy has dispellable debuffs (`dispellable: "Yes"`) | Manta Style (cores) / Lotus Orb (offlaners) | core |
+| Spirit Vessel vs Heal/Regen | Enemy has heal/regen abilities (detected by desc keywords or known ability keys) | Spirit Vessel | core |
+| Break vs Passive | Enemy has critical passive abilities | Silver Edge | core |
+
+**No new pip packages.** Extends existing `RulesEngine` class and its `DataCache` dependency.
+
+**Confidence:** HIGH -- extends proven rules engine pattern. Ability data verified to contain all needed fields.
+
+---
+
+### Context Builder Expansion (extend existing `engine/context_builder.py`)
+
+The context builder needs new sections in the Claude prompt for:
+
+1. **Timing benchmark context**: "Battle Fury timing benchmark: 63% win rate at 15:00, 40% at 20:00 -- you need it by minute 15"
+2. **Enemy ability threats**: "Enigma has Black Hole (Channeled, BKB-piercing) -- positioning items critical"
+3. **Build path guidance**: "Desolator build path: Blight Stone (300g, lane value) -> Mithril Hammer -> Mithril Hammer"
+4. **Win condition frame**: "Enemy draft is 4-protect-1 around Medusa. Win condition: end before minute 35 or itemize to burst through"
+
+These are string-building additions to `ContextBuilder.build()`. No new packages.
+
+**Confidence:** HIGH -- extends existing context builder pattern.
+
+---
+
+### System Prompt Updates (extend existing `engine/prompts/system_prompt.py`)
+
+New sections to add to `SYSTEM_PROMPT`:
+
+1. **Timing urgency rules**: "If timing benchmark data is provided, reference the win rate cliff. Items purchased after the benchmark drop below 50% win rate -- flag as URGENT if player is behind."
+2. **Ability-aware counters**: "If enemy ability data is provided, name the specific ability being countered. 'Eul's interrupts Witch Doctor's Death Ward' not 'Eul's is good vs WD'."
+3. **Build path ordering**: "When recommending items with multiple components, specify purchase order by lane value. Components that provide immediate combat stats should be bought first."
+4. **Win condition framing**: "If team composition analysis is provided, frame all item recommendations around the identified win condition. A deathball strategy prioritizes team aura items over personal farming items."
+
+No new packages. String constant modifications.
+
+**Confidence:** HIGH -- extends existing prompt engineering.
+
+---
+
+### Refresh Pipeline Updates (extend existing `data/refresh.py`)
+
+New data to fetch during the daily refresh cycle:
+
+1. **Abilities constants** (`/constants/abilities` + `/constants/hero_abilities`): Fetch once per refresh, ~1 second each. Static constants data.
+2. **Item timings** (`/scenarios/itemTimings?hero_id=X`): Fetch per hero, ~140 calls. At 60 req/min rate limit, this takes ~2.5 minutes.
+
+**Rate limit concern:** OpenDota free tier is 60 req/min, 50,000 calls/month. The current refresh pipeline fetches heroes + items (2 calls). Adding 140 hero timing calls + 2 ability constants calls = 144 new calls per refresh. At 24h refresh interval, that is 144 x 30 = 4,320 calls/month for timings. Well within the 50,000 monthly budget.
+
+**Implementation:** Add a `_refresh_timings()` coroutine to `refresh.py` that fetches all hero timing data with `asyncio.Semaphore(2)` to limit concurrency and `asyncio.sleep(1.0)` between batches to respect rate limits. Same error handling pattern as existing refresh.
+
+**Confidence:** HIGH -- rate limits verified, endpoint confirmed working.
+
+---
+
+## Recommended Stack (Complete v4.0 Delta)
+
+### New Backend Code (NO new pip packages)
+
+| Component | Type | Purpose | Integration Point |
+|-----------|------|---------|-------------------|
+| `OpenDotaClient.fetch_item_timings()` | Method | Fetch timing benchmark data | `opendota_client.py` |
+| `OpenDotaClient.fetch_abilities()` | Method | Fetch ability constants | `opendota_client.py` |
+| `OpenDotaClient.fetch_hero_abilities()` | Method | Fetch hero-to-ability mapping | `opendota_client.py` |
+| `HeroItemTimings` model | SQLAlchemy table | Persist timing data across restarts | `models.py` |
+| `HeroAbilityData` model | SQLAlchemy table | Persist ability data across restarts | `models.py` |
+| `TimingBucket` dataclass | Frozen dataclass | In-memory timing data | `cache.py` |
+| `AbilityCached` dataclass | Frozen dataclass | In-memory ability data | `cache.py` |
+| `DataCache` timing/ability methods | Methods | Zero-DB lookups for new data | `cache.py` |
+| `WinConditionClassifier` class | New module | Team composition classification | `engine/win_conditions.py` |
+| Timing-aware rules | Rule methods | Urgency signals from timing data | `rules.py` |
+| Ability-driven counter rules | Rule methods | Data-driven counter-item logic | `rules.py` |
+| Timing/ability context sections | Builder methods | New prompt sections | `context_builder.py` |
+| Timing/ability refresh tasks | Coroutines | Daily data pipeline expansion | `refresh.py` |
+
+### New Frontend Code (NO new npm packages)
+
+| Component | Type | Purpose | Integration Point |
+|-----------|------|---------|-------------------|
+| Timing benchmark display | React component | Show "buy by X:XX" urgency indicators | Item recommendation cards |
+| Build path visualization | React component | Show component purchase order | Item recommendation cards |
+| Win condition banner | React component | Show team strategy classification | Overall strategy section |
 
 ---
 
@@ -263,16 +439,41 @@ await data_cache.reload(session)
 
 | Tempting Addition | Why Not |
 |-------------------|---------|
-| CSS-in-JS (styled-components, Emotion, Panda CSS) | Tailwind v4 `@theme` handles all design token needs. Adding CSS-in-JS creates two competing styling systems and increases bundle size. |
-| Framer Motion / React Spring | DESIGN.md specifies hover states and "charging" button effects, not choreographed animations. CSS `transition` and `@keyframes` handle this. Adding Framer Motion adds 32KB+ gzipped for hover effects. |
-| Design token package (Style Dictionary, Theo, Tokens Studio) | Overkill for a single-app design system with one consumer. The `@theme` block IS the token file. |
-| Storybook | Not warranted for a single-developer project. The app itself is the component showcase. |
-| PostCSS plugins (autoprefixer, postcss-nesting) | Tailwind v4 uses its own compiler via `@tailwindcss/vite`, bypassing PostCSS entirely. PostCSS plugins are not compatible with the Vite plugin integration path. |
-| Icon library (Lucide, Heroicons, Phosphor) | DESIGN.md does not specify icon changes. Current app uses inline SVGs where needed. |
-| `cachetools` or `aiocache` (Python) | Dict singleton is the correct tool for this use case. See Backend Cache section. |
-| `@fontsource/newsreader` (non-variable static) | Variable version is strictly better: fewer files, optical sizing axis, full weight range in one import. |
-| Tailwind CSS plugins (`@tailwindcss/typography`, `daisyui`) | DESIGN.md defines a bespoke design system incompatible with pre-built component libraries. Typography plugin's prose styles would conflict with the Newsreader/Manrope hierarchy. |
-| CSS custom properties library (Open Props) | Would conflict with `@theme` definitions. The design system defines its own tokens; importing a generic token set creates naming collisions and unused values. |
+| `pandas` / `numpy` for timing data analysis | The timing data is 7 buckets per hero-item pair. Basic arithmetic (win_rate = wins/games) is trivially done with Python builtins. Adding 30MB+ of scientific computing packages for division is absurd. |
+| `scikit-learn` for win condition classification | Win condition classification is a rules-based lookup (hero roles, ability properties), not a machine learning problem. A 50-line classifier function is correct; an ML pipeline is overkill for categorizing 5 heroes into 5 strategy archetypes. |
+| `networkx` for build path graph traversal | Item component trees are at most 3 levels deep with 2-4 children per node. A recursive function handles this. A graph library adds dependency for what is essentially nested list traversal. |
+| Stratz API integration | Stratz GraphQL API provides richer data (farm breakdowns, ward placement, replay parsing) but requires a separate auth token, adds API surface, and the OpenDota endpoints provide all data needed for v4.0 timing benchmarks and ability metadata. Stratz is a v5.0+ consideration if we need replay-level analytics. |
+| `aiohttp` to replace `httpx` | The project uses `httpx.AsyncClient` throughout. Switching to `aiohttp` for the 144 new API calls in the refresh pipeline adds a second HTTP client dependency for negligible performance difference at this call volume. |
+| `pydantic-ai` or LangChain | The Claude API integration is 50 lines of direct Anthropic SDK usage with prompt engineering. Adding an orchestration framework adds abstraction for a single-LLM, single-prompt-template system with no agentic behavior. |
+| Redis / Memcached for timing cache | Same rationale as v3.0: single-process uvicorn, all data fits in <2MB of memory, atomic swap on refresh. An external cache adds Docker container overhead for no benefit. |
+| `dotaconstants` npm package on frontend | The ability data and timing benchmarks are consumed by the backend rules engine and context builder, not displayed directly in the frontend. The frontend receives processed recommendations -- it does not need raw ability data. |
+| `cron` / `celery` for background timing refresh | APScheduler is already handling the 24h refresh cycle. Adding Celery requires Redis/RabbitMQ as a broker. APScheduler can run the expanded timing refresh as part of the existing job. |
+
+---
+
+## Installation
+
+```bash
+# Backend -- NO new pip packages
+# All new functionality uses existing: httpx, sqlalchemy, pydantic, anthropic
+
+# Frontend -- NO new npm packages
+# All new UI components use existing: React 19, Tailwind v4, Zustand 5
+```
+
+**Total new dependencies: ZERO.** Zero pip packages. Zero npm packages. This milestone is entirely about new application code using existing infrastructure.
+
+---
+
+## Alternatives Considered
+
+| Category | Recommended | Alternative | When to Use Alternative |
+|----------|-------------|-------------|-------------------------|
+| Timing data source | OpenDota `/scenarios/itemTimings` | Stratz GraphQL `heroStats.itemTimings` | If OpenDota deprecates the scenarios endpoint or rate limits become restrictive. Stratz has a free tier with 500 calls/day. |
+| Ability data source | OpenDota `/constants/abilities` + `/constants/hero_abilities` | Manually curated JSON file | If OpenDota constants become stale (they mirror dotaconstants repo which updates per patch). A manual file would be needed if OpenDota goes down permanently, but this is unlikely. |
+| Ability data storage | SQLite table + DataCache frozen dataclass | Pure in-memory (no SQLite) | Ability data is static constants (~changes per Dota patch). Could skip SQLite and fetch from OpenDota on every startup. SQLite persistence avoids the startup API dependency and handles offline/rate-limited scenarios. |
+| Win condition classifier | Deterministic rules (hero roles + ability properties) | LLM-based classification (ask Claude to classify the draft) | If the rules-based classifier misses nuanced draft interactions. Could add an LLM fallback for edge cases, but the 5 strategy archetypes are well-defined enough for rules. |
+| Timing benchmark refresh | Per-hero serial fetch with rate limiting | Batch all heroes in parallel with high concurrency | If the app needs sub-minute freshness. Current 24h refresh is fine; OpenDota rate limits (60/min) make high concurrency risky. |
 
 ---
 
@@ -280,40 +481,41 @@ await data_cache.reload(session)
 
 | Package | Version | Compatible With | Verified |
 |---------|---------|----------------|----------|
-| `@fontsource-variable/newsreader` | 5.2.10 | Vite 8, @tailwindcss/vite 4.2 | Yes -- fontsource packages are plain CSS + woff2 files, framework-agnostic |
-| `@fontsource-variable/manrope` | 5.2.8 | Vite 8, @tailwindcss/vite 4.2 | Yes -- same as above |
-| Tailwind v4.2 `@theme` | 4.2.2 (current) | All `--color-*`, `--font-*`, `--shadow-*`, `--radius-*` namespaces | Yes -- verified against official Tailwind v4.2 docs |
-| Python dict (stdlib) | 3.13 | FastAPI, SQLAlchemy async | Yes -- stdlib, no version concern |
-| Zustand `.subscribe()` | 5.0.12 (current) | React 19 | Yes -- already in production use by `useGsiSync` and `useAutoRefresh` |
+| httpx | 0.28.1 (current) | OpenDota `/scenarios/itemTimings`, `/constants/abilities`, `/constants/hero_abilities` | Yes -- all three endpoints tested live |
+| SQLAlchemy | 2.0.48 (current) | New `HeroItemTimings` and `HeroAbilityData` models | Yes -- same patterns as existing `HeroItemPopularity` and `MatchupData` |
+| Pydantic | 2.12.5 (current) | New `TimingBucket` and `AbilityCached` dataclasses | Yes -- frozen dataclasses use stdlib, not Pydantic |
+| anthropic | 0.86.0 (current) | Extended system prompt with timing/ability/win-condition sections | Yes -- prompt content changes, not API changes |
+| APScheduler | 3.11.0 (current) | Expanded refresh pipeline (144 additional API calls) | Yes -- same job scheduling, longer execution time |
 
 ---
 
-## Summary of Changes from v2.0 Stack
+## API Rate Limit Budget
 
-| What | Change | Impact |
-|------|--------|--------|
-| Frontend: font packages | Replace `@fontsource/inter` + `@fontsource/jetbrains-mono` with `@fontsource-variable/newsreader` + `@fontsource-variable/manrope` | 2 packages swapped. Net zero dependency count. |
-| Frontend: globals.css | Replace `@theme` block with expanded design tokens (surfaces, accents, fonts, shadows, radius reset) | Config change only. No structural CSS changes. |
-| Frontend: main.tsx imports | 2 variable font imports replace 6 static weight imports | Simpler, smaller bundle. |
-| Frontend: hooks | Merge `useGsiSync` + `useAutoRefresh` into `useGsiLive` | 2 files become 1. Halves GSI subscription overhead. |
-| Backend: data cache | New `data/cache.py` module with dict-based hero/item cache | Eliminates ~8 DB queries per recommendation request. Zero new pip packages. |
-| Backend: context_builder | Replace DB queries with cache reads | Removes `db` parameter from several internal methods. |
-| Docker | No changes | Same containers, same ports, same volumes. |
-| Infrastructure | No changes | No new services, no new ports, no new config files. |
+| Refresh Task | Calls per Refresh | Frequency | Monthly Total |
+|-------------|-------------------|-----------|---------------|
+| Heroes constants | 1 | Daily | 30 |
+| Items constants | 1 | Daily | 30 |
+| Matchup data (on-demand) | ~20 per recommendation | Per request | Variable |
+| Item popularity (on-demand) | ~6 per recommendation | Per request | Variable |
+| **NEW: Abilities constants** | 2 | Daily | 60 |
+| **NEW: Item timings (all heroes)** | 140 | Daily | 4,200 |
+| **Total scheduled** | 144 | Daily | ~4,320 |
 
-**Total new dependencies: Zero.** Two npm packages swapped, zero pip packages added.
+Free tier budget: 50,000 calls/month. Scheduled calls use ~4,320/month (8.6%). On-demand matchup/popularity calls use the remaining budget based on usage. Comfortable margin.
 
 ---
 
 ## Sources
 
-- [Tailwind v4 Theme Variables](https://tailwindcss.com/docs/theme) -- HIGH confidence, official docs. Verified `@theme` directive, `--color-*`, `--font-*`, `--shadow-*`, `--radius-*` namespaces, and companion `--font-*--font-variation-settings` syntax.
-- [Tailwind v4 Font Family](https://tailwindcss.com/docs/font-family) -- HIGH confidence, official docs. Verified `--font-*` custom font pattern and `@font-face` integration.
-- [Tailwind v4 Box Shadow](https://tailwindcss.com/docs/box-shadow) -- HIGH confidence, official docs. Verified custom `--shadow-*` definitions, shadow-color composition, and arbitrary value syntax.
-- [Tailwind v4 Backdrop Blur](https://tailwindcss.com/docs/backdrop-filter-blur) -- HIGH confidence, official docs. Confirmed `backdrop-blur-md` = 12px.
-- [@fontsource-variable/newsreader on npm](https://www.npmjs.com/package/@fontsource-variable/newsreader) -- HIGH confidence, npm registry. Version 5.2.10 confirmed via `npm info`.
-- [@fontsource-variable/manrope on npm](https://www.npmjs.com/package/@fontsource-variable/manrope) -- HIGH confidence, npm registry. Version 5.2.8 confirmed via `npm info`.
-- [Fontsource Installation Guide](https://fontsource.org/docs/getting-started/install) -- HIGH confidence, official docs. Confirmed variable font import pattern.
-- [Zustand GitHub](https://github.com/pmndrs/zustand) -- HIGH confidence, official repo. Store separation and `.subscribe()` patterns.
-- [CSS Grainy Gradients (CSS-Tricks)](https://css-tricks.com/grainy-gradients/) -- MEDIUM confidence, established technique. SVG `feTurbulence` noise texture approach.
-- [FastAPI Caching Discussion](https://github.com/fastapi/fastapi/issues/3044) -- MEDIUM confidence. Confirms `functools.lru_cache` and dict-based caching are safe in single-process FastAPI.
+- [OpenDota API Documentation](https://docs.opendota.com/) -- HIGH confidence. Canonical API reference for all endpoints.
+- [OpenDota `/scenarios/itemTimings` endpoint](https://api.opendota.com/api/scenarios/itemTimings?hero_id=1&item=bfury) -- HIGH confidence. Verified live, response schema confirmed with actual data.
+- [OpenDota `/constants/hero_abilities` endpoint](https://api.opendota.com/api/constants/hero_abilities) -- HIGH confidence. Verified live, response schema confirmed.
+- [OpenDota `/constants/abilities` endpoint](https://api.opendota.com/api/constants/abilities) -- HIGH confidence. Verified live with specific ability examples (Black Hole, Death Ward, Freezing Field, etc.).
+- [dotaconstants repository](https://github.com/odota/dotaconstants) -- HIGH confidence. Source data for OpenDota constants endpoints. Contains `build/abilities.json` and `build/hero_abilities.json`.
+- [go-opendota ItemTimings struct](https://pkg.go.dev/github.com/jasonodonnell/go-opendota) -- MEDIUM confidence. Third-party Go client that documents the ItemTimings response fields (hero_id, item, time, games, wins).
+- [OpenDota API rate limits](https://blog.opendota.com/2018/04/17/changes-to-the-api/) -- MEDIUM confidence. Blog post from 2018 confirming 50,000 free calls/month and 60 req/min. Rate limits verified still active by testing.
+- [Stratz API](https://stratz.com/api) -- MEDIUM confidence. Confirmed GraphQL API with hero stats and item timings, but not needed for v4.0 scope.
+
+---
+*Stack research for: Prismlab v4.0 Coaching Intelligence*
+*Researched: 2026-03-27*

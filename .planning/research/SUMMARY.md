@@ -1,156 +1,167 @@
 # Project Research Summary
 
-**Project:** Prismlab v3.0 — Design Overhaul & Performance
-**Domain:** Design system migration, in-memory caching, store/hook consolidation, integration gap fixes
-**Researched:** 2026-03-26
+**Project:** Prismlab v4.0 — Coaching Intelligence
+**Domain:** Dota 2 hybrid rules+LLM item advisor — coaching intelligence expansion
+**Researched:** 2026-03-27
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Prismlab v3.0 is a focused overhaul of an existing, shipping Dota 2 item advisor. It replaces the "spectral cyan" design language with a "Tactical Relic Editorial" aesthetic: obsidian surfaces, crimson/gold accents, Newsreader serif display type, Manrope body text, and 0px sharp corners throughout. Research confirms this is entirely achievable within the existing stack (React 19, Vite 8, Tailwind v4.2, FastAPI, SQLite) with zero net new dependencies. Two npm font packages are swapped and no backend packages are added. The `@theme` block in `globals.css` is the single highest-leverage file in the migration — rewriting it propagates the design change to every component simultaneously, after which a systematic component sweep replaces old class names with new ones across roughly 30 components.
+Prismlab v4.0 adds four coaching intelligence layers to an existing, validated hybrid recommendation engine: timing benchmarks (when to buy items relative to win-rate cliffs), ability-specific counter-item logic (what counters a specific mechanic, not just a hero), build path ordering (which components to buy first and why), and win condition framing (how your team's draft wins). All four features share the same integration pattern: new data fetched in the refresh pipeline, stored in SQLite, loaded into the DataCache singleton, consumed by the RulesEngine deterministically and by the ContextBuilder as structured Claude context. Zero new pip packages and zero new npm packages are required — the entire milestone is application code over existing infrastructure.
 
-The two performance work items are equally well-scoped. The backend currently makes 12-20 SQLite queries per recommendation request for hero and item data that only changes every 6 hours. A Python dict singleton (`DataCache`) loaded at startup eliminates those to 1-5 queries per request, with atomic reload after each pipeline cycle. On the frontend, two hooks (`useGsiSync` and `useAutoRefresh`) independently subscribe to `gsiStore` on every 1Hz GSI tick. Merging them into a single `useGameIntelligence` hook halves subscription overhead, enforces correct ordering (hero is set before event detection checks for it), and provides the natural insertion point for the new playstyle auto-suggest feature.
+The recommended execution order mirrors data dependency: abilities and timing data must be in the DataCache before any intelligent feature can fire. Build the data foundation first (new OpenDota endpoints, two new SQLite tables, extended DataCache frozen dataclasses), then wire ability-aware counter rules, then surface timing benchmarks in context and UI, then add build path resolution, and finally add win condition classification. This order is not arbitrary — each phase's artifacts are prerequisites for the next. The two most important new data sources are OpenDota `/constants/abilities` + `/constants/hero_abilities` (for counter-item depth) and `/scenarios/itemTimings` (for timing benchmarks). Both endpoints have been verified live with confirmed response schemas.
 
-The primary execution risk is sequencing. The design migration touches every component file, the store consolidation touches all hooks and top-level `App.tsx`, and doing both simultaneously creates unmergeable diffs and undiagnosable regressions. Research is emphatic: finish behavioral changes (tech debt, store consolidation) before any visual migration begins. Cache work is backend-only and can run independently. The most dangerous technical pitfalls are stale-cache coherence after pipeline refresh — three cache layers must invalidate in the right order — and cross-store write cycles during hook consolidation, where Zustand's synchronous subscribe API can cascade if a subscription callback writes back to a subscribed store.
+The most dangerous pitfall is the one that touches all four features: treating the system prompt as a data store rather than a directive layer. Every new feature has a temptation to embed its data in the system prompt (timing numbers, ability descriptions, component lists). This breaks Claude's prompt cache economics, inflates token costs, and increases latency. The correct architecture is firm: static reasoning instructions go in the system prompt (budget: ~5,000 tokens total, currently ~3,300), dynamic per-request data goes in the user message (budget: ~2,000 tokens). The secondary risk is OpenDota rate-limit exhaustion if timing data is fetched per hero+item pair rather than per hero (124 calls vs. up to 2,480 calls per refresh cycle). Both risks have clear mitigations documented in PITFALLS.md and must be addressed before any feature work begins.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack requires no structural changes. The two font packages (`@fontsource/inter`, `@fontsource/jetbrains-mono`) are replaced with variable-font equivalents (`@fontsource-variable/newsreader`, `@fontsource-variable/manrope`). Variable fonts serve all weights from a single file, reducing the current 6 font CSS imports to 2 and gaining the `opsz` optical sizing axis required for Newsreader at display scale. Every other design system requirement — surface hierarchy, ambient glow shadows, backdrop blur, noise texture, ghost borders, 0px radius — maps directly to existing Tailwind v4 capabilities and requires only `@theme` configuration values, not new tooling.
+No new dependencies are introduced in v4.0. The existing stack (React 19, Vite 8, Tailwind v4, Zustand 5, FastAPI, SQLAlchemy, SQLite, httpx, APScheduler, anthropic SDK, DataCache singleton) handles everything. New backend code consists entirely of new methods on existing classes (`OpenDotaClient`, `DataCache`, `RulesEngine`, `ContextBuilder`) plus two new engine modules (`build_path.py`, `win_condition.py`) and two new data service modules (`timing_service.py`, `ability_service.py`). Two new SQLAlchemy models (`HeroItemTimings`, `HeroAbilityData`) extend the existing schema with no breaking changes.
 
-The backend data cache uses Python's stdlib `dict` as a module-level singleton. This is the correct tool: single-process uvicorn, approximately 2MB of data, atomic refresh on a 6-hour schedule, and no need for per-key TTL eviction. Redis, `cachetools`, and `fastapi-cache` are all explicitly ruled out as over-engineering for this use case. The pattern is already proven twice in this codebase (`RulesEngine` lookup dicts and `ResponseCache`). Zustand's `.subscribe()` API for hook consolidation requires no new packages — the existing stores stay separate per Zustand's recommended separation of concerns, and only the subscription hooks collapse.
-
-**Core technologies (v3.0 changes only):**
-- `@fontsource-variable/newsreader` v5.2.10: Display/headline font — variable font with `opsz` axis, single file replaces multiple weight imports
-- `@fontsource-variable/manrope` v5.2.8: Body/label/stat font — replaces Inter + JetBrains Mono, supports `tnum` feature setting for stat displays
-- Tailwind v4.2 `@theme` block: All design tokens (surfaces, accents, shadows, typography, radius reset) — already in use, values and token names swapped
-- Python stdlib `dict` singleton (`DataCache`): In-memory hero/item data cache — eliminates 8+ DB queries per recommendation request, zero new pip packages
-- Zustand v5 `.subscribe()`: Single consolidated hook subscription — no new API, behavioral refactor only
+**Core new components (no new packages):**
+- `OpenDotaClient.fetch_item_timings()` / `fetch_abilities()` / `fetch_hero_abilities()`: New API methods using existing `httpx.AsyncClient`
+- `HeroItemTimings` + `HeroAbilityData`: New SQLite tables following existing `HeroItemPopularity`/`MatchupData` patterns
+- `TimingBucket` + `AbilityCached`: New frozen dataclasses extending existing `HeroCached`/`ItemCached` pattern in DataCache
+- `BuildPathResolver` (`engine/build_path.py`, NEW): Resolves component trees from existing `ItemCached.components` (already in cache — no new data needed)
+- `WinConditionClassifier` (`engine/win_condition.py`, NEW): Classifies team compositions from existing `HeroCached.roles` (already in cache — no new data needed)
+- Extended refresh pipeline: 144 additional API calls per cycle (2 abilities endpoints + 140 per-hero timing calls), consuming ~4,320 calls/month — well within the 50,000/month free tier
 
 ### Expected Features
 
-**Must have (table stakes — defines the milestone):**
-- "Tactical Relic Editorial" full retheme — incomplete migration leaves a visual Frankenstein; all ~30 components must be updated; `@theme` token swap in `globals.css` handles ~60% of the visual change instantly
-- In-memory hero/item data cache — eliminates 6-8 unnecessary SQLite queries per recommendation; measurable latency reduction during live games with 2-minute auto-refresh cycling
-- Store subscription consolidation (`useGsiSync` + `useAutoRefresh` -> `useGameIntelligence`) — halves 1Hz GSI subscription overhead and fixes a latent ordering bug where auto-refresh can fire before hero detection completes
+**Must have (table stakes for v4.0):**
+- Per-item timing benchmark display with urgency signal — shown as win-rate ranges (good/on-track/late), NOT single-minute targets
+- Timing context in Claude's user message so it can reason about urgency and timing windows in natural language
+- Ability-aware counter-item rules that query ability properties dynamically rather than hardcoded hero ID lists
+- Counter reasoning that names the specific ability being countered ("Eul's interrupts Witch Doctor's Death Ward")
+- Build path component ordering for high-impact items (BKB, Manta, Diffusal, Orchid, S&Y — scope narrowed to 10-15 items, not the full catalog)
+- Win condition statement in `overall_strategy` framing how the team wins, not just what to counter
 
-**Should have (high value, low implementation cost):**
-- TriggerEvent type deduplication — identical interface defined in two files; one-line fix, an active maintenance hazard if deferred
-- `refresh_lookups()` session safety fix — using the same SQLAlchemy AsyncSession for upsert and lookup reload violates the "AsyncSession per task" contract; two-line fix
-- Playstyle auto-suggest on GSI hero+role detection — three lines inside the consolidated hook; removes a mandatory manual step during live games
-- Parchment noise texture and blood-glass overlays — CSS-only additions; elevates the aesthetic from dark theme to the intended editorial artifact
+**Should have (competitive differentiators for v4.0):**
+- Live timing comparison via GSI (compare current gold and game clock against expected timing window)
+- Component gold tracking (highlight which components are affordable at current gold)
+- Counter-item priority escalation based on enemy KDA from screenshot/GSI data
+- Enemy win condition assessment (requires expanding `RecommendRequest` to include all 5 enemy hero IDs, currently only lane opponents)
 
-**Defer to v3.x point release:**
-- Screenshot KDA feed-through — feeds parsed enemy KDA/level into Claude context for snowball/deficit itemization reasoning; requires coordinated schema changes across `RecommendRequest`, `gameStore`, `ScreenshotParser`, and `context_builder`; high value but disproportionate coordination cost to include in the same release as the design overhaul
+**Defer (v5+):**
+- Dynamic win condition re-assessment mid-game (stateful game-phase tracking beyond current event triggers)
+- Timing-aware re-evaluation weighting (complex item pivot logic when timing windows are missed)
+- Full ability-property-driven refactor of the existing 18 hardcoded rules (ship new ability-driven rules alongside the existing rules first, full migration later)
+- Per-match-ID timing comparison against personal history (requires Steam login and replay parsing — out of scope)
 
 ### Architecture Approach
 
-The three main work streams are structurally independent and can be sequenced without merge conflicts, provided behavioral changes (store consolidation, tech debt) are completed before the design migration sweep. Cache work is entirely backend and can be reviewed independently from any frontend work. The design migration is frontend-only (one CSS file plus ~30 component class updates). The store consolidation is hooks and stores only, with no component class changes involved. This independence is the central scheduling insight for the roadmap.
+All four v4.0 features integrate via the same established pattern: data flows from OpenDota API through the refresh pipeline into SQLite, is loaded atomically into DataCache at startup/refresh, consumed synchronously by RulesEngine (deterministic signal generation), assembled into structured context by ContextBuilder (user message sections), reasoned about by Claude via the LLMEngine (explanation quality), and merged/validated by HybridRecommender before returning to the frontend. The ResponseCache sits at the top to prevent redundant work. Adding v4.0 features means extending each layer — not bypassing it or adding new sidecars.
 
-**Major components:**
-1. `globals.css @theme block` — single source of truth for all design tokens; rewriting it propagates the full visual change globally; the most leveraged file in v3.0
-2. `DataCache` at `backend/data/cache.py` (new) — singleton holding all heroes and items as frozen dataclasses; serves `ContextBuilder`, `Recommender`, `RulesEngine`, and API routes; invalidates atomically after each data pipeline cycle; eliminates the `RulesEngine.init_lookups()` and `refresh_lookups()` methods entirely
-3. `useGameIntelligence` at `src/hooks/useGameIntelligence.ts` (new) — replaces `useGsiSync` and `useAutoRefresh`; single subscription callback with explicit step ordering: hero detection, role inference, playstyle suggest, item marking, game state guard, lane detection, event trigger, refresh dispatch
+**Major components and their v4.0 roles:**
+1. `data/refresh.py` — extended with 144 new API calls (abilities x2, timing x140+ heroes), rate-limited with `asyncio.Semaphore(2)` and 1s batch delays to respect 60 req/min
+2. `data/cache.py` — extended with `TimingBucket` + `AbilityCached` frozen dataclasses, new lookup methods (`has_channeled_ability`, `get_build_path`, `get_timing_benchmarks`, `get_abilities_by_property`)
+3. `engine/rules.py` — extended with 4-6 new ability-driven counter rules (Eul's vs channeled, Lotus vs single-target, Manta vs dispellable, BKB priority upgrade, Break vs passive)
+4. `engine/context_builder.py` — three new section builders (`_build_timing_section`, `_build_ability_threats_section`, `_build_team_strategy_section`)
+5. `engine/build_path.py` (NEW) — `BuildPathResolver` resolves component trees deterministically from cached data; cheapest-first default with survival-component override for lost-lane scenarios
+6. `engine/win_condition.py` (NEW) — `WinConditionClassifier` classifies team compositions from `HeroCached.roles` into six archetypes (teamfight, split-push, pick-off, 4-protect-1, deathball, tempo)
+7. `engine/prompts/system_prompt.py` — ~600 token additions for timing instructions, ability-aware counter guidance, win condition framing, and component ordering notes (new total ~3,900 tokens, safely within cache threshold)
+8. `engine/schemas.py` — `ComponentStep` model added, `ItemRecommendation.build_path` optional field, `RecommendResponse.win_condition` optional field; all new fields are optional so the frontend degrades gracefully when null
 
 ### Critical Pitfalls
 
-1. **Three-cache coherence after pipeline refresh** — After `refresh_all_data()` completes, all three cache layers must invalidate in order: DataCache reloads from a fresh DB session, RulesEngine reads from DataCache (no separate reload step needed), ResponseCache clears entirely. Skipping any step or using the pipeline's existing session for the reload causes stale data. Prevention: explicit ordered reload sequence in `refresh.py`; DataCache always creates its own `AsyncSession` and never accepts the pipeline's session.
+1. **System prompt bloat breaks cache economics** — The system prompt must stay under ~5,000 tokens. Dynamic data (timing numbers, ability descriptions, component lists) belongs in the USER message, not the system prompt. System prompt additions should be directives only ("If timing data is present, flag items that are behind schedule"), never data. Set this architecture before writing any feature code; it governs all four features simultaneously. Warning sign: `cache_creation_input_tokens` on >20% of requests.
 
-2. **Cross-store subscription cascade in consolidated hook** — Writing to Store B from inside a Store A subscription callback triggers Store B subscribers synchronously within the same microtask. `fireRefresh()` writes to `recommendationStore`; if the consolidated hook also subscribes to `recommendationStore` in the same callback path, a render loop results. Prevention: keep `gsiStore` subscription and `recommendationStore` subscription as separate `useEffect` blocks even within the same hook file; use `getState()` to read from a store without subscribing.
+2. **OpenDota rate limit exhaustion from naive timing fetch** — Query `/scenarios/itemTimings?hero_id={id}` without an item filter to get all items for one hero in a single call (124 total calls), not per hero+item pair (up to 2,480 calls). Parse `games` and `wins` fields explicitly as strings and cast to int in application code — they are NOT integers in the API response and will cause silent validation errors if assumed otherwise.
 
-3. **Font swap causes layout thrash on dense UI elements** — Newsreader has dramatically different metrics than Inter. Elements with hard-coded pixel widths (e.g., `max-w-[56px]` on ItemCard gold costs) will overflow when Newsreader loads. FOUT from a CDN round-trip amplifies this. Prevention: self-host fonts via `@fontsource-variable/*` packages (no external CDN dependency at Docker runtime); add `font-display: swap` with `size-adjust` fallback metrics; preload font files in `index.html`; test with network throttling before shipping.
+3. **Three-cache coherence breakage** — Timing and ability data must join the existing DataCache atomic swap, not live in separate singletons. The invalidation order in `refresh_all_data()` must update DataCache (with all new dicts) before clearing ResponseCache. An integration test must verify: after refresh, ResponseCache is empty AND DataCache contains fresh data for heroes, items, abilities, and timings simultaneously.
 
-4. **Color token removal causes silent invisible text** — Tailwind v4 purges utilities for tokens not in `@theme` at build time without any compile error. Removing `--color-cyan-accent` before all components are migrated renders `text-cyan-accent` as no-match (transparent) silently. Prevention: two-stage migration — add all new tokens alongside old ones first; grep confirms zero old-token references; only then remove old tokens.
+4. **Rules engine and LLM contradicting each other on counter-items** — Add a `counter_target` field to `RuleResult` identifying which enemy hero/ability the rule addresses. Pass this explicitly in the "Already Recommended" section of the user message so Claude knows not to recommend a second counter for the same threat. Without this, both layers may address the same threat independently (e.g., rules recommends Spirit Vessel vs Alchemist healing; LLM also recommends Shiva's Guard vs Alchemist healing).
 
-5. **Cache startup ordering on cold deploy** — If `DataCache.load()` fires before `seed_if_empty()` completes, the cache loads empty dicts and the first recommendation request sends Claude a prompt with "Hero #X" and "Item #Y" instead of real names. Prevention: strict lifespan sequence in `main.py`: `create_tables -> seed_if_empty -> data_cache.load -> RulesEngine(cache=data_cache) -> start_scheduler`; add a readiness gate to the `/health` endpoint.
+5. **Win condition classification creating item recommendation tunnel vision** — Win condition classification must be a contextual suggestion fed to Claude, not a filter on item recommendations. Classify as primary + fallback archetype, and let Claude reason about whether it applies given the current game state. Re-evaluate requests must be able to change the win condition framing when lane results or game state change. Hardcoding item priority overrides based on win condition is explicitly the wrong approach.
 
 ## Implications for Roadmap
 
 Based on research, suggested phase structure:
 
-### Phase 1: Tech Debt and Store Consolidation
-**Rationale:** Behavioral changes must come first. Store consolidation, TriggerEvent dedup, and the session safety fix are small, testable, behavior-preserving changes. Completing them before the design migration means hook logic is stable and well-tested before ~30 component files change simultaneously. Debugging a Zustand render loop inside a half-migrated UI is significantly harder than debugging it in isolation against known-good visuals.
-**Delivers:** Single `useGameIntelligence` hook replacing `useGsiSync` and `useAutoRefresh`; TriggerEvent as a single source of truth; safe session handling in the refresh pipeline; playstyle auto-suggest (3 lines, natural insertion point within the consolidated hook)
-**Addresses features:** Store consolidation, TriggerEvent dedup, session safety, playstyle auto-suggest
-**Avoids:** Cross-store cascade render loop (Pitfall 5), TriggerEvent double-fire amplification during consolidation (Pitfall 11), intermediate-state flicker from batched hero+role+playstyle writes (Pitfall 15)
+### Phase 1: Data Foundation + Prompt Architecture
+**Rationale:** Everything else depends on ability data and timing data being in DataCache. Establish the system-prompt-vs-user-message data split for all four features before writing any feature code — this architectural decision cannot be retrofitted cleanly. Build new OpenDota client methods, SQLite models, DataCache extensions, and refresh pipeline expansions. Verify three-cache coherence with an integration test before proceeding to any feature phase.
+**Delivers:** Three new OpenDota client methods; `HeroItemTimings` + `HeroAbilityData` SQLite tables; `TimingBucket` + `AbilityCached` frozen dataclasses in DataCache with new lookup methods; extended `refresh_all_data()` with rate-limited timing + ability fetches (`asyncio.Semaphore(2)`, 1s batch delays); integration test verifying three-cache coherence post-refresh.
+**Addresses:** Foundation for all four feature categories; resolves Pitfall P1 (prompt architecture) and P3 (cache coherence) before they can cause damage.
+**Avoids:** P1 (prompt bloat — data/instruction split established upfront), P2 (rate-limited timing fetch — per-hero not per-hero-per-item), P3 (DataCache atomic swap extended to include new dicts).
 
-### Phase 2: Backend Data Cache
-**Rationale:** Entirely backend with no frontend surface area; can run in parallel with Phase 1 if two developers are available, or sequentially as a focused diff. The cache architectural change — injecting `DataCache` into `RulesEngine`, `ContextBuilder`, and `Recommender` — is significant enough to deserve its own phase and review cycle rather than being buried in a hook or design migration PR.
-**Delivers:** `DataCache` singleton with frozen dataclass hero/item storage; `RulesEngine` simplified (no `init_lookups`/`refresh_lookups` methods); context builder and recommender read from cache; DB queries per recommendation reduced from 12-20 to 1-5; `/api/heroes` and `/api/items` routes serve from cache
-**Uses:** Python stdlib dict, frozen dataclasses, async SQLAlchemy (fresh session per task per SQLAlchemy docs)
-**Implements:** DataCache architecture component; correct refresh lifecycle ordering across three cache layers
-**Avoids:** Stale cache after pipeline refresh (Pitfall 3), session sharing between pipeline and reload (Pitfall 4), empty cache on cold start (Pitfall 8), context builder bypassing cache and negating the performance gain (Pitfall 10)
+### Phase 2: Ability-Aware Counter-Item Rules
+**Rationale:** Ability data is now in DataCache. The highest-value, lowest-latency improvement is new RulesEngine rules that query ability properties instead of hero ID lists. These fire before the LLM call, add zero API cost, and dramatically improve counter-item depth. Establishing the `counter_target` tagging on `RuleResult` here also prevents the rules/LLM contradiction pitfall from taking hold before Phase 3 adds timing context.
+**Delivers:** 4-6 new ability-driven rule methods in `rules.py`; `counter_target` field on `RuleResult`; updated `_build_rules_lines()` in ContextBuilder passing target context to LLM; new `_build_ability_threats_section()` in ContextBuilder; ability-aware counter instructions added to system prompt (~200 tokens).
+**Uses:** `DataCache.has_channeled_ability()`, `get_abilities_by_property()` — delivered in Phase 1.
+**Avoids:** P4 (rules/LLM contradiction — explicit `counter_target` tagging prevents duplicate countering of the same threat).
 
-### Phase 3: Design System Migration
-**Rationale:** Comes last because it touches every component file. With Phase 1 (hooks stable and tested) and Phase 2 (backend stable) complete, the design migration is a pure visual change with no behavioral risk. The `@theme` token swap in `globals.css` is the single highest-leverage change — one file edit, instant global effect. The subsequent component sweep is mechanical class-name substitution and low cognitive load.
-**Delivers:** Full "Tactical Relic Editorial" visual identity; Newsreader/Manrope fonts self-hosted; obsidian surface hierarchy (7 tones); crimson/gold accent system; 0px corners throughout (with documented exceptions); parchment noise texture on body; blood-glass overlays on modals; gold-leaf accent strips on item cards; ambient glow shadows on floated elements
-**Build order within phase:** Install fonts -> rewrite `globals.css` -> `App.tsx` root container -> layout shell (Header, Sidebar, MainPanel) -> interactive primitives (GetBuildButton, pickers) -> content components (ItemCard, PhaseCard, NeutralItemsSection) -> modals and overlays (ScreenshotParser, SettingsPanel) -> status indicators (GsiStatusIndicator, GameClock, AutoRefreshToast, LiveStatsBar) -> `constants.ts` color strings
-**Avoids:** Invisible text from premature token removal (Pitfall 6), layout thrash from font swap (Pitfall 1), functional roundedness broken by blanket 0px enforcement (Pitfall 2), wrong surface-level nesting making elements invisible (Pitfall 7), backdrop-blur frame drops on 1Hz-updated elements (Pitfall 13)
+### Phase 3: Timing Benchmarks
+**Rationale:** Timing data is in DataCache from Phase 1. This phase wires it into the recommendation pipeline as Claude context first (highest leverage, minimal schema risk), and as optional RulesEngine urgency rules when GSI clock data is present. Timing display in the frontend is additive and backward-compatible because timing information flows through Claude's reasoning text initially, with UI badges as a polishing step.
+**Delivers:** `_build_timing_section()` in ContextBuilder (top 5 items per hero, early/on-track/late windows with win rate at each bracket); timing benchmark instructions in system prompt (~150 tokens); optional urgency rules in `rules.py` when GSI clock is available; frontend urgency badges on item cards showing ranges not single-minute targets; timing context display in PhaseCard.
+**Avoids:** P5 (prescriptive timing — ranges with win-rate correlation displayed, adjusted for lane result; never a single "buy by X:XX" target), P2 (timing data already cached, no per-request API calls).
 
-### Phase 4: Screenshot KDA Feed-Through (deferred point release)
-**Rationale:** The only cross-stack schema change in v3.0. Deferred because it requires coordinated changes across `RecommendRequest`, `gameStore`, `ScreenshotParser`, `context_builder`, and the recommendation hook — touching the full data path simultaneously. The value is real (richer Claude context for snowball/deficit itemization: "Enemy PA is 8-1-3 and level 16 — she is snowballing, prioritize defensive items") but the coordination cost is disproportionate to include in the same release as the design overhaul and cache refactor.
-**Delivers:** `RecommendRequest.enemy_hero_stats` optional field; `gameStore.enemyHeroStats` and `setEnemyHeroStats` action; `ScreenshotParser` Apply action writes parsed stats to game store; "Enemy Status" section in `context_builder` (kills/deaths/assists/level per enemy hero); richer Claude reasoning about enemy economic state and timing windows
+### Phase 4: Build Path Intelligence
+**Rationale:** `ItemCached.components` has always been in DataCache — this phase is entirely schema and presentation work, not a data pipeline addition. Placed after Phases 2-3 because it requires schema changes (`ComponentStep`, `ItemRecommendation.build_path`) that need frontend coordination, and because the ability-aware context from Phase 2 enables Claude to produce richer component reasoning. Scope is deliberately narrow: 10-15 high-impact items only.
+**Delivers:** `engine/build_path.py` (`BuildPathResolver` with cheapest-first default + survival-component-first override when lane is lost); `ComponentStep` model in `schemas.py`; optional `build_path` field on `ItemRecommendation`; enrichment step in `recommender.py` after `_validate_item_ids()`; system prompt component ordering notes (~100 tokens); frontend build path display (one level of components below item card).
+**Avoids:** P6 (static build paths ignoring game state — LLM handles nuanced game-state-aware ordering; `BuildPathResolver` handles mechanical component resolution; no static ordering table for >15 items; rule is "cheapest useful component first" as fallback, not a bespoke ordering per item).
+
+### Phase 5: Win Condition Framing
+**Rationale:** Win condition classification uses only `HeroCached.roles` already in cache — no new data pipeline dependency. Placed last because it is the most nuanced feature (classification accuracy for ambiguous drafts is a judgment call), and benefits from all prior context (ability threats, timing urgency) being available to Claude when it reasons about macro strategy. The classifier is a hint to Claude, not a deterministic filter.
+**Delivers:** `engine/win_condition.py` (`WinConditionClassifier` with primary + secondary archetype, timing window, key hero identification, confidence score); `_build_team_strategy_section()` in ContextBuilder; win condition framing instructions in system prompt (~150 tokens); optional `WinCondition` field on `RecommendResponse`; frontend strategy banner above item timeline.
+**Avoids:** P7 (classification tunnel vision — win condition is a suggestion to Claude, not an item filter; re-evaluate requests can change framing when game state changes; enemy composition included in analysis; low-confidence drafts defer entirely to Claude without a classification label).
 
 ### Phase Ordering Rationale
 
-- Behavioral-first, visual-last: the design migration creates the largest diff volume in the codebase; having stable, tested behavior underneath prevents visual regressions from masking logic bugs, and keeps the design review focused on aesthetics rather than debugging
-- Cache work is backend-isolated: no frontend surface area means it can be reviewed and deployed independently without understanding design context
-- TriggerEvent dedup is a hard prerequisite for safe store consolidation: the consolidation refactors the exact code path that uses this type, and having two definitions during that refactor would introduce ambiguity
-- Playstyle auto-suggest belongs in Phase 1 because it requires the consolidated hook's explicit step ordering to work correctly; inserting it into the existing dual-subscription architecture would be placing it in the wrong hook
-- Screenshot KDA is isolated in Phase 4 because it requires simultaneous changes to both the backend request schema and frontend state shape; earlier phases can be reviewed without understanding the full cross-stack flow
+- Phase 1 is a hard prerequisite: ability data and timing data must be in DataCache before counter-item rules or timing benchmarks can fire.
+- Phases 2 and 3 are ordered by cost-to-benefit: ability-driven rules add zero LLM token cost and fire on every request; timing benchmarks add ~100-200 tokens to the user message and require careful token budget management.
+- Phase 4 is placed after Phases 2-3 because schema changes require frontend coordination and benefit from Phase 2's ability context for richer component reasoning.
+- Phase 5 requires no new data pipeline work but is the most judgment-intensive to validate; it is safest to ship last when the rest of the intelligence layers are proven.
+- All phases add only optional fields to the response schema (`build_path`, `win_condition`) — frontend backward compatibility is guaranteed by design and no forced simultaneous frontend+backend deploy is required.
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 1 (Store Consolidation):** The exact subscription callback structure for `useGameIntelligence` requires careful design review to avoid the cascade pitfall. Existing tests for `useGsiSync` and `useAutoRefresh` need a migration plan since some test cases may not map 1:1 to the consolidated hook's combined behavior.
-- **Phase 3 (Design Migration):** The DESIGN.md specification for surface-level assignment per component (which of the 7 surface tiers each UI element gets) must be resolved before implementation starts. PITFALLS.md recommends producing a component-to-surface mapping document as a prerequisite to the migration sweep.
+- **Phase 2 (Counter-Item Rules):** The boundary between which counters belong as deterministic rules vs. LLM reasoning is judgment-intensive. The 4-6 new rules identified are the clear-cut cases. A phase planning session should audit the existing 18 hardcoded rules to identify which are candidates for ability-driven migration vs. which should remain as hero ID lists because they address meta-level behaviors not captured in ability properties.
+- **Phase 3 (Timing Benchmarks):** The GSI-timing integration path (live comparison of game clock vs. benchmark window) requires explicit ResponseCache key design. Adding exact gold or game time to the cache key will obliterate hit rates. The coarse-grained gold bracket approach (0-2K, 2K-5K, 5K-10K, 10K+) is the proposed solution but needs explicit design and validation during phase planning before implementation.
 
 Phases with standard patterns (skip research-phase):
-- **Phase 2 (Backend Cache):** Architecture fully specified in ARCHITECTURE.md with concrete class signatures, frozen dataclass definitions, file-level integration points, and startup lifecycle. No open unknowns.
-- **Phase 4 (Screenshot KDA):** Data flow fully mapped in FEATURES.md with schema field names, store action names, and context builder section format. Standard schema-extension pattern with no novel integrations.
+- **Phase 1 (Data Foundation):** All three new endpoints are verified live with confirmed response schemas. The DataCache extension follows the existing `HeroCached`/`ItemCached` frozen dataclass pattern exactly. Standard SQLAlchemy table additions; no migration complexity on existing tables.
+- **Phase 4 (Build Path):** The `ItemCached.components` data is already in production since v1. `BuildPathResolver` is a BFS/DFS over nested lists — a well-understood algorithm with no external dependencies or novel integration patterns.
+- **Phase 5 (Win Condition):** `HeroCached.roles` (OpenDota tags: Carry, Support, Nuker, Disabler, Pusher, Initiator, etc.) is already in cache. Classification rules are a role-tag counting exercise; the LLM does the nuanced reasoning.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All packages verified on npm registry. Tailwind v4 `@theme` capabilities verified against official docs. Python dict cache pattern proven twice in this codebase already. No speculative dependencies. |
-| Features | HIGH | Codebase fully audited — feature list is based on direct code inspection, not domain speculation. Complexity estimates and LOC counts are grounded in actual file structure and existing component sizes. |
-| Architecture | HIGH | Integration points fully specified with file names, function signatures, and method-level change descriptions. Build order within each phase is explicit. No hand-wavy "then we integrate" steps. |
-| Pitfalls | HIGH | Most pitfalls are derived from the actual codebase (known tech debt from PROJECT.md, existing code patterns) rather than generic domain research. The Zustand cascade and SQLAlchemy session pitfalls are confirmed by official documentation and existing issue reports. |
+| Stack | HIGH | All three new OpenDota endpoints verified live with confirmed response schemas. Zero new dependencies confirmed against current `requirements.txt`. Existing SQLAlchemy/DataCache patterns proven across v1-v3. |
+| Features | HIGH | Timing endpoint data structure confirmed with real Anti-Mage Battle Fury data (7 time buckets, string-typed games/wins). Ability metadata fields (behavior, bkbpierce, dispellable, dmg_type) verified against real hero abilities including Enigma Black Hole, Witch Doctor Death Ward, CM Freezing Field. Build path data (`ItemCached.components`) already in production. |
+| Architecture | HIGH | Based on direct codebase reading of all relevant backend source files. Integration points are concrete (specific method names, file paths, class signatures). All four features follow the same data-flow pattern as existing matchup and popularity data pipelines. |
+| Pitfalls | HIGH | Prompt caching token threshold confirmed from Anthropic documentation (Haiku 4.5: 4,096 minimum). Rate limits verified from OpenDota documentation and confirmed via live testing. Three-cache coherence risk identified from direct `refresh.py` code analysis (lines 121-134). `games`/`wins` string-not-int issue confirmed from go-opendota struct definition. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Component-to-surface mapping:** PITFALLS.md flags that assigning the wrong surface tier to a component causes elements to become invisible against their background. This mapping (Sidebar -> `surface-container-lowest`, MainPanel -> `surface`, PhaseCard -> `surface-container-low`, Modal -> `surface-container-highest`, etc.) must be explicitly resolved before Phase 3 begins. Produce this as a short planning artifact before writing any component code.
-- **Functional roundedness exceptions:** DESIGN.md mandates 0px corners but the purchased-item checkmark and GSI status indicator dot use `rounded-full` for semantic meaning (circle = completed). These exceptions need to be catalogued before the component sweep so they are not accidentally removed. PITFALLS.md recommends a `DESIGN_EXCEPTIONS.md` file documenting each intentional deviation with rationale.
-- **WCAG contrast on elevated surfaces:** `on_surface` (#E5E2E1) on `surface-container-highest` (#353534) is approximately 4.1:1, which fails WCAG AA for small text (requires 4.5:1). An `on-surface-high-contrast` token should be defined for text on the highest surface tiers. Must be resolved before Phase 3 ships dense data components like ItemCard captions.
-- **Playstyle hero mapping completeness:** The `suggestPlaystyle()` utility requires a `HERO_PLAYSTYLE_MAP` covering common heroes (~50-80 entries per ARCHITECTURE.md). This is data authoring work, not code work, and is not captured in the LOC estimates. Allocate explicit time for it within Phase 1.
+- **Win condition classification accuracy for ambiguous drafts:** The hero-role-tag counting approach works cleanly for well-defined compositions but may misclassify hybrid drafts. During Phase 5 planning, define the confidence threshold below which the classifier defers entirely to Claude without providing a classification label to avoid misleading framing.
+- **Minimum sample size for timing benchmarks:** OpenDota itemTimings data thins out for heroes with low pick rates. The system needs a minimum game-count threshold (suggested: 50 games per time bucket) below which timing data is treated as absent rather than displayed. Define this threshold during Phase 3 planning.
+- **Full enemy team in `RecommendRequest` for win condition:** The current schema sends `lane_opponents` but not all 5 enemy heroes. Win condition framing needs all 10 heroes for accurate classification. During Phase 5 planning, determine whether to expand the request schema (preferred) or approximate from available data.
+- **ResponseCache key design for GSI context:** Adding game clock or exact gold to the cache key will destroy hit rates. The coarse-grained gold bracket approach is the proposed solution but has not been validated against real GSI refresh patterns (1Hz tick rate, 30s auto-refresh cycle). Design and validate this explicitly during Phase 3 planning before implementation.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Tailwind v4 Theme Variables](https://tailwindcss.com/docs/theme) — `@theme` directive, `--color-*`, `--font-*`, `--shadow-*`, `--radius-*` namespaces, companion `--font-*--font-variation-settings` syntax
-- [Tailwind v4 Font Family](https://tailwindcss.com/docs/font-family) — `--font-*` custom font pattern and `@font-face` integration
-- [Tailwind v4 Box Shadow](https://tailwindcss.com/docs/box-shadow) — custom `--shadow-*` definitions, shadow-color composition
-- [Tailwind v4 Backdrop Filter](https://tailwindcss.com/docs/backdrop-filter-blur) — confirms `backdrop-blur-md` = 12px
-- [@fontsource-variable/newsreader on npm](https://www.npmjs.com/package/@fontsource-variable/newsreader) — v5.2.10 confirmed via `npm info`
-- [@fontsource-variable/manrope on npm](https://www.npmjs.com/package/@fontsource-variable/manrope) — v5.2.8 confirmed via `npm info`
-- [SQLAlchemy Async Documentation](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html) — AsyncSession per-task requirement; `expire_on_commit=False` behavior
-- [Zustand GitHub](https://github.com/pmndrs/zustand) — store separation patterns; `.subscribe()` synchronous firing behavior
+- [OpenDota API](https://docs.opendota.com/) — canonical reference; `/scenarios/itemTimings`, `/constants/abilities`, `/constants/hero_abilities` all verified live with confirmed response schemas
+- [odota/dotaconstants](https://github.com/odota/dotaconstants) — `build/abilities.json` and `build/hero_abilities.json` schema reference; source data for OpenDota constants endpoints
+- [Anthropic Prompt Caching Documentation](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) — token thresholds (Haiku 4.5: 4,096 minimum), 5-minute cache TTL, breakpoint strategy
+- Direct codebase analysis — all backend source files: `rules.py`, `cache.py`, `system_prompt.py`, `recommender.py`, `context_builder.py`, `llm.py`, `refresh.py`, `schemas.py`, `models.py`, `opendota_client.py`
 
 ### Secondary (MEDIUM confidence)
-- [FastAPI Caching Discussion #3044](https://github.com/fastapi/fastapi/issues/3044) — confirms dict-based caching is safe in single-process FastAPI
-- [CSS Grainy Gradients (CSS-Tricks)](https://css-tricks.com/grainy-gradients/) — SVG `feTurbulence` noise texture approach for parchment effect
-- [Frontend Migration Guide (frontendmastery.com)](https://frontendmastery.com/posts/frontend-migration-guide/) — component-by-component vs token-swap migration strategy analysis; confirms token-swap is correct for <50 component codebases
-- [Zustand Cross-Store Reactivity Discussion #1586](https://github.com/pmndrs/zustand/discussions/1586) — subscription cascade risk pattern
-- [Font Loading: FOIT and FOUT](https://dev.to/ibn_abubakre/font-loading-strategies-foit-and-fout-393b) — `font-display: swap` and `size-adjust` fallback font metric matching
-- [How to Implement Cache Invalidation in FastAPI](https://oneuptime.com/blog/post/2026-02-02-fastapi-cache-invalidation/view) — ordering guarantees for multi-layer cache invalidation
+- [go-opendota package](https://pkg.go.dev/github.com/jasonodonnell/go-opendota) — confirms `games`/`wins` as string fields in itemTimings response; confirms ItemTimings struct definition
+- [OpenDota rate limit blog post](https://blog.opendota.com/2018/04/17/changes-to-the-api/) — 50,000 calls/month, 60 req/min; limits verified still active via live testing
+- [STRATZ item timings methodology](https://medium.com/stratz/dota-2-item-timings-22d2dbd76bc4) — win rate gradient analysis, central 69% purchase window approach; informs how to present timing data as ranges
+- [BSJ coaching articles](https://bsjdota.com/blog/) — five win condition archetypes (hard carry, push, pickoff, teamfight, split push); emphasis on mid-game adaptation and win condition shifts
+- [DotaCoach.gg features](https://dotacoach.gg/en/app/features) — competitor analysis: counter items per enemy, phase-based item suggestions; Overwolf overlay approach
 
 ### Tertiary (LOW confidence)
-- [Tailwind CSS v4 Migration Best Practices (2026)](https://www.digitalapplied.com/blog/tailwind-css-v4-2026-migration-best-practices) — confirms two-stage token migration approach; single blog source
+- [Steam Community team composition guide](https://steamcommunity.com/sharedfiles/filedetails/?id=2395798524) — archetype classification heuristics for deterministic rules
+- [Hybrid LLM+rules system literature](https://medium.com/@ceciliabonucchi/bridging-intelligence-the-next-evolution-in-ai-with-hybrid-llm-and-rule-based-systems-db0d89998c6d) — consistency challenges between deterministic and LLM layers; confirms contradiction risk pattern
 
 ---
-*Research completed: 2026-03-26*
+*Research completed: 2026-03-27*
 *Ready for roadmap: yes*

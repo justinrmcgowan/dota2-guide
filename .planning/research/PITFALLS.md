@@ -1,307 +1,293 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Design system migration, in-memory caching, store subscription consolidation for existing Dota 2 item advisor
-**Researched:** 2026-03-26
-**Milestone:** v3.0 Design Overhaul & Performance
-
----
+**Domain:** Adding coaching intelligence (timing benchmarks, counter-item depth, build paths, win condition framing) to an existing hybrid rules+LLM Dota 2 item advisor
+**Researched:** 2026-03-27
+**Confidence:** HIGH (based on codebase analysis, OpenDota API documentation, Anthropic prompt caching docs, and Dota 2 domain knowledge)
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data corruption, or multi-day debugging sessions.
+### Pitfall 1: System Prompt Bloat Breaking Cache Economics
 
-### Pitfall 1: Font Swap Causes Layout Thrashing (FOUT in Dense UI)
+**What goes wrong:**
+The system prompt is currently ~13,326 chars (~3,300 tokens). Claude Haiku 4.5 requires a minimum of 4,096 tokens for prompt caching to activate. Adding four new feature areas (timing benchmarks, ability counters, build paths, win conditions) to the system prompt will push it well past 5,000+ tokens -- each new section with examples adds 300-800 tokens. The prompt is currently right at the caching threshold. Growing it carelessly means every new instruction section gets cached but the per-request cost grows linearly with prompt size. Worse, if someone restructures the prompt and the prefix changes, every request becomes a cache write instead of a cache read, multiplying input token costs by 1.25x.
 
-**What goes wrong:** Replacing Inter/JetBrains Mono with Newsreader/Manrope changes character widths, line heights, and font metrics. Dense UI elements (ItemCard gold costs, LiveStatsBar KDA numbers, HeroPicker search results, DamageProfileInput sliders) are sized to pixel precision with Inter. When Newsreader loads, FOUT (Flash of Unstyled Text) causes the fallback system font to render first, then the layout snaps when the web font arrives. Newsreader is a serif with dramatically different metrics than sans-serif fallbacks -- text that fit in 56px (`max-w-[56px]` in ItemCard) will overflow or wrap mid-word.
+**Why it happens:**
+Each v4.0 feature seems to need its own instructions in the system prompt: "when timing data is available, reference it," "evaluate abilities for counter-item logic," "recommend components in order," "frame overall_strategy around win condition." Developers add these incrementally without measuring the token delta or testing cache hit rates. The 5-minute cache TTL means even small changes to the prompt prefix cause expensive cache misses.
 
-**Why it happens:** The DESIGN.md specifies Newsreader for display/headlines and Manrope for body -- both are Google Fonts that must be fetched at runtime. The current codebase hard-codes pixel widths (e.g., `w-12 h-12`, `max-w-[56px]`) and relies on Inter's metrics for visual alignment.
+**How to avoid:**
+1. Measure the current system prompt token count precisely before starting (use `anthropic.count_tokens` or tiktoken approximation).
+2. Set a budget: the system prompt should not exceed ~5,000 tokens (currently ~3,300). That leaves ~1,700 tokens for all v4.0 additions.
+3. Put dynamic data (timing benchmarks, ability descriptions, component lists) in the USER message, not the system prompt. The system prompt should contain only static reasoning instructions.
+4. New system prompt sections should be directives ("If timing data is present, compare to benchmark and flag early/late"), not data ("Battle Fury typical timing: 14 min"). Data goes in user message.
+5. After all additions, verify cache hit rate in production logs by checking `cache_read_input_tokens` vs `cache_creation_input_tokens` in Claude API responses.
 
-**Consequences:** Item names truncate incorrectly, gold cost labels shift position, phase card headers overflow their containers, and the entire sidebar layout may jump 4-8px when fonts load. During a live game with GSI active, this layout jump can cause misclicks on item cards.
+**Warning signs:**
+- System prompt exceeds 5,500 tokens after v4.0 additions.
+- `cache_creation_input_tokens` appears on >20% of requests (should be <5% after warmup).
+- Claude API latency increases noticeably (cache misses are slower).
+- Per-request cost jumps without corresponding quality improvement.
 
-**Prevention:**
-1. Add `font-display: swap` in the `@font-face` rules and specify fallback fonts with matching metrics (`size-adjust`, `ascent-override`, `descent-override` properties) to minimize layout shift.
-2. Preload both font files with `<link rel="preload" as="font">` in `index.html` so they arrive before first paint.
-3. Replace all hard-coded pixel widths with relative units or min-width/max-width pairs that accommodate both font stacks.
-4. Test with network throttling (Slow 3G) to observe the full FOUT flash before shipping.
-
-**Detection:** Core Web Vitals CLS (Cumulative Layout Shift) score degrades. Visually, text "jumps" on first page load.
-
-**Phase relevance:** Design system migration phase. Must be addressed before any other visual work lands.
-
----
-
-### Pitfall 2: Rounding Radius Removal Breaks Purchased-Item Checkmark and Hero Portrait Masks
-
-**What goes wrong:** DESIGN.md mandates `0px` corners everywhere ("Sharp corners are non-negotiable"). The current codebase uses `rounded-md` on ItemCard buttons, `rounded-full` on the purchased-item checkmark overlay, `rounded` on item images, and `rounded-lg` on the GetBuildButton. Blindly removing all border-radius will make the green checkmark circle into a green square, breaking the visual affordance that an item has been purchased. Hero portraits and item images rely on `rounded` to hide the harsh edges of the rectangular Steam CDN images.
-
-**Why it happens:** The design spec is absolutist about 0px corners but does not address functional UI patterns that use roundedness for semantic meaning (checkmark = circle = completed). A find-and-replace removal of all `rounded-*` classes will break the purchased-item UX, which is one of the most frequently used interactions during a live game.
-
-**Consequences:** Players during live games cannot visually distinguish purchased vs unpurchased items at a glance. The "golden circle with checkmark" is a strong visual signal; a "golden square with checkmark" reads as a badge or label, not as "completed."
-
-**Prevention:**
-1. Audit every `rounded-*` usage and categorize: decorative (convert to 0px per spec) vs. functional (keep or replace with alternative signal). The purchased checkmark and GSI status indicator dot are functional.
-2. For functional roundedness, propose an alternative signal to the designer: e.g., a colored left-border accent strip (which the DESIGN.md itself suggests for hero/legendary items), opacity reduction, or a strikethrough effect.
-3. Keep a `DESIGN_EXCEPTIONS.md` file documenting intentional deviations from the spec with rationale.
-
-**Detection:** Visual regression testing on the item timeline with purchased items. Manually verify during a live game flow.
+**Phase to address:**
+First phase -- establish the prompt architecture before any feature work. Define what goes in system prompt vs. user message for all four features upfront.
 
 ---
 
-### Pitfall 3: In-Memory Cache Serves Stale Data After Pipeline Refresh
+### Pitfall 2: OpenDota Scenarios/itemTimings Rate Limit Exhaustion
 
-**What goes wrong:** The plan is to load hero/item data into memory at startup and serve from cache instead of hitting SQLite. But the existing `refresh_all_data()` pipeline runs every 6 hours via APScheduler, upserting new hero/item data into the DB. If the in-memory cache is not explicitly invalidated after a pipeline refresh, the API serves stale hero stats, item costs, and matchup data until the next server restart. Worse: the `RulesEngine` already has its own `init_lookups()` cache (hero name/ID maps, item name/ID maps) that refreshes separately -- introducing a second cache layer creates two independent invalidation paths that must stay synchronized.
+**What goes wrong:**
+The `/scenarios/itemTimings` endpoint returns timing data as an array of `{hero_id, item, time, games, wins}` objects. To populate benchmarks, you might naively query per hero+item pair. For 124+ heroes with 10-20 items each, that is 1,240-2,480 API calls just for initial population. OpenDota free tier allows 50,000 calls/month and 60 requests/minute. The existing system already uses calls for matchup data (`/heroes/{id}/matchups`) and item popularity (`/heroes/{id}/itemPopularity`) -- adding timing queries could exhaust the monthly budget within a single full-refresh cycle. Also note: the `games` and `wins` fields in the response are strings, not integers, which will cause silent parsing bugs if treated as numeric.
 
-**Why it happens:** The codebase already has a subtle form of this bug: `refresh.py` line 122 calls `_rules.refresh_lookups(session)` at the end of the pipeline, but uses the same session that just did the bulk upsert. The rules engine refresh is coupled to the refresh pipeline. A new in-memory data cache would be a third independent cache alongside the rules engine lookups and the `ResponseCache` (which has its own TTL). Three caches, three invalidation timelines.
+**Why it happens:**
+The itemTimings endpoint accepts optional `hero_id` and `item` filters. Developers assume they need to query per hero+item pair for precision. In reality, querying with just `hero_id` (omitting `item`) returns all item timings for that hero in a single call. But even 124 calls per refresh cycle adds 3,720 calls/month (daily refresh) on top of existing matchup and popularity calls.
 
-**Consequences:** Hero stats change after a Dota patch, the pipeline fetches new data, but the in-memory cache still serves old stats to the context builder. Claude receives stale hero data, producing recommendations based on outdated armor/damage values. The ResponseCache (5-min TTL) may also cache responses built from stale data. Users see incorrect gold costs in the UI if item prices changed.
+**How to avoid:**
+1. Query `/scenarios/itemTimings?hero_id={id}` (without item filter) to get all item timings for one hero in a single call. This brings it down to 124 calls for full coverage.
+2. Cache timing data aggressively in SQLite with a 48-hour TTL. Timing benchmarks are statistical aggregates and change slowly -- daily refresh is sufficient.
+3. Lazy-load on first request: only fetch timing data for heroes that are actually requested, not the entire pool on startup. Most games involve 10 heroes.
+4. Budget API calls: add a monthly counter to DataRefreshLog. Halt timing fetches if approaching 40,000 calls (leave buffer for matchup/popularity data).
+5. Parse `games` and `wins` as strings and cast to int explicitly in application code.
 
-**Prevention:**
-1. Create a single `DataCache` class that owns ALL in-memory data (heroes, items, neutral items, item name maps). The `RulesEngine` should read from this cache, not maintain its own.
-2. Wire `refresh_all_data()` to call `data_cache.reload()` after successful commit, using a fresh session (not the same session that did the upsert -- see Pitfall 4).
-3. Clear `ResponseCache` when `DataCache` reloads -- stale recommendation responses are built from stale data.
-4. Add a `/admin/cache-status` endpoint that reports cache age and entry count for debugging.
+**Warning signs:**
+- OpenDota returns HTTP 429 responses during refresh cycle.
+- Monthly API call count approaches 40,000 before month-end.
+- Timing data is stale for >7 days because refresh keeps failing.
+- Background refresh tasks pile up due to rate limiting.
+- Type errors from treating `games`/`wins` as integers directly.
 
-**Detection:** After a data pipeline run, compare `GET /api/heroes` response with DB contents. If they diverge, the cache is stale.
-
----
-
-### Pitfall 4: Session Sharing Between Pipeline Refresh and Cache Reload
-
-**What goes wrong:** The current `refresh_all_data()` calls `_rules.refresh_lookups(session)` with the same session that performed bulk upserts. This is the known tech debt item "refresh_lookups() session safety fix" from PROJECT.md. If the in-memory cache reload also reuses this session, and the session is in a partially committed or rolled-back state, the cache loads corrupt or incomplete data. With async SQLAlchemy, sharing an `AsyncSession` across tasks is explicitly unsupported -- the documentation states "AsyncSession per task."
-
-**Why it happens:** The `async_session` factory creates sessions with `expire_on_commit=False` (already correctly configured), but the refresh pipeline creates a single session via `async with async_session() as session:` and passes it to multiple callsites. If `_rules.refresh_lookups()` triggers a lazy load or the new cache reload does a `select()`, it reuses the same connection, which may still be mid-transaction.
-
-**Consequences:** Intermittent `InvalidRequestError` or `DetachedInstanceError` from SQLAlchemy. In the worst case, the cache loads a mix of old and new data if the upsert transaction hasn't fully committed when the reload fires.
-
-**Prevention:**
-1. Cache reload MUST create its own fresh `AsyncSession`, never accept the pipeline's session.
-2. Structure the pipeline as: `upsert -> commit -> (new session) reload cache -> (new session) reload rules`.
-3. Use an explicit event/callback pattern: `refresh_all_data()` emits a "refresh_complete" signal, and the cache subscribes to it with its own session lifecycle.
-
-**Detection:** Run the refresh pipeline under load (concurrent recommendation requests). If any request gets a `DetachedInstanceError`, session sharing is the cause.
+**Phase to address:**
+Timing benchmarks phase -- design the data pipeline before building the benchmark comparison logic.
 
 ---
 
-### Pitfall 5: Cross-Store Subscription Cascade Creates Infinite Re-render Loop
+### Pitfall 3: Three-Cache Coherence Breakage with New Data Layers
 
-**What goes wrong:** `useGsiSync` subscribes to `gsiStore` and writes to both `gameStore` and `recommendationStore`. `useAutoRefresh` independently subscribes to `gsiStore` and writes to `recommendationStore`, `refreshStore`, and `gameStore`. When consolidating these into a single hook or merging their subscription logic, a careless implementation can create a cycle: GSI update -> write gameStore -> gameStore subscriber fires -> reads gsiStore -> triggers another GSI handler -> writes recommendationStore -> repeat. Zustand's `subscribe()` fires synchronously during `set()`, so a write-to-store inside a subscription handler of another store can cascade within the same microtask.
+**What goes wrong:**
+The system already has a delicate three-cache coherence protocol: DataCache (frozen dataclasses) -> RulesEngine (consumes DataCache via constructor injection) -> ResponseCache (SHA-256 keyed, 5-min TTL). The refresh pipeline in `refresh.py` invalidates them in this exact order (lines 121-134). Adding timing benchmark data and ability data creates two new data layers that must participate in this same invalidation chain. If timing data refreshes but ResponseCache is not cleared, cached responses contain stale timing comparisons. If ability data refreshes but the rules engine's counter-item rules still reference old ability metadata, rules contradict the prompt context.
 
-**Why it happens:** Both hooks currently work because they are isolated -- each has its own `useEffect` with its own subscription and cleanup. When consolidating, the temptation is to merge them into a single `gsiStore.subscribe()` callback. But `useAutoRefresh.fireRefresh()` calls `recStore.clearResults()`, `recStore.setLoading(true)`, and eventually `recStore.setData()` -- all of which trigger `recommendationStore` subscribers. If the consolidated hook also subscribes to `recommendationStore` (as `useAutoRefresh` does for the "manual recommend completes" detection), you get cascading synchronous updates.
+**Why it happens:**
+The current coherence protocol is implicit -- it lives in `refresh_all_data()` as sequential code, not as a formal invalidation contract. New developers adding timing data will create a separate cache (e.g., `TimingCache`) and forget to wire it into the refresh pipeline. Or they wire it in but in the wrong order (ResponseCache clears before TimingCache updates, creating a window where new responses are built from stale timing data and then cached).
 
-**Consequences:** React render loop. Browser tab freezes. During a live game, the UI becomes unresponsive exactly when it should be updating.
+**How to avoid:**
+1. Extend DataCache to hold timing and ability data alongside heroes and items. One cache, one refresh, one atomic swap. Do not create separate TimingCache or AbilityCache singletons.
+2. If separate caches are unavoidable, formalize the invalidation order as a named method: `invalidate_all_caches()` that runs in guaranteed sequence: DataCache -> RulesEngine sees new data via reference -> ResponseCache.clear().
+3. Add an integration test that verifies: after `refresh_all_data()`, ResponseCache is empty AND DataCache contains fresh data AND timing data matches DB state.
+4. Add a version counter to DataCache. ResponseCache entries include the version at creation time. On read, reject entries with stale versions.
 
-**Prevention:**
-1. Keep the `gsiStore` subscription and the `recommendationStore` subscription as separate `useEffect` blocks, even if they live in the same hook file. Consolidation should be about co-location, not about merging subscriptions into one callback.
-2. Use `queueMicrotask()` or `setTimeout(fn, 0)` to batch cross-store writes, breaking the synchronous cascade chain.
-3. Never subscribe to Store B from within a subscription callback of Store A if the callback writes to Store B. Read Store B's state via `getState()` instead.
-4. Add a guard flag (`isProcessingGsi`) to prevent re-entrant execution of the consolidated handler.
+**Warning signs:**
+- Users see timing benchmarks that reference item costs or names that don't match current game data.
+- Rules engine recommends counter-items that contradict the LLM's ability-aware reasoning.
+- ResponseCache hit rate stays high after a data refresh (should drop to 0% briefly).
+- "Ghost" recommendations appear -- items that were valid in old data but no longer exist.
 
-**Detection:** React DevTools Profiler shows rapidly increasing render count. Browser performance monitor shows 100% CPU on the tab.
-
----
-
-## Moderate Pitfalls
-
-### Pitfall 6: Color Token Rename Causes Invisible Text and Broken Hover States
-
-**What goes wrong:** The current `globals.css` defines `--color-cyan-accent`, `--color-radiant`, `--color-dire`, `--color-bg-primary`, `--color-bg-secondary`, `--color-bg-elevated`. Components reference these as Tailwind classes (`bg-cyan-accent`, `text-cyan-accent`, `bg-bg-primary`, etc.). The DESIGN.md introduces completely different tokens: `surface` (#131313), `surface-container-low` (#1C1B1B), `primary_container` (#B22222), `secondary` (#FFDB3C), `on_surface` (#E5E2E1). If the old tokens are removed before all components are migrated, any component still referencing `bg-cyan-accent` gets Tailwind's default (transparent/no match), rendering text invisible against the dark background.
-
-**Why it happens:** Tailwind v4 treats `@theme` variables as the source of truth for utility generation. Removing `--color-cyan-accent` from `@theme` means `text-cyan-accent` no longer generates a CSS class. There is no compile-time error; the class simply stops working silently.
-
-**Prevention:**
-1. Migrate in two stages: Stage 1 adds all new tokens alongside old ones (both coexist in `@theme`). Stage 2 removes old tokens after all components are migrated and grepping confirms zero references.
-2. Before Stage 2, run `grep -r "cyan-accent\|bg-primary\|bg-secondary\|bg-elevated" prismlab/frontend/src/` to find stragglers.
-3. Add a comment block in `globals.css` marking deprecated tokens: `/* DEPRECATED: remove after all components migrated */`.
-
-**Detection:** Visual inspection on every page. Look specifically for invisible text (white-on-white or transparent-on-dark).
+**Phase to address:**
+First phase -- extend the DataCache architecture before adding any new data types.
 
 ---
 
-### Pitfall 7: Elevation System Change Creates "Floating in Void" Effect
+### Pitfall 4: Rules Engine and LLM Contradicting Each Other on Counter-Items
 
-**What goes wrong:** DESIGN.md forbids traditional drop shadows and mandates "Ambient Glows" -- 5% opacity crimson aura with 32px blur. The current UI uses no explicit shadows (dark theme on dark backgrounds), but relies on `bg-bg-elevated` background contrast to create visual hierarchy. The new "tonal stacking" approach requires carefully nesting surface levels: `surface` -> `surface-container-low` -> `surface-container-high`. If the nesting order is wrong (e.g., a `surface-container-high` card inside a `surface-container-high` parent), elements become invisible against their background.
+**What goes wrong:**
+Currently, the rules engine makes broad hero-level counter-recommendations (Spirit Vessel vs "high regen heroes" like Alchemist). The v4.0 counter-item depth feature adds ability-specific logic (Eul's vs channeled ults, Lotus Orb vs single-target spells). If the rules engine recommends Spirit Vessel against Alchemist (hero-level counter) while the LLM's ability-aware reasoning recommends Shiva's Guard instead (because it counters Chemical Rage's attack speed AND healing), the user sees two anti-heal items in the same build. The merge logic in `HybridRecommender._merge()` deduplicates by `item_id` (lines 209-214), but cannot detect semantic conflicts between different items targeting the same threat.
 
-**Why it happens:** The DESIGN.md describes a physical "stack of stone" metaphor with 6+ surface levels. In practice, developers choose the wrong surface level for a given context because the naming (`lowest`, `low`, `container`, `high`, `highest`, `bright`) is relative and easy to confuse. The sidebar, item timeline, phase cards, and floating modals (screenshot parser, settings panel) each need a specific surface level in the hierarchy.
+**Why it happens:**
+The rules engine and LLM operate at different abstraction levels. Rules say "this hero is a problem, buy this item." The LLM says "this hero's specific ability is a problem, buy this different item." Neither system knows the strategic intent behind the other's recommendation. The current "Already Recommended" section in the user message (built by `_build_rules_lines()`) passes item name + reasoning text, but the reasoning doesn't tag which threat it addresses.
 
-**Prevention:**
-1. Create a mapping document: Component -> Surface Level. E.g., Sidebar = `surface-container-lowest`, MainPanel = `surface`, PhaseCard = `surface-container-low`, Modal = `surface-container-highest`.
-2. Build a visual test page (`/dev/surfaces`) that shows all surface levels stacked, ensuring each is distinguishable from its neighbors.
-3. Start implementation from the outermost layout containers (App -> Sidebar + MainPanel -> Header) inward, so the surface hierarchy is established before child components are styled.
+**How to avoid:**
+1. Tag RuleResult with a `counter_target` field: which enemy hero/ability this rule counters. Pass this to the LLM: "Spirit Vessel (counters Alchemist's healing -- do not duplicate anti-heal)."
+2. In the system prompt, add: "If the rules engine already counters a specific threat, recommend items that address OTHER threats or complement the existing counter."
+3. For ability-specific counters that are deterministic enough (Eul's vs Witch Doctor Death Ward, BKB vs Enigma Black Hole), add them to the rules engine directly. Reserve the LLM for nuanced multi-factor reasoning where a simple lookup is insufficient.
+4. Test for conflicts: create test cases where rules produce a counter-item, verify LLM output complements rather than contradicts.
 
-**Detection:** Screenshots compared side-by-side at each migration step. Any element that "disappears" into its background is a surface-level ordering error.
+**Warning signs:**
+- Two items in the same build targeting the same enemy hero with different reasoning.
+- User message says "Already Recommended: Spirit Vessel (counters healing)" but LLM still recommends Shiva's Guard "to counter Alchemist's healing."
+- Rules and LLM recommend overlapping categories (two anti-heal items, two break items) in the same build.
 
----
-
-### Pitfall 8: Cache Stampede on Startup When Both Hero and Item Caches Load Simultaneously
-
-**What goes wrong:** If the in-memory cache loads heroes and items from the DB at startup, and the DB hasn't been seeded yet (first run), the cache loads empty data. Then `seed_if_empty()` populates the DB, but the cache is never reloaded. The rules engine calls `init_lookups()` separately, creating a window where the cache is empty but the rules engine has data (or vice versa).
-
-**Why it happens:** The current startup sequence in `main.py` is: (1) create tables, (2) seed, (3) init rules lookups, (4) start scheduler. Adding cache loading anywhere in this sequence creates ordering dependencies. If cache loads at step 2.5 (between seed and rules init), it works. If it loads at step 1.5 (before seed), it gets empty data.
-
-**Consequences:** First recommendation request after a cold start hits the cache, gets empty hero/item data, and the context builder sends Claude a prompt with "Hero #X" and "Item #Y" instead of real names. The recommendation quality is severely degraded.
-
-**Prevention:**
-1. Cache loading MUST happen after seeding completes. Add it as an explicit step in the lifespan function: `create tables -> seed -> load cache -> init rules from cache (not DB) -> start scheduler`.
-2. Add a health check: `/health` should return `"ready": false` until cache is populated. The frontend should show a loading state until health returns ready.
-3. Consider making the cache object the single source of truth that both rules engine and context builder read from, eliminating the separate `init_lookups()` path entirely.
-
-**Detection:** Deploy with empty DB, hit `/api/recommend` immediately after startup. If hero names show as "Hero #X", the cache loaded before seeding.
+**Phase to address:**
+Counter-item depth phase -- redesign the rules-to-LLM communication protocol before adding new counter rules.
 
 ---
 
-### Pitfall 9: The "No-Line Rule" Breaks Accessibility and Keyboard Focus Indicators
+### Pitfall 5: Timing Benchmarks Becoming Prescriptive Instead of Descriptive
 
-**What goes wrong:** DESIGN.md says "Do not use 1px solid borders to define sections" and "If a container needs a perimeter, use the `outline_variant` at 15% opacity. It should be felt, not seen." But keyboard focus indicators (`:focus-visible` rings) ARE borders/outlines that must be clearly visible for accessibility. The current codebase uses `ring-1 ring-cyan-accent` for selected items and `focus:ring-2` patterns. Removing these to comply with the "no-line rule" makes the app inaccessible to keyboard users.
+**What goes wrong:**
+OpenDota timing data shows statistical purchase times across skill brackets. Telling a player "your Battlefury should be done by 14 minutes" when that benchmark comes from aggregate data across all brackets creates unrealistic expectations. The player might rush Battlefury without boots to hit the timing, or feel discouraged when they consistently miss it. Worse, the `/scenarios/itemTimings` endpoint returns time buckets with games/wins counts -- interpreting "items purchased at time X had Y% win rate" as "you should buy item at time X" is a fundamental misuse of correlational data.
 
-**Why it happens:** Design specs often focus on visual aesthetics without considering accessibility states. The "felt, not seen" guidance directly conflicts with WCAG 2.1 Success Criterion 2.4.7 (Focus Visible), which requires a visible focus indicator.
+**Why it happens:**
+Raw statistical benchmarks feel authoritative and are easy to display. Developers treat average timing as a target rather than a baseline. The OpenDota endpoint provides time + games + wins (enabling win rate calculation per time bucket), but the temptation is to distill this into a single "target time" number that loses all nuance.
 
-**Consequences:** Keyboard navigation becomes impossible. Screen reader users lose all visual feedback. This is both a usability and compliance issue.
+**How to avoid:**
+1. Present benchmarks as ranges with win rate correlation: "BKB completed by 22 min: 58% WR. After 28 min: 44% WR." This conveys urgency without being prescriptive.
+2. Contextualize with game state: if `lane_result` is "lost", shift timing expectations by 3-5 minutes. If "won", tighten them.
+3. In the system prompt, frame benchmarks as: "Use timing data to convey urgency, not as rigid targets. A player behind schedule should still buy the right item even if late."
+4. Never surface "you're behind schedule" without an actionable follow-up for what to do about it.
+5. Group time buckets into ranges (early/on-time/late) rather than showing a single minute target.
 
-**Prevention:**
-1. Explicitly exempt `:focus-visible` states from the no-line rule. Focus indicators should use `outline_variant` (#5A403E) at full opacity (not 15%) or the `secondary_fixed` gold (#FFE16D) to ensure visibility.
-2. Document this exemption in the component guidelines: "All interactive elements MUST have a visible `:focus-visible` indicator."
-3. Test with keyboard-only navigation (Tab through the entire flow: hero picker -> role -> playstyle -> side -> lane -> opponents -> Get Build -> item cards).
+**Warning signs:**
+- Benchmarks displayed as single numbers ("14:00") instead of ranges ("12-18 min").
+- No adjustment for lane result, role, or game state in timing display.
+- Users report feeling stressed/discouraged by timing pressure.
+- LLM reasoning says "you need X by Y minutes" without contextual caveats.
 
-**Detection:** Tab through the app. If you cannot tell which element is focused, the focus indicators are broken.
-
----
-
-### Pitfall 10: Context Builder DB Queries Bypass Cache, Negating Performance Gains
-
-**What goes wrong:** The context builder (`context_builder.py`) makes 6+ DB queries per recommendation request: hero lookup, opponent hero lookups, matchup data, item catalog, item popularity, neutral items, and item name resolution (multiple `select(Item)` calls). Adding an in-memory cache for the `/api/heroes` and `/api/items` endpoints but forgetting to wire the context builder to use the same cache means the hot path (recommendation engine) still hits SQLite on every request.
-
-**Why it happens:** The context builder takes `db: AsyncSession` as a parameter and calls `self._get_hero()`, `get_relevant_items()`, `get_neutral_items_by_tier()`, `get_hero_item_popularity()`, and `_extract_top_items()` -- all of which do direct `select()` queries. The hero/item API routes are separate code paths. Adding cache to the routes does not affect the context builder.
-
-**Consequences:** The stated goal ("eliminate DB queries on hot path") is only partially achieved. The recommendation endpoint, which is the most latency-sensitive path, still hammers SQLite. The hero/item list endpoints (which are already fast and only called once on page load) get the cache, while the path that matters most does not.
-
-**Prevention:**
-1. Design the cache API as a service layer, not a route-level decorator. The `DataCache` should expose `get_hero(id)`, `get_all_items()`, `get_neutral_items_by_tier()` methods that the context builder calls instead of querying the DB.
-2. Refactor `ContextBuilder.__init__()` to accept a `DataCache` instance alongside the `OpenDotaClient`.
-3. `get_relevant_items()` and `get_neutral_items_by_tier()` in `matchup_service.py` should read from cache, not from `db`.
-4. Matchup data and item popularity are per-hero and already have their own stale-while-revalidate pattern -- these can stay DB-backed since they are fetched on-demand.
-
-**Detection:** Add logging to `DataCache.get_hero()` and `db.execute(select(Hero))`. If both fire during the same `/api/recommend` request, the context builder is bypassing the cache.
+**Phase to address:**
+Timing benchmarks phase -- define the presentation philosophy before implementing the data pipeline.
 
 ---
 
-### Pitfall 11: TriggerEvent Dedup Bug Amplified by Subscription Consolidation
+### Pitfall 6: Component-Level Build Path Ordering Without Game State Awareness
 
-**What goes wrong:** PROJECT.md lists "TriggerEvent dedup" as existing tech debt. The current `useAutoRefresh` detects events (death, gold swing, tower kill, roshan kill, phase transition) from GSI data diffs. If the same GSI update triggers multiple events (e.g., player dies AND a tower falls in the same tick), only the first event from `detectTriggers()` is processed. During subscription consolidation, if the trigger detection logic is restructured, the dedup behavior may accidentally allow duplicate events through, firing two rapid `fireRefresh()` calls that both bypass cooldown (since cooldown is set inside `fireRefresh`, the second call may read `cooldownEndRef.current` before the first call updates it).
+**What goes wrong:**
+Recommending "buy Ogre Axe before Mithril Hammer for BKB" is correct in isolation, but wrong if the player already has 2,150 gold and an open slot (Mithril Hammer gives more immediate combat value at that gold threshold). Build path ordering is context-dependent: gold available, inventory slots remaining, whether the player is actively fighting or farming. A static "always buy component A before B" recommendation ignores the dynamic game state.
 
-**Why it happens:** `detectTriggers()` returns a single `TriggerEvent | null`, so the current code is implicitly deduplicated. If refactored to return an array of events (to fix the dedup bug properly), the `fireRefresh()` call must be guarded against concurrent execution.
+**Why it happens:**
+Build path ordering is intellectually satisfying to precompute ("always buy the stats component first for lane") but practically depends on factors that change every 30 seconds. Developers create a static ordering table per item and forget that current gold, current inventory, and game tempo all matter.
 
-**Consequences:** Two recommendation requests fire within milliseconds of each other. The Claude API gets hit twice, doubling cost. The second response overwrites the first, possibly with different recommendations, causing the item timeline to "flash" between two states.
+**How to avoid:**
+1. Build path ordering should be LLM-driven, not rules-driven. The LLM can reason about "you have 1,200 gold and need survivability, so buy Ogre Axe first for the +10 STR."
+2. In the user message, include current gold (from GSI when available) and purchased components. Let the LLM reason about ordering dynamically.
+3. For rules-only fallback, use a simple heuristic: cheapest useful component first (maximizes chance of buying something before dying).
+4. Do NOT precompute static build orders for all items. Focus on 10-15 high-impact items where component ordering actually matters (BKB, Manta, Sange & Yasha, Diffusal Blade, Orchid Malevolence, Eye of Skadi).
+5. Use the Item model's existing `components` field (already in DataCache as `ItemCached.components`) to provide the component list in the user message.
 
-**Prevention:**
-1. If `detectTriggers` is refactored to return multiple events, pick the highest-priority event (death > roshan > tower > gold_swing > phase_transition) and fire only once.
-2. Add an `isRefreshing` guard that prevents `fireRefresh()` from being called while a previous refresh is in-flight. Check `recStore.isLoading` at the top of `fireRefresh()` (this guard already exists but must be preserved during consolidation).
-3. Set cooldown BEFORE the async API call, not after -- this is already correct in the current code but easy to reorder during refactoring.
+**Warning signs:**
+- Static build path tables covering 50+ items (most items don't need ordering guidance).
+- Build path recommendations that don't change based on game state or gold available.
+- Component ordering contradicts what the player can actually afford right now.
+- Build path suggestions for items with only 1-2 components (where ordering is trivial).
 
-**Detection:** In the browser console, log every `fireRefresh()` call with a timestamp. If two calls appear within 100ms, dedup is broken.
-
----
-
-## Minor Pitfalls
-
-### Pitfall 12: Google Fonts CDN Blocked by Strict CSP or Adblockers
-
-**What goes wrong:** Newsreader and Manrope are Google Fonts. Some corporate networks, privacy-focused browsers, and adblockers block `fonts.googleapis.com` and `fonts.gstatic.com`. If fonts fail to load, the UI falls back to system fonts, but the DESIGN.md's careful typography hierarchy (Newsreader display vs. Manrope body) collapses into a single system font, losing the editorial aesthetic entirely.
-
-**Prevention:** Self-host the font files. Download Newsreader and Manrope WOFF2 files and serve them from the Vite static assets directory. This also eliminates the FOUT flash from an external network request.
-
----
-
-### Pitfall 13: The "Blood-Glass" Backdrop-Filter Effect Causes Performance Issues on Low-End Hardware
-
-**What goes wrong:** DESIGN.md specifies `backdrop-blur` of 12px with 20-40% opacity `primary_container` (#B22222) for tactical overlays. `backdrop-filter: blur(12px)` is GPU-intensive. If applied to elements that update frequently (like the LiveStatsBar or the AutoRefreshToast which appears during cooldown), it causes frame drops during the 1Hz GSI update cycle.
-
-**Prevention:** Only apply backdrop-blur to static or rarely-updated elements (modals, settings panel). For frequently-updated elements like toasts and live stats, use solid backgrounds with opacity instead.
+**Phase to address:**
+Build path intelligence phase -- define scope narrowly (high-impact items only) and delegate ordering logic to the LLM with game state context.
 
 ---
 
-### Pitfall 14: `on_surface` Color (#E5E2E1) Insufficient Contrast Against `surface-container-highest` (#353534)
+### Pitfall 7: Win Condition Classification Overfitting to Draft, Ignoring Game Evolution
 
-**What goes wrong:** DESIGN.md specifies `on_surface` (#E5E2E1) as the primary text color and says "Don't use 100% white." But #E5E2E1 on #353534 has a contrast ratio of approximately 4.1:1, which barely meets WCAG AA for normal text (4.5:1 required) and fails for small text. In the dense item timeline with `body-sm` captions, this is below the accessibility threshold.
+**What goes wrong:**
+Classifying a team as "teamfight-heavy" at draft time and then framing every item recommendation around "you need teamfight items" ignores how the game actually develops. A draft that looks like a teamfight composition might need to split-push because the enemy's teamfight is stronger. A "4-protect-1" draft might need to fight early because the carry got shut down. Static win condition classification at draft creates tunnel vision in recommendations.
 
-**Prevention:** Use `on_surface` (#E5E2E1) only on darker surfaces (`surface` #131313, `surface-container-lowest` #0E0E0E). On lighter surfaces like `surface-container-highest` (#353534), use pure white or near-white. Define a `on_surface_high_contrast` token for this purpose.
+**Why it happens:**
+Win condition classification based on hero roles/abilities is a clean system to build. Developers create a lookup: "If team has Enigma + Dark Seer + Invoker -> teamfight." But actual win conditions depend on who's ahead, enemy item timings, and which heroes are online. BSJ (8K+ MMR coach) identifies five archetypes -- hard carry, push, pickoff, teamfight, split push -- but emphasizes these shift mid-game based on execution.
 
-**Detection:** Run an automated contrast checker (e.g., axe-core) against the rendered UI.
+**How to avoid:**
+1. Win condition framing should be a suggestion in `overall_strategy`, NOT a filter on item recommendations. "Your team's natural win condition is teamfight around 25-30 min" is guidance; "only recommend teamfight items" is tunnel vision.
+2. Re-evaluate win condition on re-evaluate requests: if mid-game state shows the carry behind, shift framing from "protect carry to late game" to "create space and extend."
+3. Classify as primary + fallback: "Primary: teamfight at 25 min. Fallback if behind: split push to buy time."
+4. Let the LLM handle win condition reasoning. Provide team composition data (hero names + roles) and let it reason about macro strategy. Do not hardcode a classification lookup table.
+5. Include enemy composition in win condition analysis. Your win condition partially depends on what the enemy wants to do.
 
----
+**Warning signs:**
+- Win condition label assigned once at draft and never updated.
+- Item recommendations filtered or biased by win condition (removes valid situational items).
+- `overall_strategy` reads like a generic strategy article instead of a matchup-specific game plan.
+- No mechanism to re-evaluate win condition when game state changes.
 
-### Pitfall 15: Playstyle Auto-Suggest Creates Hidden Store Write During GSI Subscription
-
-**What goes wrong:** The v3.0 milestone includes "auto-suggest playstyle when GSI detects hero+role." This means the consolidated GSI subscription hook will write to `gameStore.setPlaystyle()` in addition to `selectHero()` and `setRole()`. But `setRole()` already has logic that clears playstyle if the current one is invalid for the new role (see `gameStore.ts` lines 98-103). If `setRole()` clears playstyle and then `setPlaystyle()` sets a new one in the same synchronous block, the intermediate state (playstyle=null) may briefly trigger a re-render that hides the playstyle selector, then shows it again with the auto-suggested value -- causing a visual flicker.
-
-**Prevention:** Batch the hero+role+playstyle writes into a single `set()` call: `set({ selectedHero: hero, role: inferredRole, playstyle: suggestedPlaystyle })`. This avoids intermediate states and re-renders.
-
----
-
-### Pitfall 16: ResponseCache Not Cleared When Design Changes Affect Recommendation Display
-
-**What goes wrong:** The `ResponseCache` caches full `RecommendResponse` objects for 5 minutes. This is fine for data, but if the frontend starts expecting new response fields (e.g., for new display formatting), cached responses from before the backend update will lack those fields. During a rolling deploy where the frontend updates before the backend, the cached responses will cause rendering errors.
-
-**Prevention:** During any deployment that changes the `RecommendResponse` schema, clear the cache or restart the backend container. Add a schema version field to the cache key so old-format responses are never served.
-
----
-
-## Phase-Specific Warnings
-
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Design token migration | Invisible text from removed color tokens (P6) | Two-stage migration: add new tokens first, remove old after full grep confirms zero references |
-| Font loading | Layout shift from Newsreader/Manrope swap (P1) | Self-host fonts with preload, use size-adjust for fallback matching |
-| 0px corners enforcement | Broken purchased-item checkmark UX (P2) | Audit functional vs decorative roundedness, propose alternative signals |
-| Elevation system | Wrong surface-level nesting (P7) | Create component-to-surface mapping document, build visual test page |
-| In-memory cache creation | Stale data after pipeline refresh (P3) | Single DataCache class with explicit reload, wire to pipeline completion |
-| Cache startup ordering | Empty cache on first run (P8) | Load cache after seed, add health check readiness gate |
-| Cache scope | Context builder bypasses cache (P10) | Design cache as service layer, inject into context builder |
-| Session safety | Shared session between pipeline and cache (P4) | New session per task, never pass pipeline session to cache reload |
-| Store subscription merge | Infinite re-render loop from cross-store writes (P5) | Keep subscriptions separate even if co-located, guard against re-entry |
-| TriggerEvent dedup fix | Double-fire during consolidation (P11) | Priority-pick single event, preserve isLoading guard |
-| Playstyle auto-suggest | Flicker from intermediate state (P15) | Batch hero+role+playstyle into single set() call |
-| Accessibility | Focus indicators removed by no-line rule (P9) | Exempt :focus-visible from design constraints |
-| Backdrop blur | Frame drops on 1Hz GSI updates (P13) | Only apply blur to static elements |
-| Contrast | Small text fails WCAG AA on light surfaces (P14) | Define high-contrast text token for elevated surfaces |
+**Phase to address:**
+Win condition framing phase -- design as an LLM-reasoned feature that adapts to game state, not as a deterministic classification.
 
 ---
 
-## Integration Pitfalls (Cross-Cutting Concerns)
+## Technical Debt Patterns
 
-### The Three-Cache Coherence Problem
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Hardcoding ability counter-items in rules engine | Instant, no API call, deterministic | Every Dota patch that changes abilities requires manual rule updates. 124 heroes x 4 abilities = 496 potential mappings. | Only for the 10-15 most iconic and stable counters (BKB vs Black Hole, Eul's vs Death Ward, etc.) |
+| Putting timing benchmark data in system prompt | Simpler than user message construction | Inflates system prompt beyond cache-optimal size, changes per hero break cache hits | Never -- timing data is per-request context, belongs in user message |
+| Static win condition lookup table | Fast classification, no LLM call needed | Stale after Dota patches change hero meta, ignores game state evolution | Only as a seed/hint to the LLM, never as the final classification |
+| Fetching all timing data on startup | Complete data availability immediately | 124+ API calls on every restart, slow startup, rate limit risk | Only if lazy-loading proves too slow for first-request UX |
+| Duplicating component data into a separate build path table | Easier to query component orders | Two sources of truth for item components. When Dota patches change recipes, both must update. | Never -- use existing `ItemCached.components` from DataCache |
+| Adding new Pydantic fields to existing schemas without versioning | Quick feature addition | Frontend and backend must deploy simultaneously; old cached responses break validation | Only during v4.0 development while frontend/backend are co-deployed |
 
-The v3.0 codebase will have three independent cache layers:
-1. **DataCache** (new) -- in-memory hero/item data
-2. **RulesEngine lookups** (existing) -- hero name/ID and item name/ID maps
-3. **ResponseCache** (existing) -- full recommendation responses, 5-min TTL
+## Integration Gotchas
 
-All three must invalidate in the correct order after a data pipeline refresh:
-1. DataCache reloads from DB (fresh session)
-2. RulesEngine rebuilds its maps FROM DataCache (not from DB directly)
-3. ResponseCache is fully cleared (old responses contain old data)
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| OpenDota `/scenarios/itemTimings` | Querying per hero+item pair (N*M calls). Also, `games` and `wins` fields are strings not integers -- will cause validation errors if parsed as int directly. | Query per hero (omit item filter) for one call per hero. Parse `games`/`wins` as strings, cast to int in application code. |
+| OpenDota ability data | Assuming `/constants/abilities` is sufficient. It has ability details (dmg_type, behavior, cd, mc, attrib) but NOT which hero owns which ability. `/constants/hero_abilities` maps hero -> ability keys. Must join both. | Fetch both `/constants/abilities` and `/constants/hero_abilities`, join in application code, cache the merged result in DataCache. |
+| Claude API structured output | Adding new fields to LLM_OUTPUT_SCHEMA (e.g., `timing_comparison`, `build_order`, `win_condition`) without updating the hand-crafted inline JSON schema in `schemas.py`. Pydantic model and JSON schema drift apart silently. | Update both `LLMRecommendation` Pydantic model AND `LLM_OUTPUT_SCHEMA` dict simultaneously. Add automated test that validates schema matches model. |
+| ResponseCache SHA-256 keying | New context (current gold, game time from GSI) not included in `RecommendRequest` but passed via other means -> cache returns stale results that ignore the new context. | All context that affects recommendations MUST be fields on `RecommendRequest` so the SHA-256 hash changes when context changes. |
+| DataCache atomic swap | Adding new dict fields (`_timing_data`, `_ability_data`) to DataCache but not swapping them atomically with heroes/items. A request reads new hero data with old timing data during the swap window. | Build ALL new dicts first, then swap ALL references in a single code block. Mirror the existing pattern at `cache.py` lines 169-174. |
+| Item components field | `ItemCached.components` is a tuple of internal_name strings (e.g., `("ogre_axe", "mithril_hammer", "recipe_bkb")`). These are internal names, not display names and not item IDs. Must resolve through DataCache to get IDs and display names. | Add a `resolve_components(item_id)` method to DataCache that returns component details (id, name, cost) from the component internal names. |
 
-If any step is skipped or out of order, the system serves inconsistent data. The current code already has a mild form of this: `ResponseCache` is never cleared after a pipeline refresh, so cached responses can contain hero data up to 5 minutes older than the DB.
+## Performance Traps
 
-### Design Migration + Store Consolidation Ordering
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| User message token explosion from timing + ability + component data | Claude API latency increases from 2s to 5s+. Token costs double. Possible timeout within 45s window for complex matchups. | Budget user message at ~2,000 tokens max. Timing data: top 5 items only. Ability data: only abilities relevant to counter-items. Component data: only for recommended items, not entire catalog. | When all 4 features include full data for 5 enemies x 4 abilities each + 10 items with timing + 6 items with components |
+| N+1 API calls for timing data during recommendation | First request for a new hero triggers a blocking API call for 1-3 seconds on top of existing matchup + popularity calls | Pre-populate timing data for frequently-played heroes during daily refresh. Lazy-load the rest with stale-while-revalidate pattern (same as matchup data). | When lazy-loading timing data for every unique hero in real-time requests |
+| ResponseCache invalidation frequency from GSI context | Adding `game_time` or `current_gold` to `RecommendRequest` means every request at a different gold level is a cache miss. Hit rate drops from ~30% to <5%. | Only include coarse-grained context in cache key: gold_bracket (0-2K, 2K-5K, 5K-10K, 10K+) instead of exact gold. Or: disable ResponseCache entirely for GSI-driven auto-refresh requests. | When GSI auto-refresh sends requests every 30s with changing gold values |
+| Ability data bloating DataCache memory | 124 heroes x 4-6 abilities x ~500 bytes per ability (name, desc, dmg_type, cd, mc, attrib). Total ~300-400KB. | Acceptable for single-server deployment. Store only counter-relevant fields (name, dmg_type, behavior: channeled/passive, key tags like "heal", "stun", "silence"). Omit full attrib arrays. | Not a real concern at this deployment scale (Unraid single server) |
 
-The design system migration touches every `.tsx` component file. The store subscription consolidation touches hooks that are imported by top-level components (`App.tsx`). If both are done in the same phase, merge conflicts between branches become severe and review is nearly impossible.
+## Security Mistakes
 
-**Recommendation:** Complete store consolidation and tech debt cleanup FIRST (smaller, behavior-preserving changes that are easy to test), THEN do the design system migration (large, visual-only changes that are easy to review). This ordering also means the store behavior is stable and well-tested before the visual layer changes, reducing the number of variables when debugging visual regressions.
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Exposing raw OpenDota API key in timing data error messages | API key leaks to frontend via error responses containing raw exception messages | Sanitize all error messages before returning to frontend. Already handled for existing endpoints but must be verified for new timing data endpoints. |
+| Ability description injection via OpenDota constants | Corrupted ability descriptions from dotaconstants could inject unexpected content into Claude prompts | Sanitize ability descriptions: strip HTML, limit length to 200 chars, reject entries with suspicious patterns (URLs, code blocks, instruction-like text). |
+| Unrestricted scenarios API access from user-triggered hero changes | A user rapidly changing heroes triggers burst OpenDota API calls for timing data, potentially exhausting rate limits for all users | Debounce timing data fetches (500ms minimum). Use lazy-load with DB cache, never fetch from API directly on user action. |
 
----
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Timing benchmarks displayed as rigid deadlines | Player feels stressed; might rush items ignoring game state; tilts when behind | Show as ranges with win rate correlation: "BKB by 20-25 min (56% WR). After 30 min (44% WR). You're at 22 min -- on track." |
+| Component build order for every item | Information overload. Most items have 2-3 components where order barely matters. | Only show ordering guidance for items where it genuinely matters (BKB, Manta, S&Y, Diffusal). Omit for trivial component trees. |
+| Win condition label with no actionable connection to items | "Your win condition: Teamfight at 25 min" is informative but doesn't tell the player what to buy differently | Connect to item urgency: "Teamfight spike at 25 min. Completing BKB before then lets you frontline during your power window." |
+| Ability counter-items without naming the ability | "Buy Eul's to counter channeled ults" -- which ult? From which hero? | Always name hero AND ability: "Eul's counters Witch Doctor's Death Ward (3.5s channel). Cast immediately when you see the animation." |
+| Cluttering the item timeline with too many new visual elements | Timing badges + component arrows + win condition banner + counter-item tags = visual noise drowning out the actual item recommendations | Introduce ONE new visual element per phase. Phase 1: timing info in reasoning text only (no new UI). Phase 2: counter-item tags. Phase 3: component hints in tooltip. Phase 4: win condition in overall_strategy. |
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Timing benchmarks:** Often missing game state adjustment -- verify benchmarks shift when `lane_result` is "lost" vs "won"
+- [ ] **Timing benchmarks:** Often missing fallback for low-data heroes -- verify graceful degradation when OpenDota returns <100 games for a hero+item pair (show nothing rather than misleading stats)
+- [ ] **Counter-item rules:** Often missing the "already countered" check -- verify that if rules engine recommends a counter, the LLM doesn't recommend a second conflicting counter for the same threat
+- [ ] **Counter-item rules:** Often missing patch resilience -- verify that if an ability is reworked (changes damage type, loses channel), the counter rule is invalidated or updated
+- [ ] **Build path ordering:** Often missing purchased-component awareness -- verify that if the player already bought Ogre Axe (marked purchased), the build path skips to the next component
+- [ ] **Build path ordering:** Often missing the "just buy the recipe" case -- verify that when all components are purchased, the recommendation says "complete the item (buy recipe for Xg)"
+- [ ] **Win condition framing:** Often missing re-evaluation -- verify that a re-evaluate request with different `lane_result` or `damage_profile` can change the win condition framing
+- [ ] **Win condition framing:** Often missing enemy composition -- verify win condition considers BOTH allied AND enemy team composition
+- [ ] **Schema updates:** Often missing frontend sync -- verify new response fields (`timing_data`, `component_order`, `win_condition`) are handled by frontend even when null/missing (backward compatibility)
+- [ ] **Cache invalidation:** Often missing ResponseCache clear after timing/ability data refresh -- verify `refresh_all_data()` clears ResponseCache after ALL new data layers update
+- [ ] **LLM_OUTPUT_SCHEMA sync:** Often missing schema update -- verify hand-crafted JSON schema in `schemas.py` matches `LLMRecommendation` model after adding new output fields
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| System prompt too large, cache economics degraded (P1) | LOW | Extract dynamic data to user message sections. Single refactor session. No schema changes needed. |
+| OpenDota rate limit exhausted mid-month (P2) | LOW | Switch to cached-only mode for timing data. Serve stale benchmarks until month resets. No user-facing breakage -- just stale stats. |
+| Three-cache coherence broken (P3) | MEDIUM | Add version counter to DataCache. ResponseCache rejects entries with stale versions. Requires code changes in cache.py + recommender.py + testing. |
+| Rules/LLM counter-item contradiction (P4) | MEDIUM | Add `counter_target` field to RuleResult. Update `_build_rules_lines()` in context_builder.py to pass it. Update system prompt with dedup guidance. |
+| Timing benchmarks demoralizing users (P5) | LOW | Change display from target to range with win rate. Primarily a presentation change in reasoning text and frontend. |
+| Build path ordering ignoring game state (P6) | MEDIUM | Redesign as LLM-driven context. Requires user message changes + system prompt update. Rules-only fallback needs cheapest-first heuristic. |
+| Win condition classification stale after draft (P7) | LOW | Move to LLM-reasoned win condition. Already the recommended approach -- stop hardcoding and let LLM adapt per request. |
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| System prompt bloat (P1) | Phase 1: Prompt architecture | Token count measured before/after. System prompt stays under 5,000 tokens. Cache hit rate >90% in steady state. |
+| OpenDota rate limit (P2) | Timing benchmarks phase | Monthly API call budget tracked. Timing data fetched per-hero not per-hero-per-item. Integration test for 429 handling. |
+| Three-cache coherence (P3) | Phase 1: DataCache extension | Integration test: refresh -> all caches coherent. ResponseCache empty after refresh. |
+| Rules/LLM contradiction (P4) | Counter-item depth phase | Test: rules produce counter -> LLM complements, not contradicts. `counter_target` present in RuleResult. |
+| Prescriptive timings (P5) | Timing benchmarks phase | Benchmarks displayed as ranges. Win rate shown. Lane result adjusts expectations. |
+| Static build paths (P6) | Build path phase | Component ordering varies with game state in LLM output. No static ordering table for >15 items. |
+| Stale win condition (P7) | Win condition phase | Re-evaluate changes win condition when game state differs. LLM generates framing, no hardcoded lookup. |
+| User message token explosion | Phase 1: Prompt architecture | User message stays under 2,000 tokens. Timing/ability/component data trimmed to essentials per request. |
+| LLM_OUTPUT_SCHEMA drift | Every phase adding new response fields | Automated test: hand-crafted schema validates against LLMRecommendation model. |
+| ResponseCache over-invalidation from GSI | Timing/GSI integration | Cache key uses coarse-grained gold brackets. Hit rate monitored. |
 
 ## Sources
 
-- [Tailwind CSS v4 Migration Best Practices](https://www.digitalapplied.com/blog/tailwind-css-v4-2026-migration-best-practices)
-- [Debugging Tailwind CSS 4 Common Mistakes](https://medium.com/@sureshdotariya/debugging-tailwind-css-4-in-2025-common-mistakes-and-how-to-fix-them-b022e6cb0a63)
-- [Tailwind CSS v4 @theme Documentation](https://tailwindcss.com/docs/theme)
-- [How to Implement Cache Invalidation in FastAPI](https://oneuptime.com/blog/post/2026-02-02-fastapi-cache-invalidation/view)
-- [FastAPI Mistakes That Kill Performance](https://dev.to/igorbenav/fastapi-mistakes-that-kill-your-performance-2b8k)
-- [How to Avoid Caching in SQLAlchemy: Fix Stale Data Issues](https://www.pythontutorials.net/blog/how-to-avoid-caching-in-sqlalchemy/)
-- [SQLAlchemy expire_on_commit Discussion](https://github.com/sqlalchemy/sqlalchemy/discussions/11495)
-- [SQLAlchemy Async Documentation](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html)
-- [Zustand Store Update and Race Conditions](https://github.com/pmndrs/zustand/discussions/2034)
-- [subscribeWithSelector Fires on Every Update](https://github.com/pmndrs/zustand/discussions/2103)
-- [Visual Breaking Change in Design Systems](https://medium.com/eightshapes-llc/visual-breaking-change-in-design-systems-1e9109fac9c4)
-- [Font Loading: FOIT and FOUT](https://dev.to/ibn_abubakre/font-loading-strategies-foit-and-fout-393b)
-- [Cache in Asynchronous Python Applications](https://medium.com/the-pandadoc-tech-blog/cache-in-asynchronous-python-applications-aa83157af712)
+- [Anthropic Prompt Caching Documentation](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) -- Token thresholds per model (Haiku 4.5: 4,096 minimum), cache TTL (5 min default), breakpoint strategy
+- [go-opendota package](https://pkg.go.dev/github.com/jasonodonnell/go-opendota) -- ItemTimings struct definition: `{hero_id: int, item: string, time: int, games: string, wins: string}`
+- [OpenDota API](https://docs.opendota.com/) -- Rate limits: 50,000 calls/month free, 60 req/min. Scenarios endpoint at `/scenarios/itemTimings`
+- [odota/dotaconstants](https://github.com/odota/dotaconstants) -- `abilities.json` structure (dname, behavior, dmg_type, dmg, cd, mc, attrib), `hero_abilities.json` for hero-to-ability mapping
+- [BSJ: How to Identify Your Win Condition](https://bsjdota.com/blog/how-to-identify-your-win-condition-in-every-game-of-dota-2/) -- Five archetypes: hard carry, push, pickoff, teamfight, split push
+- [BSJ: Common Mistakes in Dota 2](https://bsjdota.com/blog/common-lesser-known-mistakes-in-dota-2/) -- Item build ordering mistakes, timing variance by bracket
+- [Hybrid Rule-Based and LLM Systems](https://medium.com/@ceciliabonucchi/bridging-intelligence-the-next-evolution-in-ai-with-hybrid-llm-and-rule-based-systems-db0d89998c6d) -- Consistency challenges: hallucinations, contradictions, sycophancy in hybrid architectures
+- [LLM Token Optimization](https://redis.io/blog/llm-token-optimization-speed-up-apps/) -- System prompt as major cost driver, prompt creep from 500 to 2,000 tokens over time
+- Codebase analysis: `rules.py` (18 rules, hero-level counters), `cache.py` (DataCache with frozen dataclasses, 12 lookup methods), `system_prompt.py` (~13,326 chars), `recommender.py` (merge/dedup/validate pipeline), `context_builder.py` (user message assembly, ~1,500 token target), `llm.py` (Haiku 4.5, 45s timeout, prompt-instructed JSON), `refresh.py` (three-cache invalidation chain), `schemas.py` (hand-crafted LLM_OUTPUT_SCHEMA)
+
+---
+*Pitfalls research for: v4.0 Coaching Intelligence features added to existing Prismlab hybrid rules+LLM architecture*
+*Researched: 2026-03-27*

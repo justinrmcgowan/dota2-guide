@@ -1,343 +1,292 @@
-# Feature Research: v3.0 Design Overhaul & Performance
+# Feature Research: v4.0 Coaching Intelligence
 
-**Domain:** Design system migration (Tailwind v4 retheme), in-memory data caching, store/hook consolidation, integration gap fixes
-**Researched:** 2026-03-26
-**Confidence:** HIGH (Tailwind v4 @theme already in use, caching patterns well-understood, codebase fully audited)
+**Domain:** Item timing benchmarks, ability-specific counter-itemization, build path ordering, win condition framing
+**Researched:** 2026-03-27
+**Confidence:** HIGH (timing data confirmed via live API calls, ability data structure verified, existing system thoroughly audited)
+
+---
 
 ## Feature Landscape
 
-### Table Stakes (Must Ship for the Milestone to Matter)
+### Category 1: Timing Benchmarks
 
-Features that must land for v3.0 to feel like a coherent release rather than random patches.
+#### Table Stakes
 
 | Feature | Why Expected | Complexity | Dependencies | Notes |
 |---------|--------------|------------|--------------|-------|
-| "Tactical Relic Editorial" full retheme | The entire v3.0 milestone is defined by this. Shipping partial retheme leaves a Frankenstein UI -- half obsidian monolith, half cyan SaaS. Users notice inconsistency more than ugliness | HIGH | Tailwind v4 @theme in globals.css (already exists), Google Fonts (Newsreader + Manrope), all ~30 frontend components | Current globals.css uses oklch cyan/radiant/dire palette with Inter + JetBrains Mono fonts. New system: obsidian #131313 base, crimson #B22222 primary, gold #FFDB3C secondary, Newsreader display + Manrope body. Every component touches color classes. See "Migration Strategy" section below |
-| In-memory hero/item data cache | Currently the recommend hot path hits SQLite 6-8 times per request: hero lookup, opponent lookups, item catalog, neutral items, item popularity, item validation. With auto-refresh firing every 2 min during live games, this is unnecessary I/O. Hero and item data changes once per 6h refresh cycle | MEDIUM | Backend lifespan startup, refresh pipeline, context_builder.py, recommender.py, matchup_service.py, heroes.py route, items.py route, screenshot.py route | Load all heroes and items into module-level dicts at startup. Invalidate and reload after refresh_all_data() completes. Every DB query for Hero/Item on the hot path gets replaced with dict lookup. Matchup data stays in SQLite (it is per-pair, large, and fetched on-demand) |
-| Store subscription consolidation (useGsiSync + useAutoRefresh) | Both hooks independently subscribe to gsiStore via `.subscribe()` in separate useEffects. Both fire on every GSI tick (1Hz). Both read from gameStore and recommendationStore. This creates duplicate subscription overhead and makes the data flow hard to reason about | MEDIUM | useGsiSync.ts, useAutoRefresh.ts, App.tsx | Merge into single useGsiOrchestrator hook with one gsiStore.subscribe() call that handles hero detection, item auto-marking, lane detection, and event-trigger detection in a single pass. Reduces subscription count from 3 to 1 (the third is the recommendationStore subscription in useAutoRefresh) |
-| TriggerEvent type deduplication | TriggerEvent interface is defined identically in both triggerDetection.ts (line 17) and refreshStore.ts (line 3). This is a maintenance hazard -- if one is updated without the other, runtime bugs appear | LOW | triggerDetection.ts, refreshStore.ts | Single source of truth: export from triggerDetection.ts, import in refreshStore.ts. One-line fix plus import update |
-| refresh_lookups() session safety | refresh_all_data() calls `_rules.refresh_lookups(session)` using the same session that just committed the refresh. If the session is in a bad state after the commit (edge case with async SQLAlchemy + SQLite), the rules engine gets stale data | LOW | refresh.py, rules.py | Fix: open a fresh async_session() for the refresh_lookups call, or call init_lookups() with its own session. The current pattern works 99% of the time but is architecturally wrong |
+| Per-item timing benchmark display (good/average/late) | Every major Dota stats site (STRATZ, Dotabuff, Dota2ProTracker) shows timing windows. Players think in "I need BKB by 20 min" terms. Without benchmarks, item recommendations feel like a shopping list, not coaching | MEDIUM | OpenDota `/api/scenarios/itemTimings` endpoint, new `ItemTimingBenchmark` DB model, data pipeline addition, schema changes to `RecommendPhase` and `ItemRecommendation` | **Verified**: endpoint returns `{hero_id, item, time (seconds), games, wins}` bucketed in ~2-5 minute intervals. Anti-Mage Battle Fury data shows 7 time buckets from 450s to 1800s with win rates declining from 100% (tiny sample at 7.5min) to 63% at 15min to 40% at 20min to 0% at 30min. Win rate gradient is the key metric: "each minute past 15:00 costs ~3% win rate" |
+| Urgency signal on recommended items | Player needs to know "buy this NOW" vs "buy this when convenient." Currently all items in a phase are presented equally. A simple urgency indicator (timing-sensitive vs flexible) is the minimum coaching signal | LOW | Timing benchmark data feeding into rules engine and/or system prompt, frontend urgency badge on ItemCard | Derive from timing gradient: items with steep win rate falloff (>2%/min) are timing-critical. Items with flat gradients are flexible. Surface as a visual indicator per item |
+| Timing data in system prompt context | Claude already receives item popularity data per hero. Adding timing benchmarks ("BKB optimal: 18-22 min, win rate drops 3%/min after") gives Claude the data to write coaching-quality reasoning like "You need BKB before 20 min or you lose the timing window against their lockdown" | LOW | context_builder.py additions to inject timing data into Claude user message | Piggybacks on existing popularity section pattern. ~50-100 tokens of additional context per hero |
 
-### Differentiators (Improve the Product Beyond Maintenance)
-
-Features that actively improve the user experience beyond just "cleaning up."
+#### Differentiators
 
 | Feature | Value Proposition | Complexity | Dependencies | Notes |
 |---------|-------------------|------------|--------------|-------|
-| Auto-suggest playstyle when GSI detects hero+role | Currently GSI auto-detects hero and infers role via inferRole(), but playstyle stays null. The user must manually select playstyle before recommendations work. During a live game, every click matters. Auto-suggesting the most common playstyle for that hero+role removes one friction point | LOW | useGsiSync.ts, gameStore.ts, PLAYSTYLE_OPTIONS constant | After GSI sets hero and role, auto-set playstyle to the first option for that role from PLAYSTYLE_OPTIONS. The user set their preference to "Aggressive" in PROJECT.md context -- could also use a stored preference per hero. Implementation: 3-5 lines in the GSI sync hero detection block |
-| Feed KDA/level from screenshots into recommendation context | Screenshots already parse kills, deaths, assists, and level per hero (ParsedHero has these fields). But the data is currently display-only in the confirmation UI. Feeding enemy KDA/level into the Claude prompt gives much richer recommendation context: "Enemy PA is 8-1-3 and level 16 -- she is snowballing, you need defensive items NOW" | MEDIUM | schemas.py (RecommendRequest), context_builder.py, screenshotStore.ts, ScreenshotParser.tsx, gameStore.ts | Requires: (1) new optional field on RecommendRequest for enemy_hero_stats, (2) gameStore field to hold parsed enemy stats, (3) ScreenshotParser "Apply" action writes stats to gameStore, (4) context_builder builds "Enemy Status" section from stats. The Claude prompt already handles mid-game context well -- this is additive |
-| Design system "parchment texture" noise overlay | DESIGN.md explicitly calls for "low-opacity noise overlay or subtle grain texture to prevent the UI from feeling sterile." This is a small visual touch that elevates the entire experience from "dark theme" to "editorial artifact." Differentiates from every other Dota tool | LOW | New CSS pseudo-element or small SVG noise asset on body/root | A repeating SVG noise pattern at 3-5% opacity over the #131313 background. No JS needed -- pure CSS. ~2KB SVG asset. Performant because it's a single compositing layer |
-| "Blood-glass" tactical overlays | DESIGN.md specifies: primary_container (#B22222) with 20-40% opacity and backdrop-blur 12px for tactical overlays. This creates a premium, atmospheric feel for modals, toast notifications, and the screenshot parser overlay | LOW | SettingsPanel.tsx, AutoRefreshToast.tsx, ScreenshotParser.tsx, ErrorBanner.tsx | CSS-only change on 3-4 overlay/modal components. backdrop-filter: blur(12px) is well-supported in modern browsers. Performance: GPU-composited, no layout thrash |
-| Gold-leaf accent strips on hero/item cards | DESIGN.md: "If the card represents a Hero or Legendary item, apply a 2px left-side accent strip of secondary_fixed (#FFE16D)." Visual hierarchy improvement that makes important items pop | LOW | PhaseCard.tsx, ItemCard.tsx, NeutralItemSection.tsx | CSS border-left addition. Conditional: only on core/luxury priority items. Trivial implementation |
+| Live timing comparison via GSI | During a live game, compare actual gold/items against expected timing benchmarks at the current game clock. "You should have BKB by now -- you're 3 minutes late, prioritize it" | MEDIUM | GSI store (game_clock, gold, items_inventory), timing benchmark data, frontend comparison logic | GSI already provides `game_clock`, `gold`, `net_worth`, and `items_inventory`. The comparison logic is: (1) identify which core items the player hasn't purchased yet, (2) check if current game clock exceeds the optimal purchase window, (3) surface urgency. This is a natural extension of the existing auto-refresh trigger system |
+| Timing-aware re-evaluation weighting | When a player is behind on a timing window, the re-evaluate call should deprioritize "ideal" items and shift toward cheaper power spike alternatives. "You missed the Radiance timing -- pivot to fighting items" | HIGH | Modified system prompt context that communicates timing misses, potentially new rules for common timing pivots (e.g., if BF timing missed on AM, suggest Maelstrom) | Requires the system prompt to receive "player is X minutes behind on Y item" context. Claude can reason about this, but the data pipeline needs to calculate and inject it |
 
-### Anti-Features (Do NOT Build in v3.0)
+#### Anti-Features
 
-| Feature | Why It Seems Useful | Why Avoid | What to Do Instead |
-|---------|--------------------|-----------|--------------------|
-| Component library extraction (Storybook/design system package) | "We have a design system spec, let's build a proper component library" | Over-engineering for a single-app project with ~30 components. Storybook adds build complexity, maintenance burden, and slows development velocity for zero multi-project benefit | Keep components co-located in src/components/. The DESIGN.md IS the design system documentation. Components follow its rules directly |
-| CSS-in-JS migration (styled-components, Emotion) | "Design tokens should live in JS for type safety" | Tailwind v4 @theme already provides CSS-native design tokens with utility class generation. CSS-in-JS adds runtime overhead, bundle size, and fights Tailwind's compilation model | Continue using Tailwind v4 @theme for tokens. Use CSS custom properties for any dynamic values |
-| Dark/light theme toggle | "Professional apps need theme switching" | DESIGN.md is explicitly dark-only ("infinite obsidian void"). A light theme would require a completely separate color system, contradict the creative direction, and add significant testing surface | Single dark theme. The obsidian aesthetic IS the brand |
-| Redis/Memcached for caching | "In-memory dict won't scale" | This is a single-user desktop app deployed on a personal Unraid server. Total hero count is ~130, total items ~250. A Python dict holds this trivially. Redis adds container complexity and a network hop for no benefit | Module-level Python dict, invalidated on refresh cycle. Total memory: ~200KB |
-| Animated page transitions (Framer Motion / React Spring) | "The editorial design needs cinematic transitions" | Adds 30-50KB bundle, complex animation orchestration, and interferes with the app's primary use case (quick reference during a live game). Users alt-tab to check items -- they need instant rendering, not page transitions | CSS transitions for hover states and panel reveals (already in use). No page-level animation |
-| Micro-frontend architecture for design system | "Isolate the old theme from the new theme during migration" | The app has ~30 components in a single Vite build. Micro-frontends add routing complexity, build pipeline changes, and module federation config for a migration that takes days, not months | Component-by-component migration within the single Vite app. Use a Tailwind v4 @theme swap to toggle all design tokens at once |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Prescriptive timing targets ("buy by exactly 14:32") | Feels precise and "pro" | False precision. Timing benchmarks are population averages across all skill brackets. Individual game variance (lane result, rotations, deaths) makes exact targets misleading. A player who lost lane badly and hits BKB at 23 min might still be ahead of curve for their game state | Show timing windows as ranges ("good: 15-18 min, average: 18-22 min, late: 22+ min") with context about what affects timing. Use win rate gradients, not exact targets |
+| Per-match-ID timing comparison ("your last 10 games") | Would let players track their improvement | Requires Steam login, Dota 2 match history access, and match replay parsing -- massive scope expansion. Not aligned with v4.0 coaching intelligence goals | Defer entirely. Focus on population-level benchmarks that help in the current game |
 
-## Migration Strategy: Design System Retheme
+---
 
-The DESIGN.md retheme is the largest feature in v3.0. The correct migration approach depends on the codebase structure.
+### Category 2: Counter-Item Intelligence (Ability-Specific)
 
-### Why Component-by-Component is WRONG for This Project
+#### Table Stakes
 
-Research shows component-by-component migration works best for apps with 200+ components, multi-team ownership, or month-long migration timelines (source: frontendmastery.com). Prismlab has ~30 components, one developer, and a migration that involves swapping CSS custom properties rather than changing frameworks.
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Ability-aware counter-item rules | Current rules engine has 18 rules that operate on hero ID lists (e.g., "Spirit Vessel vs Alchemist/Huskar/etc"). This is a flat mapping that misses the WHY. A player fighting Enigma needs Eul's to cancel Black Hole, but the current system has no concept of "channeled ultimate" as a counter-item trigger. DotaCoach.gg already shows "counter items against each enemy hero" | HIGH | OpenDota `/api/constants/abilities` endpoint (verified structure: `dname`, `behavior`, `dmg_type`, `bkbpierce`, `desc`, `target_team`, `target_type`, `attrib`), OpenDota `/api/constants/hero_abilities` for hero-to-ability mapping, new ability data storage, new counter-item mapping logic | **Verified**: ability data includes `behavior` (e.g., "Channeled"), `dmg_type` ("Magical"/"Physical"/"Pure"), `bkbpierce` ("Yes"/"No"). This enables rules like: "enemy has channeled ultimate -> Eul's/Hex counter" rather than hardcoded hero lists. Key counter categories to model: channeled abilities, passives (Break), escape abilities (Silence/Root), high regen (anti-heal), physical burst (Ghost Scepter), magic burst (BKB/Pipe) |
+| Expanded counter-item rule set | Current 18 rules cover basics (BKB vs magic, MKB vs evasion, Spirit Vessel vs regen). Missing critical counter-item patterns: Eul's vs channeled ults (Enigma, CM, Witch Doctor, Pudge), Lotus Orb vs single-target ultimates (Lion, Lina, Necro), Nullifier vs Ghost/Glimmer carries, Linken's vs strong single-target initiation (Beastmaster, Batrider, Doom) | MEDIUM | Rules engine extension, ability behavior data to drive rule triggers instead of hardcoded hero lists | Can be implemented incrementally: start with 5-8 new ability-driven rules, then expand. The rule framework (`RulesEngine.evaluate()`) is clean and extensible -- each rule is a standalone method |
+| Counter-item reasoning that names the specific ability | Players expect "buy Eul's to cancel Enigma's Black Hole" not "buy Eul's because Enigma has disables." Current rules already name enemy heroes but not their specific abilities | LOW | Ability data (dname field) available in the counter-item logic, template reasoning strings that reference ability names | The `_hero_name()` lookup pattern already exists. Adding `_ability_name()` for the most relevant ability is a small extension. Reasoning templates become: f"Against {hero_name}'s {ability_name}, {item_name} provides..." |
 
-### Why Token Swap + Component Pass is RIGHT
+#### Differentiators
 
-**Step 1: Swap @theme tokens in globals.css (1 change, affects everything)**
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Ability-type-driven dynamic rules instead of hero lists | Instead of maintaining a static list of "channeled ult heroes," query the ability data: "any enemy hero whose ultimate has behavior=Channeled." This makes the rules engine automatically correct when new heroes are added or abilities are reworked. Zero maintenance on patch day | HIGH | Ability data cached in DataCache (new `AbilityCached` dataclass), hero-ability mapping cached, rules engine refactored to query abilities rather than hero ID sets | This is the architectural shift from "rules reference hero IDs" to "rules reference ability properties." Requires: (1) fetch and cache ability constants, (2) build hero -> abilities -> properties index, (3) refactor rules to use property queries. The payoff is enormous: rules never go stale after patches |
+| Counter-item priority escalation based on enemy performance | If enemy PA has 8 kills and 1 death (from screenshot/GSI data), escalate the priority of counter items against her from "situational" to "core." "PA is 8-1 -- Ghost Scepter is now a survival necessity, not optional" | MEDIUM | Enemy context data (already in RecommendRequest as `enemy_context`), priority escalation logic in rules engine or system prompt | The enemy_context field already carries KDA data from screenshots. The system prompt already has "Enemy Power Levels" guidance. This feature connects counter-item rules to threat assessment. Implementation: rules engine checks enemy_context when deciding priority level for counter items |
+| Item interaction awareness | Some counter items have specific interactions that matter: Lotus Orb reflects the SPELL not just blocks it (so it reflects Doom's Doom back). Linken's blocks one spell but not AoE. BKB doesn't block pure damage through spell immunity. Surfacing these nuances in reasoning | LOW | Already available via system prompt guidance and Claude's training data. Add specific interaction notes to counter-item reasoning templates | This is primarily a system prompt enhancement plus richer reasoning templates in the rules engine. Claude already knows these interactions but needs prompting to surface them |
 
-The current globals.css already uses Tailwind v4 @theme. The migration is:
-- Replace `--color-cyan-accent` with crimson/gold tokens from DESIGN.md
-- Replace `--color-bg-primary/secondary/elevated` with obsidian surface hierarchy
-- Replace `--font-body` (Inter) with Manrope, add `--font-display` (Newsreader)
-- Add surface hierarchy tokens: surface, surface-dim, surface-container-low/high/highest
-- Add the full DESIGN.md color palette as custom properties
+#### Anti-Features
 
-After this single file change, every Tailwind utility class referencing these tokens updates globally. This handles ~60% of the visual migration instantly.
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Fully automated ability data parsing from game files | Parse npc_abilities.txt directly from Dota 2 game files for maximum accuracy | Requires game file extraction pipeline, version tracking, format parsing that changes with patches. OpenDota constants already does this and provides a clean API | Use OpenDota `/api/constants/abilities` and `/api/constants/hero_abilities`. Same data, zero maintenance |
+| Counter-item popups during live game that obscure the UI | Real-time "BUY THIS NOW" alerts during teamfights | Distracting during gameplay, creates alert fatigue. DotaCoach uses a sidebar overlay, not intrusive popups | Surface urgency via the existing recommendation timeline with priority indicators, not interruption-style alerts |
 
-**Step 2: Component audit pass (systematic, not incremental)**
+---
 
-Walk through each component and:
-- Replace hardcoded color classes (e.g., `text-cyan-accent` becomes `text-primary`, `bg-bg-secondary` becomes `bg-surface-container-low`)
-- Remove all `rounded-lg` and `rounded` classes (DESIGN.md mandates 0px corners)
-- Remove all `border` classes that create visible borders (DESIGN.md "No-Line Rule")
-- Add Newsreader font to headlines (`font-display`)
-- Add gold-leaf accent strips where appropriate
+### Category 3: Build Path Intelligence
 
-**Step 3: Add new design elements**
-- Parchment noise texture on body
-- Blood-glass overlays on modals/toasts
-- Ambient glow shadows (crimson tint, 5% opacity, 32px blur)
-- Ghost borders on interactive elements (outline_variant at 15% opacity)
+#### Table Stakes
 
-### Font Loading Strategy
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Component ordering for recommended items | Currently Prismlab says "buy Battle Fury" but not "buy Quelling Blade first, then Perseverance for lane sustain, then Broadswords." Players at mid-skill brackets don't know the optimal component order. This is standard in DotaFire guides and DotaCoach's build suggestions | MEDIUM | Item component data (already in DB: `Item.components` stores component internal_names), cost data for components, new `build_path` field on `ItemRecommendation` schema | **Verified**: Item.components is already seeded from OpenDota (e.g., Battle Fury = `['pers', 'broadsword', 'broadsword', 'quelling_blade']`). Component items are also in the Item table with costs. The data exists -- this is a presentation and schema enhancement |
+| Component-level reasoning | "Buy Perseverance first because the HP/mana regen keeps you in lane" is more useful than "buy Battle Fury." Each component serves a purpose -- the ordering should reflect game state priorities | MEDIUM | Build path ordering logic, per-component reasoning templates or system prompt guidance, schema changes | Can be implemented in two ways: (1) deterministic component ordering in rules/backend with template reasoning, or (2) ask Claude to reason about component ordering in the system prompt. Hybrid approach: backend provides ordered component list, Claude provides reasoning for the ordering |
+| Component gold tracking | When a player has 1200g and needs Battle Fury (3900g), show "you can afford Perseverance (1400g) -- buy it now" rather than showing the full item as unaffordable | MEDIUM | GSI gold data (already in `gsiStore.liveState.gold`), component cost data, frontend logic to highlight affordable components | Natural extension of GSI integration. The gold data and component costs are already available -- this is frontend presentation logic |
 
-Both Newsreader and Manrope are variable fonts on Google Fonts. Variable fonts store all weights in a single file, reducing HTTP requests.
+#### Differentiators
 
-**Recommended approach:**
-1. Self-host via `@fontsource/newsreader` and `@fontsource/manrope` npm packages (eliminates Google Fonts network dependency, critical for Unraid deployment)
-2. Load Newsreader 400/700 weights only (display text: regular + bold)
-3. Load Manrope 400/500/600/700 weights (body text needs more weight range)
-4. Use `font-display: swap` to prevent FOIT (flash of invisible text)
-5. Preload the two main weight files in index.html
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Game-state-aware component priority | If player is losing lane (lane_result: "lost"), prioritize regen/defensive components of items. If winning, prioritize offensive components. "You lost lane -- rush Ring of Health from Perseverance before Broadsword" | HIGH | Lane result data (already in RecommendRequest), game-state-dependent component ordering logic | Requires conditional ordering logic: same final item, different component priority based on game state. This is true coaching intelligence -- understanding that BKB components should be Ogre Axe first when you need stats to survive, vs Mithril Hammer first when you need damage |
+| "Skip component" intelligence | Some items have components that are skippable in certain situations. If you already have a Quelling Blade from starting items, don't buy another one for Battle Fury -- it's already counted. Surface this as "you already have Quelling Blade -- 3550g remaining" | LOW | Purchased items list (already tracked), component deduplication logic | Already partially handled by the purchased_items filter. Extension: recognize when purchased items overlap with components of recommended items |
 
-Total font payload: ~80KB (both variable font files combined). Acceptable for desktop-first app.
+#### Anti-Features
 
-## In-Memory Cache Architecture
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Auto-buy suggestions via key binds | "Press F5 to auto-buy next component" | Prismlab is a web app, not an Overwolf overlay. Cannot interact with the Dota 2 client directly. Also crosses into automation territory | Show the next component clearly with its cost. Player buys manually |
+| Full item tree visualization with every sub-component | Show the complete dependency tree for every item (Perseverance = Ring of Health + Void Stone, Ring of Health = 700g, etc.) | Information overload. Players don't need to see that Ring of Health is a base component -- they know that. Multi-level trees create visual noise | Show one level of components only: the direct components of the target item. This is what DotaFire and in-game shop do |
 
-### What Gets Cached
+---
 
-| Data | Current Location | Size | Refresh Frequency | Cache Strategy |
-|------|-----------------|------|-------------------|----------------|
-| All heroes (~130) | SQLite Hero table, queried per-request | ~50KB as dicts | Every 6h (refresh pipeline) | Module-level dict[int, Hero], keyed by hero_id |
-| All items (~250) | SQLite Item table, queried per-request | ~100KB as dicts | Every 6h (refresh pipeline) | Module-level dict[int, Item], keyed by item_id |
-| Hero name lookups | RulesEngine._hero_name_to_id etc. | ~10KB | Already cached at startup | Already done -- model for new caches |
-| Matchup data | SQLite MatchupData table | ~50KB per hero pair | On-demand, stale-while-revalidate | KEEP IN SQLITE -- per-pair, large total, on-demand fetching is correct |
-| Item popularity | SQLite HeroItemPopularity table | ~5KB per hero | On-demand, stale-while-revalidate | KEEP IN SQLITE -- per-hero, fetched on-demand |
+### Category 4: Win Condition Framing
 
-### Hot Path DB Queries Eliminated
+#### Table Stakes
 
-Per recommendation request, the following DB queries are replaced with dict lookups:
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Team composition classification | Classify the full 10-hero draft into macro strategy archetypes: Teamfight, Split-push, Pick-off/Gank, Deathball/Push, Late-game Scale. Players think in these terms. "We have a teamfight draft, so build aura items" vs "we have a split-push draft, so build mobility and tower damage" | MEDIUM | All 10 hero IDs (already in RecommendRequest: `hero_id` + `allies` + `lane_opponents` as proxy for enemy team), hero roles data from OpenDota constants (already cached), classification logic | **Approach**: Use hero role tags from OpenDota (e.g., "Pusher", "Initiator", "Carry", "Support", "Nuker", "Disabler") to classify team composition. A team with 3+ "Pusher" tagged heroes is deathball. A team with strong "Carry" + "Initiator" is teamfight. This can be deterministic rules or part of the system prompt |
+| Win condition statement in overall_strategy | Currently `overall_strategy` describes the itemization game plan. Adding a win condition frame ("Your team wins by grouping at 20 min and forcing fights before their carry farms -- build team items") gives all item recommendations a strategic anchor | LOW | System prompt enhancement, team composition data passed to context builder | The `overall_strategy` field already exists in `LLMRecommendation`. This is a system prompt modification to instruct Claude to frame the strategy around how the team wins, not just what items to buy |
+| Win condition aligned item priorities | If the win condition is "end before 30 min," late game luxury items should be deprioritized. If the win condition is "protect the carry until 40 min," survival and utility items are priority | LOW | Win condition classification feeding into system prompt context, potentially adjusting the `priority` field of recommendations | Claude can already reason about this -- it just needs the explicit win condition context. "Your team's win condition is early aggression. Prioritize items that peak at 20-25 min over 40 min items" |
 
-1. `context_builder._get_hero()` -- called 1 + N times (player hero + each opponent/ally) -- SELECT Hero WHERE id = ?
-2. `context_builder._build_popularity_section()` -- SELECT all Items (full table scan to build name map)
-3. `context_builder._extract_top_items()` -- SELECT all Items (another full scan for ally build names)
-4. `matchup_service.get_relevant_items()` -- SELECT Items WHERE not recipe, not neutral, cost > 0
-5. `matchup_service.get_neutral_items_by_tier()` -- SELECT Items WHERE is_neutral AND tier IS NOT NULL
-6. `recommender._validate_item_ids()` -- SELECT Item.id, Item.cost, Item.internal_name (full scan)
-7. `heroes.list_heroes()` -- SELECT all Heroes ordered by name (frontend hero picker)
-8. `items.list_items()` -- SELECT all Items ordered by name (frontend API)
+#### Differentiators
 
-Queries 1-6 fire on every `/api/recommend` call. With auto-refresh during live games (every 2 min), that is 6-8 SQLite queries that could be pure Python dict lookups.
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Dynamic win condition re-assessment | Win condition shifts during the game. A "teamfight at 25 min" draft that loses all lanes becomes a "defend and stall to 40 min" draft. Re-evaluate should adjust the win condition based on game state (lane results, tower count, gold advantage) | HIGH | GSI data (tower counts already in `gsiStore.liveState`), game clock, lane results, win condition classification that accepts game state inputs | Requires the win condition engine to be stateful: initial classification based on draft, then updated based on game events. This is sophisticated coaching intelligence -- recognizing that the game plan has changed |
+| Enemy win condition assessment | "Their team wants to end before 35 min. Buy items that delay the game: wave clear, defensive auras, buyback gold" | MEDIUM | Enemy team composition (lane_opponents + other enemies from draft), same classification logic applied to enemy team | Requires full enemy team (currently the app tracks lane_opponents, not all 5 enemies). The 10-hero draft picker already captures all enemies, but the recommendation request only sends `lane_opponents`. Would need to expand the request or use the draft store |
 
-### Implementation Pattern
+#### Anti-Features
 
-```python
-# data/cache.py -- new module
-class DataCache:
-    """In-memory cache for hero and item data. Loaded at startup, refreshed on pipeline cycle."""
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Win probability prediction | "Your team has 62% chance to win" | Requires match prediction model trained on millions of games. Massive scope creep. Also psychologically harmful -- players tilt when shown low win probability | Frame win conditions as "how to win" not "probability of winning." Focus on actionable strategy, not prediction |
+| Teammate coordination suggestions | "Tell your offlaner to buy Pipe" | Prismlab is a single-player tool. Cannot communicate with teammates. Suggesting items for others creates frustration when teammates don't comply | Frame ally awareness as "your offlaner typically builds Pipe -- if they don't, consider it yourself" (already partially done via ally item context) |
 
-    def __init__(self):
-        self._heroes: dict[int, Hero] = {}
-        self._items: dict[int, Item] = {}
-        self._items_by_name: dict[str, Item] = {}
-        self._loaded = False
-
-    async def load(self, session: AsyncSession):
-        """Load all heroes and items from DB into memory."""
-        ...
-
-    def get_hero(self, hero_id: int) -> Hero | None: ...
-    def get_item(self, item_id: int) -> Item | None: ...
-    def all_heroes(self) -> list[Hero]: ...
-    def all_items(self) -> list[Item]: ...
-    def relevant_items(self, role: int) -> list[dict]: ...
-    def neutral_items_by_tier(self) -> dict[int, list[dict]]: ...
-
-# Singleton
-data_cache = DataCache()
-```
-
-Load in lifespan after seed_if_empty(). Reload after refresh_all_data(). Pass to ContextBuilder, Recommender, routes via dependency injection or direct import.
-
-## Store Subscription Consolidation
-
-### Current Problem
-
-```
-App.tsx
-  useGsiSync(heroes)      -> subscribes to gsiStore (1 subscription)
-  useAutoRefresh()         -> subscribes to gsiStore (1 subscription)
-                           -> subscribes to recommendationStore (1 subscription)
-                           -> runs 1Hz setInterval
-```
-
-Both hooks subscribe to gsiStore independently. On every GSI tick (1Hz):
-- useGsiSync fires: checks hero detection, checks item matching
-- useAutoRefresh fires: checks game events, checks lane detection, checks cooldown
-
-Both read from gameStore and recommendationStore inside their callbacks, creating implicit cross-store dependencies.
-
-### Consolidated Design
-
-```
-App.tsx
-  useGsiOrchestrator(heroes) -> single gsiStore subscription (1 subscription)
-                              -> single recommendationStore subscription (1 subscription)
-                              -> single 1Hz setInterval
-```
-
-Single subscription callback handles:
-1. Hero auto-detection (from useGsiSync)
-2. Item auto-marking (from useGsiSync)
-3. Playstyle auto-suggestion (NEW -- from v3.0 feature)
-4. Lane result auto-detection (from useAutoRefresh)
-5. Event trigger detection (from useAutoRefresh)
-6. Cooldown management (from useAutoRefresh)
-
-Benefits:
-- One subscription instead of two -- halves the callback overhead per tick
-- Single data flow path -- easier to debug
-- Natural place to add playstyle auto-suggest without a third subscription
-- The recommendationStore subscription (for manual recommend cooldown tracking) stays separate since it triggers on a different store
-
-### Playstyle Auto-Suggest Integration
-
-When GSI detects a hero and infers a role, the consolidated hook also sets playstyle:
-
-```typescript
-// Inside the hero detection block:
-if (role !== null) {
-  useGameStore.getState().setRole(role);
-  // Auto-suggest first playstyle for this role
-  const defaultPlaystyle = PLAYSTYLE_OPTIONS[role]?.[0];
-  if (defaultPlaystyle) {
-    useGameStore.getState().setPlaystyle(defaultPlaystyle);
-  }
-}
-```
-
-This is 3 lines of code but eliminates a manual step during live games.
-
-## Screenshot KDA Feed-Through
-
-### Current State
-
-The screenshot parser extracts KDA and level per enemy hero (ParsedHero.kills/deaths/assists/level). The confirmation UI displays these values. When the user clicks "Apply," the items are written to gameStore.enemyItemsSpotted. But KDA/level data is discarded.
-
-### Required Changes
-
-1. **RecommendRequest schema** -- add optional `enemy_hero_stats` field:
-   ```python
-   enemy_hero_stats: list[dict] | None = None
-   # e.g. [{"hero_name": "Anti-Mage", "kills": 8, "deaths": 1, "assists": 3, "level": 16}]
-   ```
-
-2. **gameStore** -- add `enemyHeroStats` field and `setEnemyHeroStats` action
-
-3. **ScreenshotParser "Apply" action** -- write parsed hero stats to gameStore.enemyHeroStats
-
-4. **context_builder** -- build "Enemy Status" section when enemy_hero_stats is present:
-   ```
-   ## Enemy Status (from scoreboard)
-   - Anti-Mage: 8/1/3, Level 16 (snowballing, high farm priority)
-   - Lion: 2/5/7, Level 11 (behind, likely limited to support items)
-   ```
-
-5. **useRecommendation + useAutoRefresh** -- include enemyHeroStats in request payload
-
-### Impact on Recommendations
-
-This gives Claude significantly more context. Current prompt only knows "enemy has BKB." With KDA data, Claude can reason about:
-- Snowballing enemies (high K/low D) -> prioritize defensive items
-- Feeding enemies (low K/high D) -> can afford greedier build
-- Level disparity -> timing window analysis
-- Enemy team's economic state -> predict what items they can afford
+---
 
 ## Feature Dependencies
 
 ```
-@theme Token Swap (globals.css)
-    |
-    v
-Component Audit Pass (all ~30 components)
-    |
-    +-- Parchment Texture (CSS-only, on body)
-    +-- Blood-Glass Overlays (CSS-only, on modals)
-    +-- Gold-Leaf Accent Strips (CSS-only, on cards)
-    +-- Ambient Glow Shadows (CSS-only, on floats)
-    +-- 0px Corner Enforcement (remove all rounded-*)
-    +-- Newsreader/Manrope Font Integration (npm + CSS)
+[Timing Benchmarks: Data Pipeline]
+    |-- requires --> [OpenDota itemTimings API integration]
+    |-- requires --> [ItemTimingBenchmark DB model + cache]
+    |-- enables --> [Timing display in PhaseCard/ItemCard]
+    |-- enables --> [Timing context in system prompt]
+    |-- enables --> [Live timing comparison via GSI]
 
-In-Memory Data Cache (data/cache.py)
-    |
-    +-- Replace context_builder DB queries
-    +-- Replace recommender._validate_item_ids DB query
-    +-- Replace heroes.list_heroes DB query
-    +-- Replace items.list_items DB query
-    +-- Replace matchup_service helper DB queries
-    +-- Wire into lifespan startup + refresh pipeline
+[Counter-Item Intelligence]
+    |-- requires --> [Ability data fetch + cache (OpenDota constants/abilities)]
+    |-- requires --> [Hero-ability mapping (OpenDota constants/hero_abilities)]
+    |-- enables --> [Ability-driven rules (replaces hero ID lists)]
+    |-- enables --> [Ability-naming in counter reasoning]
+    |-- enhances --> [Existing 18 rules with deeper context]
 
-Store Consolidation (useGsiOrchestrator)
-    |
-    +-- Merge useGsiSync logic
-    +-- Merge useAutoRefresh logic
-    +-- Add playstyle auto-suggest (NEW)
-    |
-    +-- TriggerEvent type dedup (prerequisite cleanup)
+[Build Path Intelligence]
+    |-- requires --> [Item.components data (ALREADY IN DB)]
+    |-- requires --> [Component cost resolution (ALREADY IN CACHE)]
+    |-- enables --> [Component ordering in recommendations]
+    |-- enables --> [Component gold tracking with GSI]
+    |-- enhances --> [Timing Benchmarks: component-aware timing]
 
-Screenshot KDA Feed-Through
-    |
-    +-- RecommendRequest schema update (backend)
-    +-- gameStore field addition (frontend)
-    +-- ScreenshotParser Apply action update (frontend)
-    +-- context_builder Enemy Status section (backend)
-    +-- useRecommendation payload update (frontend)
+[Win Condition Framing]
+    |-- requires --> [Hero role tag data (ALREADY CACHED)]
+    |-- requires --> [Team composition classification logic]
+    |-- enables --> [Win condition in overall_strategy]
+    |-- enables --> [Win condition aligned item priorities]
+    |-- enhances --> [Timing Benchmarks: win condition adjusts timing urgency]
+    |-- enhances --> [Counter-Item Intelligence: win condition adjusts counter priority]
+
+[Build Path Intelligence] -- enhances --> [Timing Benchmarks]
+    (component ordering considers timing windows)
+
+[Win Condition Framing] -- enhances --> [Counter-Item Intelligence]
+    (win condition shifts which counters matter most)
 ```
 
-Note: The design retheme and in-memory cache are fully independent workstreams. They can be developed in parallel. Store consolidation depends on TriggerEvent dedup (trivial prerequisite). Screenshot KDA requires both frontend and backend changes but has no dependency on other v3.0 features.
+### Dependency Notes
 
-## MVP Recommendation
+- **Timing Benchmarks require OpenDota itemTimings integration**: New API endpoint (`/api/scenarios/itemTimings`) not currently used. Needs fetch, cache, and data pipeline additions. Separate from existing `itemPopularity` pipeline.
+- **Counter-Item Intelligence requires ability data**: Two new constants endpoints to fetch and cache. This is a one-time data fetch (refresh daily with items/heroes). The `hero_abilities` mapping links hero internal names to ability internal names; the `abilities` constants provide the mechanical data.
+- **Build Path Intelligence already has its data**: `Item.components` is already seeded from OpenDota, costs are in the cache. This is primarily schema/presentation work, not data pipeline work. Fastest to ship.
+- **Win Condition Framing primarily uses existing data**: Hero roles are already cached. The classification logic is new but deterministic. The main work is system prompt engineering and optional new rules.
+- **Win Condition enhances everything else**: A "teamfight at 25 min" win condition makes timing benchmarks more urgent, shifts counter-item priorities toward team-fight-relevant counters, and changes build path ordering toward earlier completed items.
 
-### Must-ship (defines the milestone):
-1. **@theme token swap + component audit** -- This IS v3.0. Ship the design system or the milestone has no identity.
-2. **In-memory data cache** -- Eliminates 6-8 unnecessary DB queries per recommendation. Measurable perf win during live games.
-3. **Store consolidation** -- Architectural cleanup that makes the playstyle auto-suggest possible and halves subscription overhead.
+---
 
-### Should-ship (high value, low cost):
-4. **TriggerEvent dedup** -- One-line fix. No reason to defer.
-5. **refresh_lookups session safety** -- Two-line fix. No reason to defer.
-6. **Playstyle auto-suggest** -- Three lines inside the consolidated hook. Huge UX win during live games.
-7. **Parchment texture + blood-glass overlays** -- CSS-only. Elevates the design from "dark theme" to "editorial artifact."
+## MVP Definition
 
-### Can-defer (higher complexity, lower urgency):
-8. **Screenshot KDA feed-through** -- Useful but requires schema changes across the stack. Can ship in a point release.
+### Phase 1: Data Foundation + Quick Wins
 
-## Complexity Estimates
+Ship the data pipeline and the features that already have all data available.
 
-| Feature | Frontend LOC | Backend LOC | Test LOC | Risk |
-|---------|-------------|-------------|----------|------|
-| @theme token swap | ~30 (globals.css) | 0 | 0 | LOW -- single file change |
-| Component audit pass | ~400 (class changes across 30 files) | 0 | ~50 (snapshot updates) | MEDIUM -- tedious but mechanical |
-| Font integration | ~20 (CSS + npm) | 0 | 0 | LOW |
-| Parchment texture | ~10 (CSS) | 0 | 0 | LOW |
-| Blood-glass overlays | ~30 (CSS on 4 components) | 0 | 0 | LOW |
-| In-memory data cache | 0 | ~150 (new module + wiring) | ~80 | MEDIUM -- must verify cache invalidation works |
-| Store consolidation | ~200 (merge 2 hooks) | 0 | ~100 (migrate existing tests) | MEDIUM -- complex logic merge |
-| TriggerEvent dedup | ~5 | 0 | 0 | TRIVIAL |
-| Session safety fix | 0 | ~10 | ~20 | LOW |
-| Playstyle auto-suggest | ~10 | 0 | ~30 | LOW |
-| Screenshot KDA feed | ~50 | ~60 | ~80 | MEDIUM -- cross-stack schema change |
+- [ ] **Build path intelligence (component ordering)** -- data already exists, schema + presentation work only
+- [ ] **Ability data fetch and cache** -- fetch `constants/abilities` and `constants/hero_abilities`, store in cache
+- [ ] **Item timing data fetch and cache** -- fetch `/api/scenarios/itemTimings`, store in new DB model
+- [ ] **Win condition classification logic** -- deterministic rules on hero role tags
 
-**Total estimated:** ~750 frontend LOC, ~220 backend LOC, ~360 test LOC.
+### Phase 2: Core Intelligence Integration
+
+Wire the new data into the recommendation engine.
+
+- [ ] **Timing benchmarks in system prompt** -- inject timing windows into Claude context
+- [ ] **Timing display on ItemCard/PhaseCard** -- frontend urgency badges
+- [ ] **Expanded counter-item rules (ability-driven)** -- 5-8 new rules using ability behavior data
+- [ ] **Counter reasoning names specific abilities** -- reasoning templates reference ability dname
+- [ ] **Win condition in overall_strategy** -- system prompt instructs Claude to frame around win condition
+
+### Phase 3: Live Game Intelligence
+
+Features that depend on GSI integration and game-state awareness.
+
+- [ ] **Live timing comparison** -- compare current gold/clock against timing benchmarks
+- [ ] **Component gold tracking** -- highlight affordable components at current gold
+- [ ] **Counter-item priority escalation** -- enemy KDA data shifts counter priorities
+
+### Future Consideration (v5+)
+
+- [ ] **Dynamic win condition re-assessment** -- defer: requires stateful game-phase tracking beyond current event triggers
+- [ ] **Timing-aware re-evaluation weighting** -- defer: complex interaction between timing misses and item pivots
+- [ ] **Full ability-type-driven dynamic rules** -- defer: full refactor of rules engine from hero-ID-based to ability-property-based. Ship incremental ability rules first, refactor later
+- [ ] **Enemy win condition assessment** -- defer: requires passing all 5 enemy hero IDs (currently only lane opponents)
+
+---
+
+## Feature Prioritization Matrix
+
+| Feature | User Value | Implementation Cost | Priority | Notes |
+|---------|------------|---------------------|----------|-------|
+| Build path component ordering | HIGH | MEDIUM | P1 | Data exists, high coaching value, no API dependency |
+| Timing benchmark data pipeline | HIGH | MEDIUM | P1 | Enables 3+ downstream features |
+| Ability data fetch + cache | HIGH | MEDIUM | P1 | Enables counter-item depth |
+| Win condition classification | HIGH | LOW | P1 | Uses existing cached data |
+| Timing display on item cards | HIGH | LOW | P1 | Frontend-only after data pipeline |
+| Timing context in system prompt | HIGH | LOW | P1 | 20-line context_builder addition |
+| Expanded counter-item rules (ability-driven) | HIGH | MEDIUM | P1 | Core coaching value |
+| Counter reasoning names abilities | MEDIUM | LOW | P1 | Polish, piggybacking on counter rules |
+| Win condition in overall_strategy | HIGH | LOW | P1 | System prompt enhancement |
+| Component-level reasoning | MEDIUM | MEDIUM | P2 | Requires careful prompt engineering |
+| Live timing comparison via GSI | HIGH | MEDIUM | P2 | Depends on timing data pipeline |
+| Component gold tracking (GSI) | MEDIUM | MEDIUM | P2 | Depends on build path work |
+| Counter-item priority escalation | MEDIUM | MEDIUM | P2 | Uses existing enemy_context |
+| Urgency signal badges | MEDIUM | LOW | P2 | Frontend polish after timing data |
+| Game-state-aware component priority | MEDIUM | HIGH | P3 | Complex conditional logic |
+| Dynamic win condition re-assessment | HIGH | HIGH | P3 | Stateful game tracking |
+| Enemy win condition assessment | MEDIUM | MEDIUM | P3 | Needs full enemy team data |
+
+**Priority key:**
+- P1: Ships in v4.0 core phases
+- P2: Ships in v4.0 polish phases if time permits
+- P3: Future consideration (v4.x or v5.0)
+
+---
+
+## Competitor Feature Analysis
+
+| Feature | DotaCoach.gg | STRATZ | Dotabuff | Dota2ProTracker | Prismlab v4.0 Approach |
+|---------|--------------|--------|----------|-----------------|----------------------|
+| Item timing data | Not shown | Purchase Pattern with win rate gradient, detailed view with time sliders | End-of-game item win rates only (skewed) | Pro match item builds with implicit timing | Population timing benchmarks from OpenDota, surfaced per-item with urgency signals. Win rate gradient analysis for timing sensitivity |
+| Counter items | Per-enemy hero counter items in sidebar overlay | Hero page shows common counters | Hero matchup page with items | Not explicitly shown | Ability-specific counter items with named-ability reasoning. Driven by ability mechanics, not just hero ID lists |
+| Build path ordering | Static hero builds with component order | Not explicitly shown | Guide builds have ordering | Pro builds show purchase order | Dynamic component ordering based on game state. Components prioritized by lane result and gold availability |
+| Win condition framing | Not shown (hero-specific coaching only) | Not shown | Not shown | Not shown | **Unique differentiator**: Team composition classified into macro strategy, all item recommendations framed around how the team wins. No competitor does this |
+| Ability reasoning depth | Counter tips mention abilities by name | Hero ability pages separate from items | Guides reference abilities | Not shown | Counter-item rules driven by ability behavior properties (channeled, passive, escape). Reasoning templates name the specific ability and explain the interaction |
+| Live game integration | Overwolf overlay with real-time suggestions | No live integration | No live integration | No live integration | GSI-powered timing comparison, component affordability tracking, priority escalation from live enemy performance |
+
+**Key competitive insight**: No existing tool combines timing benchmarks + ability-driven counter intelligence + win condition framing into a unified recommendation. DotaCoach comes closest with its counter items and coaching, but it's an Overwolf overlay, not a reasoning engine. STRATZ has the best timing data but presents it as analytics, not coaching. Prismlab's unique value is the hybrid engine that synthesizes all this data into contextual, explained recommendations.
+
+---
+
+## Existing System Integration Points
+
+### Backend
+
+| Component | What Changes | Impact |
+|-----------|-------------|--------|
+| `opendota_client.py` | Add `fetch_item_timings(hero_id)`, `fetch_abilities()`, `fetch_hero_abilities()` methods | LOW -- follows existing pattern of `fetch_*` methods |
+| `data/models.py` | Add `ItemTimingBenchmark` model, optionally `HeroAbility` model | LOW -- new tables, no schema migration on existing tables |
+| `data/cache.py` | Add ability data to `DataCache`, add timing data access methods | MEDIUM -- new dataclass (`AbilityCached`), new index structures |
+| `data/seed.py` | Add ability and hero_abilities seeding | LOW -- follows existing seed pattern |
+| `data/refresh.py` | Add timing data refresh to daily pipeline | LOW -- follows existing refresh pattern |
+| `engine/rules.py` | New counter-item rules using ability data, optional refactor from hero-ID lists | MEDIUM -- 5-8 new rule methods, or refactor existing rules to use ability queries |
+| `engine/schemas.py` | Add `build_path` field to `ItemRecommendation`, add timing fields to `RecommendPhase`, add `win_condition` to `LLMRecommendation` | MEDIUM -- schema changes require frontend type updates |
+| `engine/context_builder.py` | Add timing benchmark section, ability context section, win condition section to user message | MEDIUM -- 3 new section builders following existing patterns |
+| `engine/prompts/system_prompt.py` | Add timing benchmark guidance, ability-specific counter rules, win condition framing instructions | LOW -- text additions to existing prompt |
+| `engine/recommender.py` | Pass timing and win condition data through merge pipeline | LOW -- data flows through existing merge/validate pipeline |
+
+### Frontend
+
+| Component | What Changes | Impact |
+|-----------|-------------|--------|
+| `types/recommendation.ts` | Add `build_path`, `timing_benchmark`, `win_condition` fields | LOW -- type additions |
+| `components/timeline/ItemCard.tsx` | Add urgency badge, timing indicator, component ordering display | MEDIUM -- new visual elements |
+| `components/timeline/PhaseCard.tsx` | Add timing benchmark display per phase | LOW -- small additions to existing layout |
+| `components/timeline/ItemTimeline.tsx` | Add win condition banner at top of timeline | LOW -- new section above phases |
+| `stores/recommendationStore.ts` | Store timing comparison state, win condition | LOW -- small state additions |
+
+---
 
 ## Sources
 
-### Design System Migration
-- [Tailwind CSS v4 Migration Best Practices (2026)](https://www.digitalapplied.com/blog/tailwind-css-v4-2026-migration-best-practices)
-- [Tailwind CSS v4 Theme Variables (Official Docs)](https://tailwindcss.com/docs/theme)
-- [Design Tokens in Tailwind v4 + CSS Variables (2026)](https://www.maviklabs.com/blog/design-tokens-tailwind-v4-2026)
-- [Frontend Migration Guide](https://frontendmastery.com/posts/frontend-migration-guide/)
-- [Tailwind CSS v4.0 Announcement](https://tailwindcss.com/blog/tailwindcss-v4)
+- [OpenDota API Documentation](https://docs.opendota.com/) -- confirmed `/api/scenarios/itemTimings` endpoint, `/api/constants/abilities`, `/api/constants/hero_abilities`
+- [OpenDota itemTimings endpoint](https://www.opendota.com/scenarios/itemTimings) -- live data verified via API call, returns `{hero_id, item, time, games, wins}`
+- [OpenDota dotaconstants repository](https://github.com/odota/dotaconstants) -- `build/hero_abilities.json` and `build/abilities.json` for ability data
+- [STRATZ Item Timings Analysis](https://medium.com/stratz/dota-2-item-timings-22d2dbd76bc4) -- defines timing importance via win rate gradient analysis, central 69% purchase window methodology
+- [STRATZ API](https://stratz.com/api) -- alternative data source for timing data (GraphQL), 2000 req/hour free tier
+- [DotaCoach.gg Features](https://dotacoach.gg/en/app/features) -- competitor analysis: counter items per enemy, phase-based item suggestions, Overwolf overlay
+- [Dota2ProTracker](https://dota2protracker.com/) -- pro match build orders from 7000+ MMR matches
+- [DotA-Item-Timings Project](https://github.com/nander25/DotA-Item-Timings) -- prior art using OpenDota API for item timing analysis
+- [Go OpenDota Client](https://pkg.go.dev/github.com/jasonodonnell/go-opendota) -- confirmed ScenariosService.ItemTimings method signature and response structure
+- [Dota 2 Team Composition Strategy](https://steamcommunity.com/sharedfiles/filedetails/?id=2395798524) -- team composition classification concepts: teamfight, split push, ganking, deathball
+- [Dota 2 Abilities by Type (Wiki)](https://dota2.fandom.com/wiki/Abilities/Abilities_by_type) -- canonical reference for ability classifications
 
-### Font Loading
-- [Newsreader on Google Fonts](https://fonts.google.com/specimen/Newsreader)
-- [Manrope on Google Fonts](https://fonts.google.com/specimen/Manrope)
-- [@fontsource/newsreader on npm](https://www.npmjs.com/package/@fontsource/newsreader)
-
-### Caching Patterns
-- [FastAPI Application Events & Startup Logic](https://www.fastapiinteractive.com/fastapi-advanced-patterns/09-events-and-signals/theory)
-- [FastAPI Response Caching Patterns](https://www.fastapiinteractive.com/fastapi-advanced-patterns/07-caching-patterns)
-
-### Zustand Store Patterns
-- [Working with Zustand (TkDodo)](https://tkdodo.eu/blog/working-with-zustand)
-- [Zustand Architecture Patterns at Scale](https://brainhub.eu/library/zustand-architecture-patterns-at-scale)
-- [Cross-Store Reactivity Discussion (#1586)](https://github.com/pmndrs/zustand/discussions/1586)
-- [Multiple Stores vs Single Store Discussion (#2496)](https://github.com/pmndrs/zustand/discussions/2496)
+---
+*Feature research for: v4.0 Coaching Intelligence*
+*Researched: 2026-03-27*
