@@ -3,8 +3,7 @@ import Header from "./components/layout/Header";
 import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
-import { useGsiSync } from "./hooks/useGsiSync";
-import { useAutoRefresh } from "./hooks/useAutoRefresh";
+import { useGameIntelligence } from "./hooks/useGameIntelligence";
 import { useHeroes } from "./hooks/useHeroes";
 import { useScreenshotPaste } from "./hooks/useScreenshotPaste";
 import { useGsiStore, type GsiLiveState } from "./stores/gsiStore";
@@ -15,8 +14,7 @@ import ScreenshotParser from "./components/screenshot/ScreenshotParser";
 
 function App() {
   const { heroes } = useHeroes();
-  useGsiSync(heroes);
-  useAutoRefresh(); // Phase 12: auto-refresh on game events
+  useGameIntelligence(heroes);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
 

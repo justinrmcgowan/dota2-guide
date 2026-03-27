@@ -3,6 +3,7 @@ import { renderHook, act } from "@testing-library/react";
 import { useGsiStore } from "../stores/gsiStore";
 import { useGameStore } from "../stores/gameStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
+import { useRefreshStore } from "../stores/refreshStore";
 import type { Hero } from "../types/hero";
 import type { RecommendResponse } from "../types/recommendation";
 import type { GsiLiveState } from "../stores/gsiStore";
@@ -12,8 +13,23 @@ vi.mock("../utils/itemMatching", () => ({
   findPurchasedKeys: vi.fn(() => new Set<string>()),
 }));
 
+vi.mock("../api/client", () => ({
+  api: {
+    recommend: vi.fn(() =>
+      Promise.resolve({
+        phases: [],
+        overall_strategy: null,
+        fallback: false,
+        model: null,
+        latency_ms: null,
+        neutral_items: [],
+      }),
+    ),
+  },
+}));
+
 import { findPurchasedKeys } from "../utils/itemMatching";
-import { useGsiSync } from "./useGsiSync";
+import { useGameIntelligence } from "./useGameIntelligence";
 
 const mockFindPurchasedKeys = findPurchasedKeys as ReturnType<typeof vi.fn>;
 
@@ -64,6 +80,9 @@ function makeLiveState(overrides: Partial<GsiLiveState> = {}): GsiLiveState {
     team_side: "radiant",
     is_alive: true,
     timestamp: Date.now(),
+    roshan_state: "alive",
+    radiant_tower_count: 11,
+    dire_tower_count: 11,
     ...overrides,
   };
 }
@@ -103,28 +122,32 @@ function makeRecommendations(): RecommendResponse {
   };
 }
 
-describe("useGsiSync", () => {
+describe("useGameIntelligence", () => {
   beforeEach(() => {
-    // Reset all stores to clean defaults (don't pass true -- keep action methods)
+    // Reset all stores to clean defaults
     useGsiStore.setState({
       wsStatus: "disconnected",
       gsiStatus: "idle",
       lastUpdate: null,
       liveState: null,
     });
-    useGameStore.setState(
-      {
-        selectedHero: null,
-        role: null,
-        playstyle: null,
-      },
-    );
-    useRecommendationStore.setState(
-      {
-        data: null,
-        purchasedItems: new Set<string>(),
-      },
-    );
+    useGameStore.setState({
+      selectedHero: null,
+      role: null,
+      playstyle: null,
+    });
+    useRecommendationStore.setState({
+      data: null,
+      isLoading: false,
+      purchasedItems: new Set<string>(),
+    });
+    useRefreshStore.setState({
+      cooldownEnd: null,
+      queuedEvent: null,
+      secondsRemaining: 0,
+      lastToast: null,
+      laneAutoDetected: false,
+    });
     mockFindPurchasedKeys.mockClear();
     mockFindPurchasedKeys.mockReturnValue(new Set<string>());
   });
@@ -133,10 +156,12 @@ describe("useGsiSync", () => {
     vi.restoreAllMocks();
   });
 
+  // --- Adapted tests from useGsiSync ---
+
   it("auto-detects hero when gsiStore.liveState.hero_id matches a hero in the list", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     act(() => {
       useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
@@ -149,7 +174,7 @@ describe("useGsiSync", () => {
   it("does NOT set selectedHero when hero_id is not found in heroes list", () => {
     const hero = makeHero({ id: 99 });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     act(() => {
       useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 999 }));
@@ -162,7 +187,7 @@ describe("useGsiSync", () => {
   it("sets role to 1 when hero.roles includes 'Carry'", () => {
     const hero = makeHero({ id: 1, roles: ["Carry", "Escape"] });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     act(() => {
       useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
@@ -175,7 +200,7 @@ describe("useGsiSync", () => {
   it("suggests role 5 for a Support hero without Disabler", () => {
     const hero = makeHero({ id: 50, roles: ["Support"] });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     act(() => {
       useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 50 }));
@@ -188,7 +213,7 @@ describe("useGsiSync", () => {
   it("does NOT update gameStore when gsiStatus is not 'connected'", () => {
     const hero = makeHero({ id: 1 });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     // Set liveState directly without going through updateLiveState
     // (which would set gsiStatus to "connected")
@@ -215,7 +240,7 @@ describe("useGsiSync", () => {
       },
     });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     // First update
     act(() => {
@@ -242,7 +267,7 @@ describe("useGsiSync", () => {
 
     mockFindPurchasedKeys.mockReturnValue(new Set(["laning-36"]));
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     act(() => {
       useGsiStore.getState().updateLiveState(
@@ -258,7 +283,9 @@ describe("useGsiSync", () => {
       [],
       recs,
     );
-    expect(useRecommendationStore.getState().purchasedItems.has("laning-36")).toBe(true);
+    expect(
+      useRecommendationStore.getState().purchasedItems.has("laning-36"),
+    ).toBe(true);
     unmount();
   });
 
@@ -283,7 +310,7 @@ describe("useGsiSync", () => {
       },
     });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
 
     act(() => {
       useGsiStore.getState().updateLiveState(
@@ -298,10 +325,10 @@ describe("useGsiSync", () => {
     unmount();
   });
 
-  it("cleans up subscription on unmount", () => {
+  it("cleans up subscriptions on unmount", () => {
     const hero = makeHero({ id: 1, roles: ["Carry"] });
 
-    const { unmount } = renderHook(() => useGsiSync([hero]));
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
     unmount();
 
     // After unmount, store updates should not trigger selectHero
@@ -310,5 +337,65 @@ describe("useGsiSync", () => {
     });
 
     expect(useGameStore.getState().selectedHero).toBeNull();
+  });
+
+  // --- NEW tests for playstyle auto-suggest ---
+
+  it("auto-suggests playstyle from HERO_PLAYSTYLE_MAP when hero and role detected", () => {
+    // Anti-Mage (id=1) + Carry (role=1) -> HERO_PLAYSTYLE_MAP["1-1"] = "Farm-first"
+    const hero = makeHero({ id: 1, roles: ["Carry"] });
+
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
+
+    act(() => {
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
+    });
+
+    expect(useGameStore.getState().playstyle).toBe("Farm-first");
+    unmount();
+  });
+
+  it("falls back to PLAYSTYLE_OPTIONS[role][0] when hero not in HERO_PLAYSTYLE_MAP", () => {
+    // Hero id=999 not in HERO_PLAYSTYLE_MAP; roles=["Carry"] -> role=1
+    // PLAYSTYLE_OPTIONS[1][0] = "Farm-first"
+    const hero = makeHero({ id: 999, roles: ["Carry"] });
+
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
+
+    act(() => {
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 999 }));
+    });
+
+    expect(useGameStore.getState().playstyle).toBe("Farm-first");
+    unmount();
+  });
+
+  it("does NOT re-set playstyle on repeated GSI updates with same hero_id", () => {
+    const hero = makeHero({ id: 1, roles: ["Carry"] });
+
+    const { unmount } = renderHook(() => useGameIntelligence([hero]));
+
+    // First update: hero detected, playstyle auto-suggested
+    act(() => {
+      useGsiStore.getState().updateLiveState(makeLiveState({ hero_id: 1 }));
+    });
+    expect(useGameStore.getState().playstyle).toBe("Farm-first");
+
+    // User manually overrides playstyle
+    act(() => {
+      useGameStore.getState().setPlaystyle("Aggressive");
+    });
+    expect(useGameStore.getState().playstyle).toBe("Aggressive");
+
+    // Another GSI update with same hero_id but different gold
+    act(() => {
+      useGsiStore
+        .getState()
+        .updateLiveState(makeLiveState({ hero_id: 1, gold: 700 }));
+    });
+
+    // Playstyle should still be "Aggressive" -- not reset to auto-suggest
+    expect(useGameStore.getState().playstyle).toBe("Aggressive");
+    unmount();
   });
 });
