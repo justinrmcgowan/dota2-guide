@@ -1,12 +1,9 @@
-from datetime import datetime
+from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from data.database import get_db
-from data.models import Item
+from data.cache import data_cache
 
 router = APIRouter()
 
@@ -33,17 +30,15 @@ class ItemResponse(BaseModel):
 
 
 @router.get("/items", response_model=list[ItemResponse])
-async def list_items(db: AsyncSession = Depends(get_db)):
-    """Return all items ordered by name."""
-    result = await db.execute(select(Item).order_by(Item.name))
-    return result.scalars().all()
+async def list_items():
+    """Return all items ordered by name (from cache)."""
+    return [asdict(i) for i in data_cache.get_all_items()]
 
 
 @router.get("/items/{item_id}", response_model=ItemResponse)
-async def get_item(item_id: int, db: AsyncSession = Depends(get_db)):
-    """Return a single item by ID."""
-    result = await db.execute(select(Item).where(Item.id == item_id))
-    item = result.scalar_one_or_none()
+async def get_item(item_id: int):
+    """Return a single item by ID (from cache)."""
+    item = data_cache.get_item(item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
-    return item
+    return asdict(item)

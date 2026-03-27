@@ -3,13 +3,14 @@
 Coordinates the rules engine (deterministic, instant) and LLM engine (Claude API,
 structured output) into a unified recommendation pipeline with merge, deduplication,
 fallback, and item ID validation. Includes response caching for cost efficiency.
+
+Item validation uses DataCache -- zero DB queries for item lookups on the hot path.
 """
 
 import hashlib
 import time
 import logging
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from engine.schemas import (
@@ -23,7 +24,7 @@ from engine.schemas import (
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine, FallbackReason
 from engine.context_builder import ContextBuilder
-from data.models import Item
+from data.cache import DataCache
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,10 @@ class ResponseCache:
         for k in expired:
             del self._cache[k]
 
+    def clear(self) -> None:
+        """Clear all cached responses (e.g., after data pipeline refresh)."""
+        self._cache.clear()
+
 
 class HybridRecommender:
     """Orchestrates rules -> LLM -> merge -> validate pipeline.
@@ -76,11 +81,13 @@ class HybridRecommender:
         llm: LLMEngine,
         context_builder: ContextBuilder,
         response_cache: ResponseCache | None = None,
+        cache: DataCache | None = None,
     ):
         self.rules = rules
         self.llm = llm
         self.context_builder = context_builder
         self.response_cache = response_cache
+        self.cache = cache
 
     # Reason-specific fallback messages for the overall_strategy field
     FALLBACK_STRATEGIES = {
@@ -149,8 +156,8 @@ class HybridRecommender:
         if request.purchased_items:
             phases = self._filter_purchased(phases, request.purchased_items)
 
-        # Step 6: Validate all item_ids against DB
-        phases = await self._validate_item_ids(phases, db)
+        # Step 6: Validate all item_ids against cache (zero DB queries)
+        phases = self._validate_item_ids(phases)
 
         elapsed_ms = int((time.monotonic() - start) * 1000)
         response = RecommendResponse(
@@ -269,17 +276,14 @@ class HybridRecommender:
                 )
         return filtered_phases
 
-    async def _validate_item_ids(
-        self, phases: list[RecommendPhase], db: AsyncSession
+    def _validate_item_ids(
+        self, phases: list[RecommendPhase]
     ) -> list[RecommendPhase]:
-        """Validate all item_ids against the Item table. Filter out invalid ones.
+        """Validate all item_ids against cached item data. Filter out invalid ones.
 
         Logs a warning for each filtered-out item. Removes empty phases.
         """
-        result = await db.execute(select(Item.id, Item.cost, Item.internal_name))
-        item_info: dict[int, tuple[int | None, str]] = {
-            row[0]: (row[1], row[2]) for row in result.fetchall()
-        }
+        item_info = self.cache.get_item_validation_map() if self.cache else {}
 
         validated_phases: list[RecommendPhase] = []
         for phase in phases:

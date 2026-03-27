@@ -1,12 +1,9 @@
-from datetime import datetime
+from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from data.database import get_db
-from data.models import Hero
+from data.cache import data_cache
 
 router = APIRouter()
 
@@ -41,17 +38,15 @@ class HeroResponse(BaseModel):
 
 
 @router.get("/heroes", response_model=list[HeroResponse])
-async def list_heroes(db: AsyncSession = Depends(get_db)):
-    """Return all heroes ordered by localized name."""
-    result = await db.execute(select(Hero).order_by(Hero.localized_name))
-    return result.scalars().all()
+async def list_heroes():
+    """Return all heroes ordered by localized name (from cache)."""
+    return [asdict(h) for h in data_cache.get_all_heroes()]
 
 
 @router.get("/heroes/{hero_id}", response_model=HeroResponse)
-async def get_hero(hero_id: int, db: AsyncSession = Depends(get_db)):
-    """Return a single hero by ID."""
-    result = await db.execute(select(Hero).where(Hero.id == hero_id))
-    hero = result.scalar_one_or_none()
+async def get_hero(hero_id: int):
+    """Return a single hero by ID (from cache)."""
+    hero = data_cache.get_hero(hero_id)
     if hero is None:
         raise HTTPException(status_code=404, detail="Hero not found")
-    return hero
+    return asdict(hero)

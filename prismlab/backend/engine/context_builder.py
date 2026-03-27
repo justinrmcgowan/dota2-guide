@@ -2,20 +2,20 @@
 
 Assembles game state, matchup data, item catalog, and rules engine output
 into a compact user message. Targets under 1500 tokens for the user message.
+
+All hero/item lookups come from DataCache -- zero DB queries for hero/item
+data on the hot path. Only matchup and popularity data still hit the DB.
 """
 
 import logging
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from data.models import Hero, Item
+from data.cache import DataCache, HeroCached
 from data.matchup_service import (
     get_or_fetch_matchup,
     get_hero_item_popularity,
-    get_relevant_items,
-    get_neutral_items_by_tier,
 )
 from data.opendota_client import OpenDotaClient
 from engine.schemas import RecommendRequest, RuleResult
@@ -38,8 +38,9 @@ class ContextBuilder:
     the per-request user message.
     """
 
-    def __init__(self, opendota_client: OpenDotaClient):
+    def __init__(self, opendota_client: OpenDotaClient, cache: DataCache):
         self.opendota = opendota_client
+        self.cache = cache
 
     async def build(
         self,
@@ -52,8 +53,8 @@ class ContextBuilder:
         Target: under 1500 tokens for the user message.
         The system prompt (static, cached) is separate.
         """
-        # 1. Fetch player's hero
-        hero = await self._get_hero(request.hero_id, db)
+        # 1. Fetch player's hero (from cache -- zero DB queries)
+        hero = self._get_hero(request.hero_id)
         hero_name = hero.localized_name if hero else f"Hero #{request.hero_id}"
         primary_attr = (hero.primary_attr or "unknown") if hero else "unknown"
         attack_type = (hero.attack_type or "unknown") if hero else "unknown"
@@ -69,8 +70,8 @@ class ContextBuilder:
         # 4. Build already recommended section from rules
         rules_lines = self._build_rules_lines(rules_items)
 
-        # 5. Get filtered item catalog
-        items = await get_relevant_items(request.hero_id, request.role, db)
+        # 5. Get filtered item catalog (from cache -- zero DB queries)
+        items = self.cache.get_relevant_items(request.role)
         item_lines = self._build_item_catalog(items)
 
         # 6. Get item popularity (optional)
@@ -94,6 +95,11 @@ class ContextBuilder:
 
         if opponent_lines:
             sections.append(f"## Lane Opponents\n{opponent_lines}")
+        else:
+            sections.append(
+                "## Lane Opponents\nNone selected. Do NOT invent or assume opponents. "
+                "Recommend items based on hero strengths, role duties, and playstyle."
+            )
 
         if midgame_section:
             sections.append(midgame_section)
@@ -113,8 +119,8 @@ class ContextBuilder:
                 f"## Popular Items on This Hero\n{popularity_section}"
             )
 
-        # 7b. Get neutral items catalog (optional)
-        neutral_catalog = await self._build_neutral_catalog(db)
+        # 7b. Get neutral items catalog (from cache -- zero DB queries)
+        neutral_catalog = self._build_neutral_catalog()
         if neutral_catalog:
             sections.append(f"## Neutral Items Catalog\n{neutral_catalog}")
 
@@ -126,10 +132,16 @@ class ContextBuilder:
                 "remaining item choices."
             )
         else:
-            sections.append(
-                "Recommend items for each game phase. Be specific about WHY "
-                "each item is good in THIS matchup."
-            )
+            if request.lane_opponents:
+                sections.append(
+                    "Recommend items for each game phase. Be specific about WHY "
+                    "each item is good in THIS matchup."
+                )
+            else:
+                sections.append(
+                    "Recommend items for each game phase. Focus on WHY "
+                    "each item synergizes with this hero's kit and role."
+                )
 
         return "\n\n".join(sections)
 
@@ -168,10 +180,9 @@ class ContextBuilder:
 
         return "\n".join(lines)
 
-    async def _get_hero(self, hero_id: int, db: AsyncSession) -> Hero | None:
-        """Look up a hero by ID from the database."""
-        result = await db.execute(select(Hero).where(Hero.id == hero_id))
-        return result.scalar_one_or_none()
+    def _get_hero(self, hero_id: int) -> HeroCached | None:
+        """Look up a hero by ID from the in-memory cache."""
+        return self.cache.get_hero(hero_id)
 
     async def _build_opponent_lines(
         self,
@@ -182,7 +193,7 @@ class ContextBuilder:
         """Build opponent section with matchup win rates."""
         lines: list[str] = []
         for opp_id in lane_opponents:
-            opp_hero = await self._get_hero(opp_id, db)
+            opp_hero = self._get_hero(opp_id)
             opp_name = opp_hero.localized_name if opp_hero else "Unknown Hero"
 
             matchup = await get_or_fetch_matchup(
@@ -211,13 +222,13 @@ class ContextBuilder:
         lines: list[str] = []
         fallback = "no typical build data available"
         for ally_id in allies:
-            ally_hero = await self._get_hero(ally_id, db)
+            ally_hero = self._get_hero(ally_id)
             ally_name = ally_hero.localized_name if ally_hero else f"Hero #{ally_id}"
 
             # Fetch popular items for this ally
             popularity = await get_hero_item_popularity(ally_id, db, self.opendota)
             popular_items = (
-                await self._extract_top_items(popularity, db)
+                self._extract_top_items(popularity)
                 if popularity
                 else ""
             )
@@ -230,16 +241,15 @@ class ContextBuilder:
 
         return "\n".join(lines)
 
-    async def _extract_top_items(
+    def _extract_top_items(
         self,
         popularity: dict,
-        db: AsyncSession,
         limit: int = 5,
     ) -> str:
         """Merge all phase popularity dicts and return top item names.
 
         Combines early, mid, and late game item counts into one ranking,
-        takes the top N unique items, resolves names from DB.
+        takes the top N unique items, resolves names from cache.
         Returns a comma-separated string of item names.
         """
         merged: dict[int, int] = {}
@@ -258,10 +268,8 @@ class ContextBuilder:
         sorted_items = sorted(merged.items(), key=lambda x: x[1], reverse=True)
         top_ids = [item_id for item_id, _ in sorted_items[:limit]]
 
-        # Resolve item names from DB
-        all_items_result = await db.execute(select(Item))
-        all_items = all_items_result.scalars().all()
-        item_name_map = {item.id: item.name for item in all_items}
+        # Resolve item names from cache (zero DB queries)
+        item_name_map = self.cache.get_item_name_map()
 
         names = [item_name_map.get(iid, f"Item #{iid}") for iid in top_ids]
         return ", ".join(names)
@@ -294,12 +302,11 @@ class ContextBuilder:
         # Build an item name lookup from available items
         item_name_map = {item["id"]: item["name"] for item in available_items}
 
-        # Also look up items from DB for IDs not in filtered catalog
-        all_item_result = await db.execute(select(Item))
-        all_items = all_item_result.scalars().all()
-        for item in all_items:
-            if item.id not in item_name_map:
-                item_name_map[item.id] = item.name
+        # Also look up items from cache for IDs not in filtered catalog
+        full_name_map = self.cache.get_item_name_map()
+        for item_id, name in full_name_map.items():
+            if item_id not in item_name_map:
+                item_name_map[item_id] = name
 
         sections: list[str] = []
         for api_key, label in _POPULARITY_PHASE_MAP.items():
@@ -323,25 +330,21 @@ class ContextBuilder:
 
         return "\n".join(sections)
 
-    async def _build_neutral_catalog(self, db: AsyncSession) -> str:
+    def _build_neutral_catalog(self) -> str:
         """Build compact neutral items catalog grouped by tier.
 
-        Queries all neutral items and formats them as compact markdown
-        for Claude to rank by hero synergy. Returns empty string if no
-        neutral items exist in the database.
+        Reads all neutral items from cache and formats them as compact
+        markdown for Claude to rank by hero synergy. Returns empty string
+        if no neutral items exist in the cache.
         """
-        tier_groups = await get_neutral_items_by_tier(db)
+        tier_groups = self.cache.get_neutral_items_by_tier()
         if not tier_groups:
             return ""
 
         tier_lines: list[str] = []
         for tier in sorted(tier_groups.keys()):
             items = tier_groups[tier]
-            tier_lines.append(f"T{tier}:")
-            for item in items:
-                desc = item["active_desc"]
-                if len(desc) > 80:
-                    desc = desc[:77] + "..."
-                tier_lines.append(f"  - {item['name']}: {desc}")
+            names = [item["name"] for item in items]
+            tier_lines.append(f"T{tier}: {', '.join(names)}")
 
         return "\n".join(tier_lines)

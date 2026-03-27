@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.database import get_db
 from data.opendota_client import OpenDotaClient
+from data.cache import data_cache
 from engine.schemas import RecommendRequest, RecommendResponse
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine
@@ -27,13 +28,13 @@ router = APIRouter()
 
 # Singleton instances (created once, reused across requests)
 _opendota = OpenDotaClient(api_key=settings.opendota_api_key)
-_rules = RulesEngine()
+_rules = RulesEngine(cache=data_cache)
 _llm = LLMEngine()
-_context_builder = ContextBuilder(opendota_client=_opendota)
+_context_builder = ContextBuilder(opendota_client=_opendota, cache=data_cache)
 _response_cache = ResponseCache(ttl_seconds=settings.response_cache_ttl_seconds)
 _recommender = HybridRecommender(
     rules=_rules, llm=_llm, context_builder=_context_builder,
-    response_cache=_response_cache,
+    response_cache=_response_cache, cache=data_cache,
 )
 
 
