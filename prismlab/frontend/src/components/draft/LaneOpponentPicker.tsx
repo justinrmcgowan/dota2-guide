@@ -13,7 +13,7 @@ function LaneOpponentPicker() {
 
   if (pickedOpponents.length === 0) {
     return (
-      <p className="text-xs text-gray-500 italic">Pick opponents first</p>
+      <p className="text-xs text-on-surface-variant italic">Pick opponents first</p>
     );
   }
 
@@ -28,10 +28,10 @@ function LaneOpponentPicker() {
           <button
             key={hero.id}
             onClick={() => toggleLaneOpponent(hero)}
-            className={`flex items-center gap-1 px-2 py-1 rounded-md border text-xs transition-colors ${
+            className={`flex items-center gap-1 px-2 py-1 border text-xs transition-colors ${
               isSelected
-                ? "bg-cyan-accent/20 text-cyan-accent border-cyan-accent"
-                : "bg-bg-elevated text-gray-400 border-bg-elevated hover:text-gray-200"
+                ? "bg-primary-container/20 text-primary border-primary/40"
+                : "bg-surface-container-high text-on-surface-variant border-outline-variant/15 hover:text-on-surface"
             }`}
           >
             <img

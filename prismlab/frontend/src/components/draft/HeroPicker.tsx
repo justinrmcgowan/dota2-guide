@@ -98,7 +98,7 @@ function HeroPicker({
   }
 
   if (loading) {
-    return <p className="text-gray-400 text-sm">Loading heroes...</p>;
+    return <p className="text-on-surface-variant text-sm">Loading heroes...</p>;
   }
 
   if (error) {
@@ -114,7 +114,7 @@ function HeroPicker({
         </div>
         <button
           onClick={handleClear}
-          className="text-gray-400 hover:text-gray-200 transition-colors p-1 shrink-0"
+          className="text-on-surface-variant hover:text-on-surface transition-colors p-1 shrink-0"
           aria-label="Clear hero selection"
           title="Clear selection"
         >
@@ -150,11 +150,11 @@ function HeroPicker({
         }}
         onFocus={() => setIsOpen(true)}
         placeholder={placeholder}
-        className={`w-full bg-bg-elevated border border-bg-elevated text-gray-100 placeholder-gray-500 rounded-lg px-3 py-2 ${inputTextSize} focus:outline-none focus:ring-2 focus:ring-cyan-accent focus:border-transparent`}
+        className={`w-full bg-surface-container-lowest border-b border-outline-variant/15 text-on-surface placeholder-on-surface-variant/40 px-3 py-2 ${inputTextSize} focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent`}
       />
 
       {isOpen && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1 max-h-64 overflow-y-auto bg-bg-secondary border border-bg-elevated rounded-lg shadow-lg z-10">
+        <div className="absolute left-0 right-0 top-full mt-1 max-h-64 overflow-y-auto bg-surface-container-low shadow-lg z-10">
           {results.map((hero) => {
             const isExcluded = excludedHeroIds.has(hero.id);
             return (
@@ -163,7 +163,7 @@ function HeroPicker({
                 className={
                   isExcluded
                     ? "opacity-40 cursor-not-allowed"
-                    : "hover:bg-bg-elevated"
+                    : "hover:bg-surface-container-high"
                 }
               >
                 <HeroPortrait

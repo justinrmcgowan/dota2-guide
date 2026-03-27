@@ -10,10 +10,10 @@ function SideSelector() {
         role="radio"
         aria-checked={side === "radiant"}
         onClick={() => setSide("radiant")}
-        className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+        className={`flex-1 py-1.5 text-xs font-medium border transition-colors ${
           side === "radiant"
             ? "bg-radiant/20 text-radiant border-radiant"
-            : "bg-bg-elevated text-gray-400 border-bg-elevated hover:text-gray-200"
+            : "bg-surface-container-high text-on-surface-variant border-outline-variant/15 hover:text-on-surface"
         }`}
       >
         Radiant
@@ -22,10 +22,10 @@ function SideSelector() {
         role="radio"
         aria-checked={side === "dire"}
         onClick={() => setSide("dire")}
-        className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+        className={`flex-1 py-1.5 text-xs font-medium border transition-colors ${
           side === "dire"
             ? "bg-dire/20 text-dire border-dire"
-            : "bg-bg-elevated text-gray-400 border-bg-elevated hover:text-gray-200"
+            : "bg-surface-container-high text-on-surface-variant border-outline-variant/15 hover:text-on-surface"
         }`}
       >
         Dire

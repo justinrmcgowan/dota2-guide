@@ -26,13 +26,13 @@ function HeroPortrait({
   const dotSize = size === "lg" ? "w-2.5 h-2.5" : "w-2 h-2";
 
   const containerClasses = [
-    "flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors",
+    "flex items-center gap-2 px-2 py-1.5 transition-colors",
     disabled
       ? "opacity-40 cursor-not-allowed"
       : onClick
-        ? "cursor-pointer hover:bg-bg-elevated"
+        ? "cursor-pointer hover:bg-surface-container-high"
         : "",
-    selected ? "ring-2 ring-cyan-accent" : "",
+    selected ? "ring-1 ring-secondary-fixed" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -60,7 +60,7 @@ function HeroPortrait({
         className={`${imgSize} object-cover rounded`}
         loading="lazy"
       />
-      <span className={`${textSize} text-gray-100`}>{hero.localized_name}</span>
+      <span className={`${textSize} text-on-surface`}>{hero.localized_name}</span>
       <span
         className={`${dotSize} rounded-full ${attrDotClass} shrink-0`}
         title={hero.primary_attr}

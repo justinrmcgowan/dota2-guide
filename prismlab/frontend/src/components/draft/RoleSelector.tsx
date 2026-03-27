@@ -15,10 +15,10 @@ function RoleSelector() {
             role="radio"
             aria-checked={isActive}
             onClick={() => setRole(opt.value)}
-            className={`px-2 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+            className={`px-2 py-1.5 text-xs font-medium border transition-colors ${
               isActive
-                ? "bg-cyan-accent/20 text-cyan-accent border-cyan-accent"
-                : "bg-bg-elevated text-gray-400 border-bg-elevated hover:text-gray-200"
+                ? "bg-primary-container/20 text-primary border-primary/40"
+                : "bg-surface-container-high text-on-surface-variant border-outline-variant/15 hover:text-on-surface"
             }`}
           >
             {opt.label}

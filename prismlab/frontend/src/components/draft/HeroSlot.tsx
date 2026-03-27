@@ -16,7 +16,7 @@ function HeroSlot({ hero, onClickEmpty, onClear, borderColor }: HeroSlotProps) {
     return (
       <button
         onClick={onClickEmpty}
-        className="w-8 h-8 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center text-gray-500 hover:border-gray-300 hover:text-gray-300 transition-colors"
+        className="w-8 h-8 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center text-outline-variant hover:border-on-surface-variant hover:text-on-surface-variant transition-colors"
         aria-label="Add hero"
       >
         <svg
@@ -53,7 +53,7 @@ function HeroSlot({ hero, onClickEmpty, onClear, borderColor }: HeroSlotProps) {
       {hovered && (
         <button
           onClick={onClear}
-          className="absolute inset-0 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center text-gray-200 hover:text-white transition-colors"
+          className="absolute inset-0 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center text-on-surface hover:text-on-surface transition-colors"
           aria-label={`Remove ${hero.localized_name}`}
         >
           <svg

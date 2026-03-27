@@ -38,7 +38,7 @@ export const LANE_OPTIONS = [
 
 export const LANE_RESULT_OPTIONS = [
   { value: "won" as const, label: "Won", color: "text-radiant", bg: "bg-radiant/20", border: "border-radiant" },
-  { value: "even" as const, label: "Even", color: "text-cyan-accent", bg: "bg-cyan-accent/20", border: "border-cyan-accent" },
+  { value: "even" as const, label: "Even", color: "text-primary", bg: "bg-primary/20", border: "border-primary" },
   { value: "lost" as const, label: "Lost", color: "text-dire", bg: "bg-dire/20", border: "border-dire" },
 ] as const;
 
