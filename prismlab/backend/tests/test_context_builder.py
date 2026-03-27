@@ -1,8 +1,13 @@
-"""Unit tests for the context builder that assembles Claude API user messages."""
+"""Unit tests for the context builder that assembles Claude API user messages.
+
+Hero/item lookups come from DataCache (loaded from test DB in conftest).
+Only matchup and popularity data are still mocked (they hit external APIs).
+"""
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from data.cache import data_cache
 from engine.context_builder import ContextBuilder
 from engine.schemas import RecommendRequest, RuleResult
 
@@ -24,9 +29,9 @@ def _make_request(**kwargs) -> RecommendRequest:
 
 @pytest.fixture
 def builder():
-    """ContextBuilder with a mock OpenDota client."""
+    """ContextBuilder with a mock OpenDota client and DataCache singleton."""
     mock_opendota = MagicMock()
-    return ContextBuilder(opendota_client=mock_opendota)
+    return ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
 
 
 # ---------------------------------------------------------------------------
@@ -208,13 +213,6 @@ class TestBuildAllyLines:
 
     @pytest.mark.asyncio
     @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
-    @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
         return_value=None,
@@ -225,11 +223,11 @@ class TestBuildAllyLines:
         return_value=None,
     )
     async def test_build_with_allies_includes_section(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Full build() with allies includes '## Allied Heroes' section."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request(allies=[2, 3])
         result = await cb.build(req, [], test_db_session)
         assert "## Allied Heroes" in result
@@ -237,13 +235,6 @@ class TestBuildAllyLines:
         assert "Crystal Maiden" in result
 
     @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
     @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
@@ -255,23 +246,16 @@ class TestBuildAllyLines:
         return_value=None,
     )
     async def test_build_without_allies_no_section(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Full build() with empty allies does NOT include 'Allied Heroes'."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request(allies=[])
         result = await cb.build(req, [], test_db_session)
         assert "Allied Heroes" not in result
 
     @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
     @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
@@ -283,11 +267,11 @@ class TestBuildAllyLines:
         return_value=None,
     )
     async def test_allied_heroes_section_ordering(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Allied Heroes appears after '## Your Hero' and before '## Lane Opponents'."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request(allies=[2], lane_opponents=[3])
         result = await cb.build(req, [], test_db_session)
 
@@ -308,13 +292,6 @@ class TestAllyIntegration:
 
     @pytest.mark.asyncio
     @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
-    @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
     )
@@ -324,7 +301,7 @@ class TestAllyIntegration:
         return_value=None,
     )
     async def test_build_with_allies_and_popularity(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Full build with allies and popularity data shows ally names and items."""
 
@@ -339,7 +316,7 @@ class TestAllyIntegration:
         mock_popularity.side_effect = popularity_side_effect
 
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request(allies=[2])  # Axe as ally
         result = await cb.build(req, [], test_db_session)
 
@@ -349,13 +326,6 @@ class TestAllyIntegration:
         assert "typical builds include" in result
 
     @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
     @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
@@ -367,11 +337,11 @@ class TestAllyIntegration:
         return_value=None,
     )
     async def test_build_with_allies_no_popularity(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Full build with allies but no popularity shows fallback text."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request(allies=[3])  # Crystal Maiden as ally
         result = await cb.build(req, [], test_db_session)
 
@@ -420,65 +390,26 @@ class TestSystemPromptAllyRules:
 
 
 class TestNeutralCatalog:
-    @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_neutral_items_by_tier",
-        new_callable=AsyncMock,
-        return_value={
-            1: [
-                {"id": 301, "name": "Mysterious Hat", "internal_name": "mysterious_hat",
-                 "active_desc": "Grants +1 mana regeneration"},
-                {"id": 350, "name": "Chipped Vest", "internal_name": "chipped_vest",
-                 "active_desc": "Returns 28 damage when attacked"},
-            ],
-            3: [
-                {"id": 351, "name": "Psychic Headband", "internal_name": "psychic_headband",
-                 "active_desc": "Pushes the target 400 units away"},
-            ],
-        },
-    )
-    async def test_neutral_catalog_groups_by_tier(
-        self, mock_neutral, builder: ContextBuilder, test_db_session
-    ):
-        """Neutral catalog groups items by tier with T1: and T3: headers."""
-        result = await builder._build_neutral_catalog(test_db_session)
+    def test_neutral_catalog_groups_by_tier(self, builder: ContextBuilder):
+        """Neutral catalog groups items by tier (reads from DataCache)."""
+        result = builder._build_neutral_catalog()
+        # Test DB has neutral items in tier 1, 3, and 5
         assert "T1:" in result
         assert "T3:" in result
         assert "Mysterious Hat" in result
         assert "Chipped Vest" in result
         assert "Psychic Headband" in result
 
-    @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_neutral_items_by_tier",
-        new_callable=AsyncMock,
-        return_value={},
-    )
-    async def test_neutral_catalog_empty_returns_empty(
-        self, mock_neutral, builder: ContextBuilder, test_db_session
-    ):
-        """Empty neutral items returns empty string."""
-        result = await builder._build_neutral_catalog(test_db_session)
+    def test_neutral_catalog_empty_when_cache_empty(self):
+        """Empty DataCache returns empty neutral catalog."""
+        from data.cache import DataCache
+        empty_cache = DataCache()
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=empty_cache)
+        result = cb._build_neutral_catalog()
         assert result == ""
 
     @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_neutral_items_by_tier",
-        new_callable=AsyncMock,
-        return_value={
-            1: [
-                {"id": 301, "name": "Mysterious Hat", "internal_name": "mysterious_hat",
-                 "active_desc": "Grants +1 mana regeneration"},
-            ],
-        },
-    )
-    @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
     @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
@@ -490,11 +421,11 @@ class TestNeutralCatalog:
         return_value=None,
     )
     async def test_build_includes_neutral_catalog_section(
-        self, mock_matchup, mock_popularity, mock_items, mock_neutral, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Full build() with neutral items includes '## Neutral Items Catalog' section."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request()
         result = await cb.build(req, [], test_db_session)
         assert "## Neutral Items Catalog" in result
@@ -533,14 +464,6 @@ class TestSystemPromptNeutralRules:
 class TestBuildFull:
     @pytest.mark.asyncio
     @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-            {"id": 1, "name": "Blink Dagger", "cost": 2250},
-        ],
-    )
-    @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
         return_value=None,
@@ -551,11 +474,11 @@ class TestBuildFull:
         return_value=None,
     )
     async def test_build_contains_hero_and_game_state(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Build output contains hero name, role, playstyle, side, and lane."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request()
         result = await cb.build(req, [], test_db_session)
 
@@ -567,13 +490,6 @@ class TestBuildFull:
 
     @pytest.mark.asyncio
     @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
-    @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
         return_value=None,
@@ -584,11 +500,11 @@ class TestBuildFull:
         return_value=None,
     )
     async def test_build_includes_opponent_section(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Build output includes Lane Opponents section when opponents provided."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request(lane_opponents=[2])  # Axe
         result = await cb.build(req, [], test_db_session)
 
@@ -596,13 +512,6 @@ class TestBuildFull:
         assert "Axe" in result
 
     @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
     @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
@@ -614,26 +523,20 @@ class TestBuildFull:
         return_value=None,
     )
     async def test_build_includes_available_items(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
-        """Build output includes Available Items section with item catalog."""
+        """Build output includes Available Items section with item catalog from cache."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         req = _make_request()
         result = await cb.build(req, [], test_db_session)
 
         assert "Available Items" in result
+        # Power Treads is in test DB and not a recipe/neutral, so should appear
         assert "Power Treads" in result
         assert "1400g" in result
 
     @pytest.mark.asyncio
-    @patch(
-        "engine.context_builder.get_relevant_items",
-        new_callable=AsyncMock,
-        return_value=[
-            {"id": 48, "name": "Power Treads", "cost": 1400},
-        ],
-    )
     @patch(
         "engine.context_builder.get_hero_item_popularity",
         new_callable=AsyncMock,
@@ -645,11 +548,11 @@ class TestBuildFull:
         return_value=None,
     )
     async def test_build_includes_rules_section(
-        self, mock_matchup, mock_popularity, mock_items, test_db_session
+        self, mock_matchup, mock_popularity, test_db_session
     ):
         """Build output includes Already Recommended section when rules provided."""
         mock_opendota = MagicMock()
-        cb = ContextBuilder(opendota_client=mock_opendota)
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
         rules = [
             RuleResult(
                 item_id=36,

@@ -117,10 +117,21 @@ async def refresh_all_data() -> DataRefreshLog:
             session.add(log_entry)
             await session.commit()
 
-            # Refresh rules engine lookup cache
-            from api.routes.recommend import _rules
-            await _rules.refresh_lookups(session)
-            logger.info("Rules engine lookups refreshed.")
+            # Coordinated three-layer cache invalidation:
+            # 1. DataCache refreshes first (new data) -- uses fresh session (INT-05)
+            # 2. RulesEngine sees new data automatically via DataCache reference
+            # 3. ResponseCache clears (stale responses built from old data) (INT-06)
+            from data.cache import data_cache
+            async with async_session() as fresh_session:
+                await data_cache.refresh(fresh_session)
+            logger.info(
+                "DataCache refreshed: %d heroes, %d items",
+                len(data_cache._heroes), len(data_cache._items),
+            )
+
+            from api.routes.recommend import _response_cache
+            _response_cache.clear()
+            logger.info("ResponseCache cleared after data refresh.")
 
             logger.info(
                 "Data refresh completed: %d heroes, %d items updated.",

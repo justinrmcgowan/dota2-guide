@@ -3,6 +3,7 @@
 import pytest
 import pytest_asyncio
 
+from data.cache import data_cache
 from engine.schemas import RecommendRequest, VALID_PLAYSTYLES
 from engine.rules import RulesEngine
 
@@ -41,9 +42,7 @@ def _make_request(
 
 @pytest_asyncio.fixture
 async def engine(test_db_session) -> RulesEngine:
-    eng = RulesEngine()
-    await eng.init_lookups(test_db_session)
-    return eng
+    return RulesEngine(cache=data_cache)
 
 
 class TestMagicStickRule:

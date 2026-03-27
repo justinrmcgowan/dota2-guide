@@ -18,6 +18,7 @@ from engine.schemas import (
     NeutralItemPick,
     NeutralTierRecommendation,
 )
+from data.cache import data_cache
 from engine.rules import RulesEngine
 from engine.llm import FallbackReason
 from engine.recommender import HybridRecommender
@@ -84,9 +85,10 @@ def mock_context_builder():
 async def recommender_fixture(mock_llm_engine, mock_context_builder):
     """HybridRecommender with real RulesEngine, mocked LLM and ContextBuilder."""
     return HybridRecommender(
-        rules=RulesEngine(),
+        rules=RulesEngine(cache=data_cache),
         llm=mock_llm_engine,
         context_builder=mock_context_builder,
+        cache=data_cache,
     )
 
 
@@ -252,7 +254,7 @@ async def test_invalid_item_id_filtered(recommender_fixture, test_db_session):
         ),
     ]
 
-    validated = await recommender_fixture._validate_item_ids(phases, test_db_session)
+    validated = recommender_fixture._validate_item_ids(phases)
 
     assert len(validated) == 1
     all_ids = [item.item_id for item in validated[0].items]
@@ -413,7 +415,7 @@ class TestFallbackReason:
             return_value=(None, FallbackReason.timeout)
         )
         recommender = HybridRecommender(
-            rules=RulesEngine(), llm=mock_llm_engine, context_builder=mock_context_builder,
+            rules=RulesEngine(cache=data_cache), llm=mock_llm_engine, context_builder=mock_context_builder, cache=data_cache,
         )
         response = await recommender.recommend(sample_request, test_db_session)
         assert response.fallback is True
@@ -429,7 +431,7 @@ class TestFallbackReason:
             return_value=(None, FallbackReason.parse_error)
         )
         recommender = HybridRecommender(
-            rules=RulesEngine(), llm=mock_llm_engine, context_builder=mock_context_builder,
+            rules=RulesEngine(cache=data_cache), llm=mock_llm_engine, context_builder=mock_context_builder, cache=data_cache,
         )
         response = await recommender.recommend(sample_request, test_db_session)
         assert response.fallback is True
@@ -443,7 +445,7 @@ class TestFallbackReason:
         """Successful LLM call produces fallback_reason=None."""
         # mock_llm_engine already returns success tuple via fixture
         recommender = HybridRecommender(
-            rules=RulesEngine(), llm=mock_llm_engine, context_builder=mock_context_builder,
+            rules=RulesEngine(cache=data_cache), llm=mock_llm_engine, context_builder=mock_context_builder, cache=data_cache,
         )
         response = await recommender.recommend(sample_request, test_db_session)
         assert response.fallback is False

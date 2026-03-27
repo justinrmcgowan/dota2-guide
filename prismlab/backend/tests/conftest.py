@@ -4,6 +4,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from data.database import Base, get_db
+from data.cache import data_cache
 from data.models import Hero, Item
 from main import app
 
@@ -238,6 +239,10 @@ async def test_db_setup():
         session.add_all(items)
 
         await session.commit()
+
+    # Load DataCache from test DB so cache-backed routes work
+    async with test_async_session() as session:
+        await data_cache.load(session)
 
     yield
 
