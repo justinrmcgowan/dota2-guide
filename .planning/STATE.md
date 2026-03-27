@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Ready to plan
-stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-03-27T16:22:36.074Z"
+status: In progress
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-03-27T17:23:26.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 20 — counter-item-intelligence
+**Current focus:** Phase 21 — Timing Benchmarks
 
 ## Current Position
 
 Phase: 21
-Plan: Not started
+Plan: 1 of 2
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Plan: Not started
 | Phase 19 P02 | 6min | 2 tasks | 5 files |
 | Phase 19 P03 | 4min | 2 tasks | 2 files |
 | Phase 20 P03 | 5min | 1 tasks | 2 files |
+| Phase 21 P01 | 6min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - [Phase 19]: v4.0 directives use conditional If guards for optional context sections
 - [Phase 19]: System prompt data boundary enforced: directives only, no dynamic data (token budget <5000, no percentages)
 - [Phase 20]: Counter-relevant ability properties limited to 4: channeled, passive, BKB-pierce, undispellable
+- [Phase 21]: 10pp urgency threshold for timing-critical items (good-zone minus late-zone WR > 10pp)
+- [Phase 21]: Post-LLM enrichment pattern: timing data appended after _validate_item_ids, never sent to Claude for generation
+- [Phase 21]: Zone classification uses 2% peak threshold for good zone, weighted average for ontrack/late boundary
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T16:05:49.875Z
-Stopped at: Completed 20-03-PLAN.md
+Last session: 2026-03-27T17:23:26.000Z
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None

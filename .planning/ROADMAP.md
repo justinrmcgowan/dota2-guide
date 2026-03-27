@@ -107,9 +107,9 @@ Plans:
   2. Items with steep win-rate falloff at later purchase times show a distinct urgency indicator, visually separating timing-critical items from flexible ones
   3. Claude's reasoning references specific timing benchmarks when explaining item urgency (e.g., "BKB before 25 minutes has a 58% win rate vs. 41% after 30 minutes")
   4. During GSI-connected games, the user can see how their current gold and game clock compare against the timing benchmark window for upcoming items
-**Plans:** 2 plans
+**Plans:** 1/2 plans complete
 Plans:
-- [ ] 21-01-PLAN.md -- Backend zone classification, schema extension, context builder timing section, recommender enrichment
+- [x] 21-01-PLAN.md -- Backend zone classification, schema extension, context builder timing section, recommender enrichment
 - [ ] 21-02-PLAN.md -- Frontend TimingBar component, CSS urgency animation, ItemCard/PhaseCard/ItemTimeline wiring, GSI integration
 
 ### Phase 22: Build Path Intelligence
@@ -147,6 +147,6 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 |-------|-----------|----------------|--------|-----------|
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 20. Counter-Item Intelligence | v4.0 | 2/3 | Complete    | 2026-03-27 |
-| 21. Timing Benchmarks | v4.0 | 0/2 | Planned | - |
+| 21. Timing Benchmarks | v4.0 | 1/2 | In progress | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |
