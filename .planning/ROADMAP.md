@@ -63,7 +63,7 @@
 - [x] **Phase 19: Data Foundation & Prompt Architecture** - Ability/timing data pipeline, DataCache extensions, system-prompt-vs-user-message data split (completed 2026-03-27)
 - [x] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude (completed 2026-03-27)
 - [x] **Phase 21: Timing Benchmarks** - Timing windows in UI, urgency indicators, Claude timing reasoning, GSI live comparison (completed 2026-03-27)
-- [ ] **Phase 22: Build Path Intelligence** - Component ordering, adaptive build paths, GSI gold tracking
+- [x] **Phase 22: Build Path Intelligence** - Component ordering, adaptive build paths, GSI gold tracking (completed 2026-03-27)
 - [ ] **Phase 23: Win Condition Framing** - Draft classification, strategy anchoring, enemy win condition assessment
 
 ## Phase Details
@@ -121,10 +121,10 @@ Plans:
   2. Each component step includes reasoning for its position in the order (e.g., "Ogre Axe first for +10 STR survivability in a losing lane")
   3. During GSI-connected games, components that are affordable at the player's current gold are visually highlighted
   4. Component ordering adapts to game state: losing lane shifts defensive components earlier, winning lane prioritizes offensive components
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 22-01-PLAN.md -- Backend: ComponentStep/BuildPathResponse schemas, _enrich_build_paths enrichment, system prompt directive
-- [ ] 22-02-PLAN.md -- Frontend: BuildPathSteps component, PhaseCard integration, GSI gold affordability
+- [x] 22-02-PLAN.md -- Frontend: BuildPathSteps component, PhaseCard integration, GSI gold affordability
 **UI hint**: yes
 
 ### Phase 23: Win Condition Framing
@@ -138,7 +138,7 @@ Plans:
   4. The system assesses the enemy team's likely win condition and recommends counter-strategy items (e.g., "Enemy draft wins through teamfight -- consider split-push enabling items to avoid 5v5")
 **Plans:** 2 plans
 Plans:
-- [ ] 22-01-PLAN.md -- Backend: ComponentStep/BuildPathResponse schemas, _enrich_build_paths enrichment, system prompt directive
+- [x] 22-01-PLAN.md -- Backend: ComponentStep/BuildPathResponse schemas, _enrich_build_paths enrichment, system prompt directive
 - [ ] 22-02-PLAN.md -- Frontend: BuildPathSteps component, PhaseCard integration, GSI gold affordability
 **UI hint**: yes
 
@@ -154,5 +154,5 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 20. Counter-Item Intelligence | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 21. Timing Benchmarks | v4.0 | 2/2 | Complete    | 2026-03-27 |
-| 22. Build Path Intelligence | v4.0 | 1/2 | In Progress|  |
+| 22. Build Path Intelligence | v4.0 | 2/2 | Complete   | 2026-03-27 |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |

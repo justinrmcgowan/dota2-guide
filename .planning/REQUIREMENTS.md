@@ -32,7 +32,7 @@ Requirements for v4.0 Coaching Intelligence. Each maps to roadmap phases.
 
 - [x] **PATH-01**: User can see the optimal component purchase order for each recommended item
 - [x] **PATH-02**: User can see reasoning for component ordering (why this component first)
-- [ ] **PATH-03**: User can see which components are affordable at current gold during GSI-connected games
+- [x] **PATH-03**: User can see which components are affordable at current gold during GSI-connected games
 - [x] **PATH-04**: Component ordering adapts to game state — lost lane prioritizes defensive components, won lane prioritizes offensive
 
 ### Win Condition Framing
@@ -127,7 +127,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TIME-04 | Phase 21 | Complete |
 | PATH-01 | Phase 22 | Complete |
 | PATH-02 | Phase 22 | Complete |
-| PATH-03 | Phase 22 | Pending |
+| PATH-03 | Phase 22 | Complete |
 | PATH-04 | Phase 22 | Complete |
 | WCON-01 | Phase 23 | Pending |
 | WCON-02 | Phase 23 | Pending |

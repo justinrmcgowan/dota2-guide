@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Ready to execute
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-03-27T18:08:24.240Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 22-02-PLAN.md
+last_updated: "2026-03-27T18:14:34.542Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 2 of 2
 | Phase 21 P01 | 6min | 2 tasks | 6 files |
 | Phase 21 P02 | 4min | 2 tasks | 6 files |
 | Phase 22 P01 | 3 | 3 tasks | 3 files |
+| Phase 22 P02 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 22]: Component ordering uses Claude's component_order when valid; heuristic _sort_defensive_first activates on lost lane
 - [Phase 22]: Build paths only generated for items with >= 2 components to avoid noise for base items
 - [Phase 22]: ComponentStep.reason defaults to empty string; build_path_notes is the primary ordering justification
+- [Phase 22]: buildPathMap useMemo mirrors timingDataMap pattern — O(1) per-item lookup keyed by item_name
+- [Phase 22]: BuildPathSteps returns null for empty steps arrays — base items with no components show reasoning only
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T18:08:24.238Z
-Stopped at: Completed 22-01-PLAN.md
+Last session: 2026-03-27T18:14:34.539Z
+Stopped at: Completed 22-02-PLAN.md
 Resume file: None
