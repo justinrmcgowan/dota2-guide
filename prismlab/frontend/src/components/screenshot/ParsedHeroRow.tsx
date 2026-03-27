@@ -88,7 +88,7 @@ function ParsedHeroRow({ hero, heroIdx, onAddItem }: ParsedHeroRowProps) {
                       .getState()
                       .removeItem(heroIdx, itemIdx)
                   }
-                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-dire text-white text-[9px] font-bold rounded-full flex items-center justify-center hover:bg-red-400 z-10"
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-dire text-on-surface text-[9px] font-bold rounded-full flex items-center justify-center hover:bg-dire/80 z-10"
                   title="Remove item"
                 >
                   X

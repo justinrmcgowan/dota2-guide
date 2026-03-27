@@ -67,7 +67,7 @@ function ItemCard({
               height="12"
               viewBox="0 0 12 12"
               fill="none"
-              className="text-white"
+              className="text-on-surface"
             >
               <path
                 d="M3 6L5 8L9 4"
