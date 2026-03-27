@@ -18,10 +18,10 @@ function LaneResultSelector() {
               role="radio"
               aria-checked={isActive}
               onClick={() => setLaneResult(opt.value)}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium border transition-colors ${
                 isActive
                   ? `${opt.bg} ${opt.color} ${opt.border}`
-                  : "bg-bg-elevated text-gray-400 border-bg-elevated hover:text-gray-200"
+                  : "bg-surface-container-high text-on-surface-variant border-outline-variant/15 hover:text-on-surface"
               }`}
             >
               {opt.label}
@@ -30,7 +30,7 @@ function LaneResultSelector() {
         })}
       </div>
       {laneAutoDetected && laneResult && (
-        <p className="text-[10px] text-gray-500 mt-1 italic">
+        <p className="text-[10px] text-on-surface-variant/50 mt-1 italic">
           auto-detected from GPM
         </p>
       )}

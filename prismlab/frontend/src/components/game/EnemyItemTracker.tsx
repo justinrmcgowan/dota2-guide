@@ -15,7 +15,7 @@ function EnemyItemTracker() {
             key={item.name}
             title={item.label}
             onClick={() => toggleEnemyItem(item.name)}
-            className={`flex flex-col items-center gap-0.5 p-1 rounded-md transition-all ${
+            className={`flex flex-col items-center gap-0.5 p-1 transition-all ${
               isSpotted
                 ? "ring-2 ring-dire opacity-100"
                 : "opacity-50 grayscale hover:opacity-75 hover:grayscale-0"
@@ -26,9 +26,9 @@ function EnemyItemTracker() {
               alt={item.label}
               width={32}
               height={32}
-              className="rounded-sm"
+              className=""
             />
-            <span className="text-[8px] text-gray-400 leading-tight text-center truncate w-full">
+            <span className="text-[8px] text-on-surface-variant leading-tight text-center truncate w-full">
               {item.label}
             </span>
           </button>
