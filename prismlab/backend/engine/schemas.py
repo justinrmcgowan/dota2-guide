@@ -15,6 +15,16 @@ VALID_PLAYSTYLES: dict[int, set[str]] = {
 }
 
 
+class EnemyContext(BaseModel):
+    """Per-enemy hero context from screenshot parsing (KDA + level)."""
+
+    hero_id: int
+    kills: int | None = None
+    deaths: int | None = None
+    assists: int | None = None
+    level: int | None = None
+
+
 class RecommendRequest(BaseModel):
     """POST /api/recommend request body."""
 
@@ -31,6 +41,7 @@ class RecommendRequest(BaseModel):
     damage_profile: dict[str, int] | None = None  # e.g. {"physical": 60, "magical": 30, "pure": 10}
     enemy_items_spotted: list[str] = Field(default_factory=list)  # e.g. ["bkb", "blink"]
     purchased_items: list[int] = Field(default_factory=list)  # item_ids already purchased
+    enemy_context: list[EnemyContext] = Field(default_factory=list)
 
     @field_validator("playstyle")
     @classmethod

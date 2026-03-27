@@ -33,6 +33,14 @@ If allies listed: deduplicate auras (don't double Pipe/AC/Vlads), identify combo
 (BKB during Enigma's Black Hole), fill team gaps (lockdown, save, wave clear). \
 Name the ally and explain the coordination.
 
+## Enemy Power Levels
+If an "Enemy Team Status" section is present with KDA/level data:
+- Fed enemies (high K/D): recommend defensive/survival items earlier (BKB, Ghost, Force Staff).
+- Behind enemies: deprioritize countering them specifically; focus on the real threats.
+- Reference the specific hero's KDA in your reasoning ("PA is 8/1 -- rush BKB before Desolator").
+- Level advantages/disadvantages affect timing windows: higher-level enemies hit power spikes earlier.
+If no Enemy Team Status section is present, ignore this guidance entirely.
+
 ## Neutral Items
 If catalog provided: rank 2-3 per tier by hero synergy. 1 sentence each. \
 Note build-path interactions ("covers mana sustain — skip Falcon Blade"). \

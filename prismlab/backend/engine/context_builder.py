@@ -18,7 +18,7 @@ from data.matchup_service import (
     get_hero_item_popularity,
 )
 from data.opendota_client import OpenDotaClient
-from engine.schemas import RecommendRequest, RuleResult
+from engine.schemas import EnemyContext, RecommendRequest, RuleResult
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,11 @@ class ContextBuilder:
                 "Recommend items based on hero strengths, role duties, and playstyle."
             )
 
+        # 3b. Build enemy team KDA context (if screenshot data present)
+        enemy_status = self._build_enemy_context_section(request)
+        if enemy_status:
+            sections.append(enemy_status)
+
         if midgame_section:
             sections.append(midgame_section)
 
@@ -179,6 +184,49 @@ class ContextBuilder:
             lines.append(f"Enemy Items Spotted: {', '.join(display_names)}")
 
         return "\n".join(lines)
+
+    def _build_enemy_context_section(self, request: RecommendRequest) -> str:
+        """Build enemy team KDA/level section from screenshot data.
+
+        Returns empty string if no enemy_context entries exist, preserving
+        backward compatibility with requests that lack screenshot data.
+        """
+        if not request.enemy_context:
+            return ""
+
+        lines: list[str] = []
+        for ec in request.enemy_context:
+            # Skip entries with no KDA data at all
+            if ec.kills is None and ec.deaths is None and ec.assists is None:
+                continue
+
+            hero = self._get_hero(ec.hero_id)
+            name = hero.localized_name if hero else f"Hero #{ec.hero_id}"
+
+            # Build KDA string
+            k = ec.kills if ec.kills is not None else 0
+            d = ec.deaths if ec.deaths is not None else 0
+            a = ec.assists if ec.assists is not None else 0
+
+            level_part = f" (Lv {ec.level})" if ec.level is not None else ""
+
+            # Threat annotation
+            annotation = ""
+            if k >= 5 and d > 0 and k >= 2 * d:
+                annotation = " -- fed, high threat"
+            elif k >= 5 and d == 0:
+                annotation = " -- fed, high threat"
+            elif d >= 3 and k > 0 and d >= 2 * k:
+                annotation = " -- behind"
+            elif d >= 3 and k == 0:
+                annotation = " -- behind"
+
+            lines.append(f"- {name}{level_part}: {k}/{d}/{a}{annotation}")
+
+        if not lines:
+            return ""
+
+        return "## Enemy Team Status\n" + "\n".join(lines)
 
     def _get_hero(self, hero_id: int) -> HeroCached | None:
         """Look up a hero by ID from the in-memory cache."""
