@@ -16,10 +16,10 @@ Requirements for v4.0 Coaching Intelligence. Each maps to roadmap phases.
 
 ### Timing Benchmarks
 
-- [ ] **TIME-01**: User can see timing benchmarks (good/average/late window with win rate gradients) on each recommended item
-- [ ] **TIME-02**: User can see urgency indicators distinguishing timing-sensitive items (steep win rate falloff) from flexible items
+- [x] **TIME-01**: User can see timing benchmarks (good/average/late window with win rate gradients) on each recommended item
+- [x] **TIME-02**: User can see urgency indicators distinguishing timing-sensitive items (steep win rate falloff) from flexible items
 - [ ] **TIME-03**: Claude's reasoning references specific timing benchmarks when explaining item urgency
-- [ ] **TIME-04**: User can see live comparison of current gold/clock against timing benchmarks during GSI-connected games
+- [x] **TIME-04**: User can see live comparison of current gold/clock against timing benchmarks during GSI-connected games
 
 ### Counter-Item Intelligence
 
@@ -121,10 +121,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CNTR-02 | Phase 20 | Complete |
 | CNTR-03 | Phase 20 | Complete |
 | CNTR-04 | Phase 20 | Complete |
-| TIME-01 | Phase 21 | Pending |
-| TIME-02 | Phase 21 | Pending |
+| TIME-01 | Phase 21 | Complete |
+| TIME-02 | Phase 21 | Complete |
 | TIME-03 | Phase 21 | Pending |
-| TIME-04 | Phase 21 | Pending |
+| TIME-04 | Phase 21 | Complete |
 | PATH-01 | Phase 22 | Pending |
 | PATH-02 | Phase 22 | Pending |
 | PATH-03 | Phase 22 | Pending |

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: In progress
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-03-27T17:23:26.000Z"
+status: Ready to execute
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-03-27T17:35:38.547Z"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 21
-Plan: 1 of 2
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 1 of 2
 | Phase 19 P03 | 4min | 2 tasks | 2 files |
 | Phase 20 P03 | 5min | 1 tasks | 2 files |
 | Phase 21 P01 | 6min | 2 tasks | 6 files |
+| Phase 21 P02 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 21]: 10pp urgency threshold for timing-critical items (good-zone minus late-zone WR > 10pp)
 - [Phase 21]: Post-LLM enrichment pattern: timing data appended after _validate_item_ids, never sent to Claude for generation
 - [Phase 21]: Zone classification uses 2% peak threshold for good zone, weighted average for ontrack/late boundary
+- [Phase 21]: Proportional zone widths use bucket count ratio, not time span -- consistent with equal-interval bucket emission
+- [Phase 21]: timingDataMap built with useMemo in ItemTimeline keyed by item_name for O(1) per-item lookup
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T17:23:26.000Z
-Stopped at: Completed 21-01-PLAN.md
+Last session: 2026-03-27T17:35:38.544Z
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None
