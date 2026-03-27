@@ -37,10 +37,10 @@ Requirements for v4.0 Coaching Intelligence. Each maps to roadmap phases.
 
 ### Win Condition Framing
 
-- [ ] **WCON-01**: System classifies 10-hero drafts into macro strategy archetypes (teamfight, split-push, pick-off, deathball, late-game scale)
-- [ ] **WCON-02**: Win condition statement anchors overall_strategy and frames all item recommendations
-- [ ] **WCON-03**: Item priorities adjust based on win condition — early win condition deprioritizes luxury items
-- [ ] **WCON-04**: System assesses enemy team's win condition and recommends counter-strategy items
+- [x] **WCON-01**: System classifies 10-hero drafts into macro strategy archetypes (teamfight, split-push, pick-off, deathball, late-game scale)
+- [x] **WCON-02**: Win condition statement anchors overall_strategy and frames all item recommendations
+- [x] **WCON-03**: Item priorities adjust based on win condition — early win condition deprioritizes luxury items
+- [x] **WCON-04**: System assesses enemy team's win condition and recommends counter-strategy items
 
 ## v3.0 Requirements (Complete)
 
@@ -129,10 +129,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PATH-02 | Phase 22 | Complete |
 | PATH-03 | Phase 22 | Complete |
 | PATH-04 | Phase 22 | Complete |
-| WCON-01 | Phase 23 | Pending |
-| WCON-02 | Phase 23 | Pending |
-| WCON-03 | Phase 23 | Pending |
-| WCON-04 | Phase 23 | Pending |
+| WCON-01 | Phase 23 | Complete |
+| WCON-02 | Phase 23 | Complete |
+| WCON-03 | Phase 23 | Complete |
+| WCON-04 | Phase 23 | Complete |
 | DESIGN-01 | Phase 17 | Complete |
 | DESIGN-02 | Phase 17 | Complete |
 | DESIGN-03 | Phase 17 | Complete |

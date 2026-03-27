@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Ready to plan
-stopped_at: Completed 22-02-PLAN.md
-last_updated: "2026-03-27T18:20:33.857Z"
+status: Ready to execute
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-03-27T18:40:47.883Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 12
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 22 — build-path-intelligence
+**Current focus:** Phase 23 — win-condition-framing
 
 ## Current Position
 
-Phase: 23
-Plan: Not started
+Phase: 23 (win-condition-framing) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 | Phase 21 P02 | 4min | 2 tasks | 6 files |
 | Phase 22 P01 | 3 | 3 tasks | 3 files |
 | Phase 22 P02 | 5 | 2 tasks | 4 files |
+| Phase 23-win-condition-framing P01 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [Phase 22]: ComponentStep.reason defaults to empty string; build_path_notes is the primary ordering justification
 - [Phase 22]: buildPathMap useMemo mirrors timingDataMap pattern — O(1) per-item lookup keyed by item_name
 - [Phase 22]: BuildPathSteps returns null for empty steps arrays — base items with no components show reasoning only
+- [Phase 23-win-condition-framing]: win_condition is post-LLM enrichment only -- never in LLM_OUTPUT_SCHEMA, never Claude-generated
+- [Phase 23-win-condition-framing]: all_opponents (max 5) separate from lane_opponents (max 2) -- draft classification vs matchup rules
+- [Phase 23-win-condition-framing]: MIN_HEROES=3 threshold prevents noisy low-signal context injection into system prompt
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T18:14:34.539Z
-Stopped at: Completed 22-02-PLAN.md
+Last session: 2026-03-27T18:40:47.881Z
+Stopped at: Completed 23-01-PLAN.md
 Resume file: None
