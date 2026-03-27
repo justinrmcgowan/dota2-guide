@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Ready to plan
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-03-27T17:44:20.008Z"
+status: Ready to execute
+stopped_at: Completed 22-01-PLAN.md
+last_updated: "2026-03-27T18:08:24.240Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 21 — Timing Benchmarks
+**Current focus:** Phase 22 — build-path-intelligence
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
+Phase: 22 (build-path-intelligence) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: Not started
 | Phase 20 P03 | 5min | 1 tasks | 2 files |
 | Phase 21 P01 | 6min | 2 tasks | 6 files |
 | Phase 21 P02 | 4min | 2 tasks | 6 files |
+| Phase 22 P01 | 3 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 21]: Zone classification uses 2% peak threshold for good zone, weighted average for ontrack/late boundary
 - [Phase 21]: Proportional zone widths use bucket count ratio, not time span -- consistent with equal-interval bucket emission
 - [Phase 21]: timingDataMap built with useMemo in ItemTimeline keyed by item_name for O(1) per-item lookup
+- [Phase 22]: Component ordering uses Claude's component_order when valid; heuristic _sort_defensive_first activates on lost lane
+- [Phase 22]: Build paths only generated for items with >= 2 components to avoid noise for base items
+- [Phase 22]: ComponentStep.reason defaults to empty string; build_path_notes is the primary ordering justification
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T17:35:38.544Z
-Stopped at: Completed 21-02-PLAN.md
+Last session: 2026-03-27T18:08:24.238Z
+Stopped at: Completed 22-01-PLAN.md
 Resume file: None
