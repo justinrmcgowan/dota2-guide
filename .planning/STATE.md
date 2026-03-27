@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
-status: Ready to plan
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-27T00:33:25.003Z"
+status: Ready to execute
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-27T00:45:48.649Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 15 — store-consolidation-tech-debt
+**Current focus:** Phase 16 — backend-data-cache
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
+Phase: 16 (backend-data-cache) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 *Updated after each plan completion*
 | Phase 15 P01 | 3min | 1 tasks | 3 files |
 | Phase 15 P02 | 5min | 2 tasks | 6 files |
+| Phase 16 P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent decisions affecting current work:
 - [Phase 15]: Re-export TriggerEvent from refreshStore for backward compat; HERO_PLAYSTYLE_MAP keyed by '{hero_id}-{role}'
 - [Phase 15]: Separate gsiStore.subscribe and recStore.subscribe within consolidated hook to prevent cross-store write cascades
 - [Phase 15]: Playstyle auto-suggest fires only on hero_id change; user manual override persists across GSI ticks
+- [Phase 16]: Frozen dataclasses for cache immutability; atomic swap refresh safe in single-threaded async; RulesEngine consumes DataCache via constructor injection
 
 ### Pending Todos
 
@@ -80,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:27:29.313Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-27T00:45:48.647Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None

@@ -20,9 +20,9 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 
 ### Performance
 
-- [ ] **PERF-01**: In-memory DataCache singleton preloads hero and item data at startup, eliminating per-request DB queries
+- [x] **PERF-01**: In-memory DataCache singleton preloads hero and item data at startup, eliminating per-request DB queries
 - [ ] **PERF-02**: DataCache refreshes atomically on 6h pipeline cycle (coordinated with ResponseCache and RulesEngine invalidation)
-- [ ] **PERF-03**: Context builder and recommendation engine consume DataCache instead of direct DB queries
+- [x] **PERF-03**: Context builder and recommendation engine consume DataCache instead of direct DB queries
 
 ### Integration
 
@@ -73,9 +73,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DESIGN-06 | Phase 17 | Pending |
 | DESIGN-07 | Phase 17 | Pending |
 | DESIGN-08 | Phase 17 | Pending |
-| PERF-01 | Phase 16 | Pending |
+| PERF-01 | Phase 16 | Complete |
 | PERF-02 | Phase 16 | Pending |
-| PERF-03 | Phase 16 | Pending |
+| PERF-03 | Phase 16 | Complete |
 | INT-01 | Phase 15 | Complete |
 | INT-02 | Phase 15 | Complete |
 | INT-03 | Phase 18 | Pending |
