@@ -26,9 +26,9 @@
   --color-tertiary-container: #4E5E6D;
 
   /* === Text / Outline === */
-  --color-on-surface: #E5E2E1;
-  --color-on-surface-variant: #E2BEBA;
-  --color-outline-variant: #5A403E;
+  --color-on-surface: #E0E0E0;
+  --color-on-surface-variant: #8A8A8A;
+  --color-outline-variant: #333333;
 
   /* === Game Colors (PRESERVED) === */
   --color-radiant: #6AFF97;
