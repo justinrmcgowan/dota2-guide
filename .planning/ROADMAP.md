@@ -92,10 +92,10 @@ Plans:
   2. At least 5 new counter-item rules fire correctly: channeled ult interrupts (Eul's), single-target ult saves (Lotus/Linken's), escape counters, high-regen counters (Spirit Vessel), and burst/passive counters (Break items)
   3. Counter-item reasoning in the recommendation response names the specific enemy ability being countered (e.g., "Eul's Scepter to interrupt Witch Doctor's Death Ward")
   4. When enemy performance data is available (KDA from screenshots or GSI), counter-item priority escalates against high-performing enemies
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 20-01-PLAN.md -- Schema extension, test fixtures, ability helpers, threat utility
-- [ ] 20-02-PLAN.md -- Refactor 14 rules to ability-first, add 4 new rule methods, threat escalation
+- [x] 20-02-PLAN.md -- Refactor 14 rules to ability-first, add 4 new rule methods, threat escalation
 - [ ] 20-03-PLAN.md -- Context builder ability annotations for Claude user message
 
 ### Phase 21: Timing Benchmarks
@@ -144,7 +144,7 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
-| 20. Counter-Item Intelligence | v4.0 | 1/3 | In Progress|  |
+| 20. Counter-Item Intelligence | v4.0 | 2/3 | In Progress | - |
 | 21. Timing Benchmarks | v4.0 | 0/0 | Not started | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |
