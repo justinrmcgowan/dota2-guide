@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { useRefreshStore } from "./refreshStore";
-import type { TriggerEvent } from "./refreshStore";
+import type { TriggerEvent } from "../utils/triggerDetection";
 
 describe("refreshStore", () => {
   beforeEach(() => {

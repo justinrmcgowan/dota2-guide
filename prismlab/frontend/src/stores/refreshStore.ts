@@ -1,14 +1,7 @@
 import { create } from "zustand";
+import type { TriggerEvent } from "../utils/triggerDetection";
 
-export interface TriggerEvent {
-  type:
-    | "death"
-    | "gold_swing"
-    | "tower_kill"
-    | "roshan_kill"
-    | "phase_transition";
-  message: string;
-}
+export type { TriggerEvent } from "../utils/triggerDetection";
 
 interface RefreshStore {
   // Cooldown state (D-07, D-08)
