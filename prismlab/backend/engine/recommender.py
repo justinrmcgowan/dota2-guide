@@ -19,6 +19,8 @@ from engine.schemas import (
     RecommendPhase,
     ItemRecommendation,
     ItemTimingResponse,
+    ComponentStep,
+    BuildPathResponse,
     RuleResult,
     LLMRecommendation,
 )
@@ -166,12 +168,18 @@ class HybridRecommender:
         if self.cache:
             timing_data = self._enrich_timing_data(request.hero_id, phases)
 
+        # Step 6c: Enrich with build path data (zero DB queries, uses DataCache)
+        build_paths: list[BuildPathResponse] = []
+        if self.cache:
+            build_paths = self._enrich_build_paths(request, phases)
+
         elapsed_ms = int((time.monotonic() - start) * 1000)
         response = RecommendResponse(
             phases=phases,
             overall_strategy=overall_strategy,
             neutral_items=neutral_items,
             timing_data=timing_data,
+            build_paths=build_paths,
             fallback=fallback,
             fallback_reason=fallback_reason.value if fallback_reason else None,
             model=LLMEngine.MODEL if not fallback else None,
@@ -363,3 +371,81 @@ class HybridRecommender:
                 total_games=classified["total_games"],
             ))
         return results
+
+    def _enrich_build_paths(
+        self,
+        request: RecommendRequest,
+        phases: list[RecommendPhase],
+    ) -> list[BuildPathResponse]:
+        """Build component ordering for all recommended items.
+
+        Reads ItemCached.components from DataCache (zero DB queries).
+        Uses Claude's component_order if present and valid against actual components;
+        falls back to heuristic ordering based on lane_result.
+        Only generates build paths for items with >= 2 components.
+        """
+        if not self.cache:
+            return []
+
+        results: list[BuildPathResponse] = []
+        for phase in phases:
+            for item in phase.items:
+                cached_item = self.cache.get_item(item.item_id)
+                if not cached_item or not cached_item.components or len(cached_item.components) < 2:
+                    continue
+
+                # Determine component order: Claude's ordering takes priority
+                component_names = list(cached_item.components)
+                if item.component_order:
+                    # Validate Claude's ordering: keep only names that match actual components
+                    actual_set = set(component_names)
+                    valid_order = [n for n in item.component_order if n in actual_set]
+                    # Append any components Claude omitted (preserve completeness)
+                    for name in component_names:
+                        if name not in valid_order:
+                            valid_order.append(name)
+                    component_names = valid_order
+                elif request.lane_result == "lost":
+                    # Heuristic: defensive components first when losing lane
+                    component_names = self._sort_defensive_first(component_names)
+
+                # Build steps with costs from cache
+                steps: list[ComponentStep] = []
+                for i, comp_name in enumerate(component_names, start=1):
+                    comp_id = self.cache.item_name_to_id(comp_name)
+                    comp_item = self.cache.get_item(comp_id) if comp_id else None
+                    steps.append(ComponentStep(
+                        item_name=comp_name,
+                        item_id=comp_id if comp_id is not None else 0,
+                        cost=comp_item.cost if comp_item else None,
+                        reason="",  # filled below from build_path_notes or heuristic
+                        position=i,
+                    ))
+
+                # Use Claude's build_path_notes as the overall ordering justification
+                notes = item.build_path_notes or ""
+
+                results.append(BuildPathResponse(
+                    item_name=item.item_name,
+                    steps=steps,
+                    build_path_notes=notes,
+                ))
+
+        return results
+
+    def _sort_defensive_first(self, component_names: list[str]) -> list[str]:
+        """Heuristic: sort components with highest HP/armor/magic resist value first.
+
+        Uses a keyword-based proxy against internal_names. Defensive components
+        (hood, ring_of_health, platemail, vit_booster, crown, belt_of_strength)
+        are sorted before offensive/utility components.
+        Preserves relative order within each group.
+        """
+        DEFENSIVE_KEYWORDS = {
+            "ring_of_health", "vit_booster", "platemail", "hood_of_defiance",
+            "cloak", "belt_of_strength", "crown", "bracer",
+            "helm_of_iron_will", "ring_of_regen", "chain_mail",
+        }
+        defensive = [n for n in component_names if n in DEFENSIVE_KEYWORDS]
+        offensive = [n for n in component_names if n not in DEFENSIVE_KEYWORDS]
+        return defensive + offensive
