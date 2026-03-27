@@ -4,57 +4,37 @@ Evaluates priority-ordered rules against game state. Each rule checks
 hero IDs and role conditions, returning RuleResult objects with
 enemy-hero-naming reasoning strings.
 
-Hero and item references are loaded from DB at startup and cached.
-Call init_lookups() at startup and refresh_lookups() after data refresh.
+Hero and item references come from DataCache -- all lookups are
+synchronous dict reads with zero DB queries.
 
 This is NOT a fallback -- it fires on every request before Claude API.
 """
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from data.models import Hero, Item
+from data.cache import DataCache
 from engine.schemas import RecommendRequest, RuleResult
 
 
 class RulesEngine:
     """Priority-ordered deterministic rules for item recommendations.
 
-    Hero and item references are loaded from DB at startup and cached.
-    Call init_lookups() at startup and refresh_lookups() after data refresh.
+    Hero and item references come from DataCache. All lookups are
+    synchronous dict reads with zero DB queries.
     """
 
-    def __init__(self) -> None:
-        self._hero_name_to_id: dict[str, int] = {}
-        self._hero_id_to_name: dict[int, str] = {}
-        self._item_name_to_id: dict[str, int] = {}
-        self._initialized: bool = False
-
-    async def init_lookups(self, db: AsyncSession) -> None:
-        """Load hero/item mappings from DB. Call at startup and after data refresh."""
-        heroes = (await db.execute(select(Hero))).scalars().all()
-        self._hero_name_to_id = {h.localized_name: h.id for h in heroes}
-        self._hero_id_to_name = {h.id: h.localized_name for h in heroes}
-
-        items = (await db.execute(select(Item))).scalars().all()
-        self._item_name_to_id = {i.internal_name: i.id for i in items}
-        self._initialized = True
-
-    async def refresh_lookups(self, db: AsyncSession) -> None:
-        """Alias for init_lookups -- refresh after data pipeline runs."""
-        await self.init_lookups(db)
+    def __init__(self, cache: DataCache) -> None:
+        self.cache = cache
 
     def _hero_id(self, name: str) -> int | None:
         """Lookup hero ID by localized_name. Returns None if not found."""
-        return self._hero_name_to_id.get(name)
+        return self.cache.hero_name_to_id(name)
 
     def _item_id(self, internal_name: str) -> int | None:
         """Lookup item ID by internal_name. Returns None if not found."""
-        return self._item_name_to_id.get(internal_name)
+        return self.cache.item_name_to_id(internal_name)
 
     def _hero_name(self, hero_id: int) -> str:
         """Lookup hero localized_name by ID. Returns 'the enemy' if not found."""
-        return self._hero_id_to_name.get(hero_id, "the enemy")
+        return self.cache.hero_id_to_name(hero_id)
 
     def _hero_ids(self, *names: str) -> set[int]:
         """Convert hero names to IDs, skipping unknown heroes."""
