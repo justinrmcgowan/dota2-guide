@@ -60,7 +60,7 @@
 
 **Milestone Goal:** Transform Prismlab from an item list generator into a strategic coach -- with data-backed timing windows, ability-aware counter-itemization, build path ordering, and win condition framing.
 
-- [ ] **Phase 19: Data Foundation & Prompt Architecture** - Ability/timing data pipeline, DataCache extensions, system-prompt-vs-user-message data split
+- [x] **Phase 19: Data Foundation & Prompt Architecture** - Ability/timing data pipeline, DataCache extensions, system-prompt-vs-user-message data split (completed 2026-03-27)
 - [ ] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude
 - [ ] **Phase 21: Timing Benchmarks** - Timing windows in UI, urgency indicators, Claude timing reasoning, GSI live comparison
 - [ ] **Phase 22: Build Path Intelligence** - Component ordering, adaptive build paths, GSI gold tracking
@@ -77,10 +77,10 @@
   2. After a data refresh, the DataCache contains item timing benchmarks (hero, item, time bucket, games, win rate) for all heroes with sufficient sample size
   3. The system prompt stays under 5,000 tokens total and contains only reasoning directives -- no dynamic data (timing numbers, ability descriptions, component lists)
   4. Three-cache coherence is maintained: after refresh, DataCache contains fresh ability + timing data, RulesEngine is re-initialized, and ResponseCache is cleared -- atomically
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 19-01-PLAN.md -- Data layer foundation: OpenDota fetch methods, SQLAlchemy models, test scaffolds
-- [ ] 19-02-PLAN.md -- DataCache extension, timing service, refresh pipeline, seed integration
+- [x] 19-01-PLAN.md -- Data layer foundation: OpenDota fetch methods, SQLAlchemy models, test scaffolds
+- [x] 19-02-PLAN.md -- DataCache extension, timing service, refresh pipeline, seed integration
 - [ ] 19-03-PLAN.md -- System prompt v4.0 directives and token budget tests
 
 ### Phase 20: Counter-Item Intelligence
@@ -139,7 +139,7 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 19. Data Foundation & Prompt Architecture | v4.0 | 0/3 | Planned | - |
+| 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 20. Counter-Item Intelligence | v4.0 | 0/0 | Not started | - |
 | 21. Timing Benchmarks | v4.0 | 0/0 | Not started | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
