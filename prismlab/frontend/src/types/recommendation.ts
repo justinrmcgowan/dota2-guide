@@ -21,6 +21,20 @@ export interface ItemTimingData {
   total_games: number;
 }
 
+export interface ComponentStep {
+  item_name: string;     // internal_name (e.g. "ogre_axe") — use with itemImageUrl()
+  item_id: number;       // 0 if component not found in backend cache
+  cost: number | null;   // gold cost from DataCache; null if unknown
+  reason: string;        // empty string (reasoning is in BuildPathResponse.build_path_notes)
+  position: number;      // 1-based purchase order index
+}
+
+export interface BuildPathResponse {
+  item_name: string;         // matches ItemRecommendation.item_name
+  steps: ComponentStep[];    // ordered from first-buy to last-buy
+  build_path_notes: string;  // Claude's overall ordering justification paragraph
+}
+
 export interface ItemRecommendation {
   item_id: number;
   item_name: string;
@@ -57,6 +71,7 @@ export interface RecommendResponse {
   latency_ms: number | null;
   neutral_items: NeutralTierRecommendation[];
   timing_data: ItemTimingData[];
+  build_paths: BuildPathResponse[];
 }
 
 export interface EnemyContext {
