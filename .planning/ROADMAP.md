@@ -114,11 +114,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. After applying a parsed screenshot, enemy KDA and level data appears in the recommendation request sent to the backend
   2. Claude's reasoning references enemy economic state (e.g., "Enemy PA is 8-1-3 and snowballing -- prioritize defensive items") when KDA data is available
-**Plans**: TBD
+**Plans**: 1 plan
 **UI hint**: yes
 
 Plans:
-- [ ] 18-01: TBD
+- [ ] 18-01-PLAN.md — EnemyContext schema, context builder KDA section, system prompt update, frontend store + handleApply wiring
 
 ## Progress
 
