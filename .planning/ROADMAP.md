@@ -68,7 +68,7 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — TriggerEvent dedup, HERO_PLAYSTYLE_MAP data file
+- [x] 15-01-PLAN.md — TriggerEvent dedup, HERO_PLAYSTYLE_MAP data file
 - [ ] 15-02-PLAN.md — useGameIntelligence hook consolidation, App.tsx wiring, old hook deletion
 
 ### Phase 16: Backend Data Cache
@@ -127,7 +127,7 @@ Note: Phase 16 is backend-only and could execute in parallel with Phase 15 (fron
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 15. Store Consolidation & Tech Debt | v3.0 | 0/2 | Not started | - |
+| 15. Store Consolidation & Tech Debt | v3.0 | 1/2 | In Progress|  |
 | 16. Backend Data Cache | v3.0 | 0/2 | Not started | - |
 | 17. Design System Migration | v3.0 | 0/3 | Not started | - |
 | 18. Screenshot KDA Feed-Through | v3.0 | 0/1 | Not started | - |

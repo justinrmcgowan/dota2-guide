@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
-status: planning
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-26T23:48:03.209Z"
-last_activity: 2026-03-26 — Roadmap created for v3.0
+status: Ready to execute
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-27T00:18:42.669Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 15 — Store Consolidation & Tech Debt
+**Current focus:** Phase 15 — store-consolidation-tech-debt
 
 ## Current Position
 
-Phase: 15 of 18 (Store Consolidation & Tech Debt)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-26 — Roadmap created for v3.0
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 15 (store-consolidation-tech-debt) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -54,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: Stable (fast execution)
 
 *Updated after each plan completion*
+| Phase 15 P01 | 3min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -67,6 +62,7 @@ Recent decisions affecting current work:
 - [Phase 12]: TriggerEvent defined locally in refreshStore -- Phase 15 reconciles to single source
 - [Phase 12]: Replicate recommend() logic in useAutoRefresh via direct store access
 - [Phase 11]: Subscribe to gsiStore outside render cycle via useGsiStore.subscribe()
+- [Phase 15]: Re-export TriggerEvent from refreshStore for backward compat; HERO_PLAYSTYLE_MAP keyed by '{hero_id}-{role}'
 
 ### Pending Todos
 
@@ -81,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:48:03.207Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-store-consolidation-tech-debt/15-CONTEXT.md
+Last session: 2026-03-27T00:18:42.667Z
+Stopped at: Completed 15-01-PLAN.md
+Resume file: None

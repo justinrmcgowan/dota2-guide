@@ -27,9 +27,9 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 ### Integration
 
 - [ ] **INT-01**: useGsiSync and useAutoRefresh consolidated into single useGameIntelligence hook with one gsiStore subscription
-- [ ] **INT-02**: Playstyle auto-suggested (first valid option for role) when GSI detects hero and role
+- [x] **INT-02**: Playstyle auto-suggested (first valid option for role) when GSI detects hero and role
 - [ ] **INT-03**: Screenshot-parsed KDA and level data fed into recommendation request context for Claude reasoning
-- [ ] **INT-04**: TriggerEvent interface deduplicated (single source in triggerDetection.ts)
+- [x] **INT-04**: TriggerEvent interface deduplicated (single source in triggerDetection.ts)
 - [ ] **INT-05**: refresh_lookups() session safety fixed (fresh session or atomic swap)
 - [ ] **INT-06**: ResponseCache cleared on data pipeline refresh (coordinated with DataCache)
 
@@ -77,9 +77,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-02 | Phase 16 | Pending |
 | PERF-03 | Phase 16 | Pending |
 | INT-01 | Phase 15 | Pending |
-| INT-02 | Phase 15 | Pending |
+| INT-02 | Phase 15 | Complete |
 | INT-03 | Phase 18 | Pending |
-| INT-04 | Phase 15 | Pending |
+| INT-04 | Phase 15 | Complete |
 | INT-05 | Phase 16 | Pending |
 | INT-06 | Phase 16 | Pending |
 
