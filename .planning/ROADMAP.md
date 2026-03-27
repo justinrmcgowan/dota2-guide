@@ -155,4 +155,4 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | 20. Counter-Item Intelligence | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 21. Timing Benchmarks | v4.0 | 2/2 | Complete    | 2026-03-27 |
 | 22. Build Path Intelligence | v4.0 | 2/2 | Complete    | 2026-03-27 |
-| 23. Win Condition Framing | v4.0 | 2/2 | Complete   | 2026-03-27 |
+| 23. Win Condition Framing | v4.0 | 2/2 | Complete    | 2026-03-27 |
