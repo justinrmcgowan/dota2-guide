@@ -374,10 +374,11 @@ class TestAbilityHelpers:
         assert result is None
 
     async def test_has_undispellable_debuff_witch_doctor(self, engine: RulesEngine):
-        """_has_undispellable_debuff returns Maledict for Witch Doctor (dispellable=No)."""
+        """_has_undispellable_debuff returns an undispellable ability for Witch Doctor."""
         result = engine._has_undispellable_debuff(30)
         assert result is not None
-        assert result.dname == "Maledict"
+        # Witch Doctor has Paralyzing Cask (Strong Dispels Only) and Maledict (No)
+        assert result.dname in ("Paralyzing Cask", "Maledict")
 
 
 class TestCounterTargetField:

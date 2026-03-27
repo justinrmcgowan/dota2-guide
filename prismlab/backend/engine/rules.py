@@ -10,7 +10,7 @@ synchronous dict reads with zero DB queries.
 This is NOT a fallback -- it fires on every request before Claude API.
 """
 
-from data.cache import DataCache
+from data.cache import DataCache, AbilityCached
 from engine.schemas import RecommendRequest, RuleResult
 
 
@@ -39,6 +39,63 @@ class RulesEngine:
     def _hero_ids(self, *names: str) -> set[int]:
         """Convert hero names to IDs, skipping unknown heroes."""
         return {hid for n in names if (hid := self._hero_id(n)) is not None}
+
+    # ------------------------------------------------------------------
+    # Ability query helpers (Phase 20)
+    # ------------------------------------------------------------------
+
+    def _has_channeled_ability(self, hero_id: int) -> AbilityCached | None:
+        """Return a channeled ability for hero, or None."""
+        abilities = self.cache.get_hero_abilities(hero_id)
+        if not abilities:
+            return None
+        for ability in abilities:
+            if ability.is_channeled:
+                return ability
+        return None
+
+    def _has_passive(self, hero_id: int) -> AbilityCached | None:
+        """Return the first passive ability for hero, or None."""
+        abilities = self.cache.get_hero_abilities(hero_id)
+        if not abilities:
+            return None
+        for ability in abilities:
+            if ability.is_passive:
+                return ability
+        return None
+
+    def _has_bkb_piercing(self, hero_id: int) -> list[AbilityCached]:
+        """Return all BKB-piercing abilities for hero."""
+        abilities = self.cache.get_hero_abilities(hero_id)
+        if not abilities:
+            return []
+        return [a for a in abilities if a.bkbpierce]
+
+    def _has_escape_ability(self, hero_id: int) -> AbilityCached | None:
+        """Return an escape-type ability (blink, invis, movement), or None.
+        Uses ability key matching + hero roles as heuristic."""
+        abilities = self.cache.get_hero_abilities(hero_id)
+        if not abilities:
+            return None
+        escape_keywords = {
+            "blink", "invis", "leap", "pounce", "ball_lightning",
+            "waveform", "time_walk", "phase_shift", "illusory_orb",
+            "shukuchi", "windrun", "shadow_dance",
+        }
+        for ability in abilities:
+            if any(kw in ability.key for kw in escape_keywords):
+                return ability
+        return None
+
+    def _has_undispellable_debuff(self, hero_id: int) -> AbilityCached | None:
+        """Return an ability with undispellable or strong-dispel-only debuff, or None."""
+        abilities = self.cache.get_hero_abilities(hero_id)
+        if not abilities:
+            return None
+        for ability in abilities:
+            if ability.dispellable and ability.dispellable.lower() in ("no", "strong dispels only"):
+                return ability
+        return None
 
     def evaluate(self, request: RecommendRequest) -> list[RuleResult]:
         """Run all rules in priority order and collect results."""
