@@ -567,3 +567,73 @@ class TestBuildFull:
 
         assert "Already Recommended" in result
         assert "Magic Stick" in result
+
+
+# ---------------------------------------------------------------------------
+# Ability annotations in opponent lines (D-06, D-07)
+# ---------------------------------------------------------------------------
+
+
+class TestAbilityAnnotations:
+    """Tests for ability annotations in opponent lines (D-06, D-07)."""
+
+    def test_counter_relevant_abilities_wd(self, builder):
+        """Witch Doctor ability annotations include channeled and BKB-pierce."""
+        result = builder._get_counter_relevant_abilities(30)
+        assert "Death Ward" in result
+        assert "channeled" in result
+        assert "BKB-pierce" in result
+
+    def test_counter_relevant_abilities_wd_maledict(self, builder):
+        """Witch Doctor Maledict shows as undispellable."""
+        result = builder._get_counter_relevant_abilities(30)
+        assert "Maledict" in result
+        assert "undispellable" in result
+
+    def test_counter_relevant_abilities_am(self, builder):
+        """Anti-Mage ability annotations include Mana Break (passive)."""
+        result = builder._get_counter_relevant_abilities(1)
+        assert "Mana Break" in result
+        assert "passive" in result
+
+    def test_counter_relevant_abilities_am_excludes_blink(self, builder):
+        """Blink has no counter-relevant properties and is excluded."""
+        result = builder._get_counter_relevant_abilities(1)
+        # Blink should not appear (no channeled, no passive, no BKB-pierce, no undispellable)
+        assert "Blink" not in result
+
+    def test_counter_relevant_abilities_unknown_hero(self, builder):
+        """Hero with no ability data returns empty string."""
+        result = builder._get_counter_relevant_abilities(9999)
+        assert result == ""
+
+    def test_counter_relevant_abilities_cm(self, builder):
+        """Crystal Maiden shows Freezing Field as channeled."""
+        result = builder._get_counter_relevant_abilities(3)
+        assert "Freezing Field" in result
+        assert "channeled" in result
+
+    @pytest.mark.asyncio
+    async def test_opponent_lines_include_threats(self, builder, test_db_session):
+        """Opponent lines include Threats annotation for WD."""
+        with patch(
+            "engine.context_builder.get_or_fetch_matchup",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
+            result = await builder._build_opponent_lines(1, [30], test_db_session)
+        assert "Threats:" in result
+        assert "Death Ward" in result
+
+    @pytest.mark.asyncio
+    async def test_opponent_lines_no_threats_for_hero_without_abilities(self, builder, test_db_session):
+        """Opponent lines omit Threats line for hero without counter-relevant abilities."""
+        # Use a hero ID that exists but has no abilities with counter-relevant props
+        # Hero 9999 has no ability data at all
+        with patch(
+            "engine.context_builder.get_or_fetch_matchup",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
+            result = await builder._build_opponent_lines(1, [9999], test_db_session)
+        assert "Threats:" not in result
