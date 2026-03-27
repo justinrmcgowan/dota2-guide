@@ -23,10 +23,10 @@ Requirements for v4.0 Coaching Intelligence. Each maps to roadmap phases.
 
 ### Counter-Item Intelligence
 
-- [ ] **CNTR-01**: Counter-item rules query ability properties (channeled, passive, BKB-pierce) instead of hardcoded hero ID lists
+- [x] **CNTR-01**: Counter-item rules query ability properties (channeled, passive, BKB-pierce) instead of hardcoded hero ID lists
 - [ ] **CNTR-02**: System includes 5-8 new counter-item rules covering channeled ults, single-target ults, escape abilities, high regen, and burst damage patterns
-- [ ] **CNTR-03**: Counter-item reasoning names the specific enemy ability being countered
-- [ ] **CNTR-04**: Counter-item priority escalates based on enemy performance data (KDA from screenshots/GSI)
+- [x] **CNTR-03**: Counter-item reasoning names the specific enemy ability being countered
+- [x] **CNTR-04**: Counter-item priority escalates based on enemy performance data (KDA from screenshots/GSI)
 
 ### Build Path Intelligence
 
@@ -117,10 +117,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 19 | Complete |
 | DATA-03 | Phase 19 | Complete |
 | DATA-04 | Phase 19 | Complete |
-| CNTR-01 | Phase 20 | Pending |
+| CNTR-01 | Phase 20 | Complete |
 | CNTR-02 | Phase 20 | Pending |
-| CNTR-03 | Phase 20 | Pending |
-| CNTR-04 | Phase 20 | Pending |
+| CNTR-03 | Phase 20 | Complete |
+| CNTR-04 | Phase 20 | Complete |
 | TIME-01 | Phase 21 | Pending |
 | TIME-02 | Phase 21 | Pending |
 | TIME-03 | Phase 21 | Pending |
