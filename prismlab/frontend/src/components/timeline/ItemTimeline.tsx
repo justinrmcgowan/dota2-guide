@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { RecommendResponse, ItemTimingData, BuildPathResponse } from "../../types/recommendation";
 import PhaseCard from "./PhaseCard";
 import NeutralItemSection from "./NeutralItemSection";
+import WinConditionBadge from "./WinConditionBadge";
 import { useGsiStore } from "../../stores/gsiStore";
 import { getCurrentTier } from "../../utils/neutralTiers";
 
@@ -48,9 +49,22 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
           <span className="text-secondary text-xs font-semibold uppercase tracking-wide font-display">
             Strategy
           </span>
+          {data.win_condition && (
+            <WinConditionBadge winCondition={data.win_condition} />
+          )}
           <p className="text-on-surface-variant text-sm italic mt-1">
             {data.overall_strategy}
           </p>
+        </div>
+      )}
+
+      {/* Win condition badge when overall_strategy is absent but win_condition is present (fallback mode) */}
+      {!data.overall_strategy && data.win_condition && (
+        <div className="mb-2">
+          <span className="text-secondary text-xs font-semibold uppercase tracking-wide font-display">
+            Strategy
+          </span>
+          <WinConditionBadge winCondition={data.win_condition} />
         </div>
       )}
 

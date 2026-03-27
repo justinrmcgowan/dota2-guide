@@ -37,6 +37,7 @@ export function useRecommendation() {
       lane: game.lane ?? "safe",
       lane_opponents: game.laneOpponents.map((h) => h.id),
       allies: game.allies.filter(Boolean).map((h) => h!.id),
+      all_opponents: game.opponents.filter(Boolean).map((h) => h!.id),
 
       // Mid-game adaptation fields (only include when present)
       lane_result: game.laneResult,
