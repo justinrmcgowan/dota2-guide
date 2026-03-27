@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Ready to plan
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-27T15:55:13.807Z"
+status: Executing Phase 20
+stopped_at: Phase 20 context gathered
+last_updated: "2026-03-27T15:45:06.916Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 19 — Data Foundation & Prompt Architecture
+**Current focus:** Phase 20 — counter-item-intelligence
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
+Phase: 20 (counter-item-intelligence) — EXECUTING
+Plan: 1 of 3
 
 ## Performance Metrics
 
@@ -45,7 +45,6 @@ Plan: Not started
 | Phase 19 P01 | 5min | 2 tasks | 4 files |
 | Phase 19 P02 | 6min | 2 tasks | 5 files |
 | Phase 19 P03 | 4min | 2 tasks | 2 files |
-| Phase 20 P01 | 6min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -65,7 +64,6 @@ Recent decisions affecting current work:
 - [Phase 19]: Ability refresh is non-fatal try/except -- heroes/items always commit
 - [Phase 19]: v4.0 directives use conditional If guards for optional context sections
 - [Phase 19]: System prompt data boundary enforced: directives only, no dynamic data (token budget <5000, no percentages)
-- [Phase 20]: compute_threat_level in schemas.py co-located with EnemyContext; ability helpers return first match for single-ability queries; escape_keywords uses key substring matching
 
 ### Pending Todos
 
@@ -78,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T15:55:13.805Z
-Stopped at: Completed 20-01-PLAN.md
-Resume file: None
+Last session: 2026-03-27T15:20:09.709Z
+Stopped at: Phase 20 context gathered
+Resume file: .planning/phases/20-counter-item-intelligence/20-CONTEXT.md
