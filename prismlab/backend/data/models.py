@@ -87,6 +87,28 @@ class MatchupData(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
 
 
+class HeroAbilityData(Base):
+    """Cached hero ability constants from OpenDota. One row per hero, abilities_json contains all ability metadata."""
+
+    __tablename__ = "hero_ability_data"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hero_id: Mapped[int] = mapped_column(Integer, ForeignKey("heroes.id"), unique=True)
+    abilities_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
+
+
+class ItemTimingData(Base):
+    """Cached item timing benchmark data per hero from OpenDota scenarios. One row per hero, timings_json contains all item timing buckets."""
+
+    __tablename__ = "item_timing_data"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hero_id: Mapped[int] = mapped_column(Integer, ForeignKey("heroes.id"), unique=True)
+    timings_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
+
+
 class DataRefreshLog(Base):
     """Tracks data refresh pipeline executions for freshness reporting."""
 
