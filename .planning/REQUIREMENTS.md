@@ -9,10 +9,10 @@ Requirements for v4.0 Coaching Intelligence. Each maps to roadmap phases.
 
 ### Data Foundation
 
-- [ ] **DATA-01**: System fetches and caches hero ability metadata (behavior, damage type, BKB-pierce, dispellable) from OpenDota constants
-- [ ] **DATA-02**: System fetches and caches hero-to-ability mapping from OpenDota constants
-- [ ] **DATA-03**: System fetches and caches item timing benchmark data (hero, item, time bucket, games, win rate) from OpenDota scenarios endpoint
-- [ ] **DATA-04**: System prompt restructured — directives stay in system message (~5K token budget), all dynamic data (timing, abilities, components) moves to user message
+- [x] **DATA-01**: System fetches and caches hero ability metadata (behavior, damage type, BKB-pierce, dispellable) from OpenDota constants
+- [x] **DATA-02**: System fetches and caches hero-to-ability mapping from OpenDota constants
+- [x] **DATA-03**: System fetches and caches item timing benchmark data (hero, item, time bucket, games, win rate) from OpenDota scenarios endpoint
+- [x] **DATA-04**: System prompt restructured — directives stay in system message (~5K token budget), all dynamic data (timing, abilities, components) moves to user message
 
 ### Timing Benchmarks
 
@@ -113,10 +113,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 19 | Pending |
-| DATA-02 | Phase 19 | Pending |
-| DATA-03 | Phase 19 | Pending |
-| DATA-04 | Phase 19 | Pending |
+| DATA-01 | Phase 19 | Complete |
+| DATA-02 | Phase 19 | Complete |
+| DATA-03 | Phase 19 | Complete |
+| DATA-04 | Phase 19 | Complete |
 | CNTR-01 | Phase 20 | Pending |
 | CNTR-02 | Phase 20 | Pending |
 | CNTR-03 | Phase 20 | Pending |
