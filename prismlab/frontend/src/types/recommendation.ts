@@ -37,6 +37,14 @@ export interface RecommendResponse {
   neutral_items: NeutralTierRecommendation[];
 }
 
+export interface EnemyContext {
+  hero_id: number;
+  kills?: number | null;
+  deaths?: number | null;
+  assists?: number | null;
+  level?: number | null;
+}
+
 export interface RecommendRequest {
   hero_id: number;
   role: number;
@@ -51,4 +59,5 @@ export interface RecommendRequest {
   damage_profile?: { physical: number; magical: number; pure: number } | null;
   enemy_items_spotted?: string[];
   purchased_items?: number[];
+  enemy_context?: EnemyContext[];
 }

@@ -113,6 +113,18 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
     const uniqueItems = [...new Set(itemNames)];
     gameStore.setEnemyItemsSpotted(uniqueItems);
 
+    // Collect enemy KDA/level context from parsed heroes
+    const enemyCtx = parsedHeroes
+      .filter((h) => h.hero_id !== null)
+      .map((h) => ({
+        hero_id: h.hero_id!,
+        kills: h.kills,
+        deaths: h.deaths,
+        assists: h.assists,
+        level: h.level,
+      }));
+    gameStore.setEnemyContext(enemyCtx);
+
     // Show toast
     useRefreshStore
       .getState()

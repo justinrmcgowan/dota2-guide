@@ -47,6 +47,8 @@ export function useRecommendation() {
           : undefined,
       purchased_items:
         purchasedItemIds.length > 0 ? purchasedItemIds : undefined,
+      enemy_context:
+        game.enemyContext.length > 0 ? game.enemyContext : undefined,
     };
 
     try {

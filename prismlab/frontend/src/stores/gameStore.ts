@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Hero } from "../types/hero";
+import type { EnemyContext } from "../types/recommendation";
 import { PLAYSTYLE_OPTIONS } from "../utils/constants";
 
 interface GameStore {
@@ -16,6 +17,7 @@ interface GameStore {
   laneResult: "won" | "even" | "lost" | null;
   damageProfile: { physical: number; magical: number; pure: number } | null;
   enemyItemsSpotted: string[];
+  enemyContext: EnemyContext[];
 
   selectHero: (hero: Hero) => void;
   clearHero: () => void;
@@ -39,6 +41,7 @@ interface GameStore {
   }) => void;
   toggleEnemyItem: (itemName: string) => void;
   setEnemyItemsSpotted: (items: string[]) => void;
+  setEnemyContext: (ctx: EnemyContext[]) => void;
   clearMidGameState: () => void;
 }
 
@@ -54,6 +57,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   laneResult: null,
   damageProfile: null,
   enemyItemsSpotted: [],
+  enemyContext: [],
 
   selectHero: (hero) => set({ selectedHero: hero }),
   clearHero: () => set({ selectedHero: null }),
@@ -139,6 +143,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   setEnemyItemsSpotted: (items) => set({ enemyItemsSpotted: items }),
 
+  setEnemyContext: (ctx) => set({ enemyContext: ctx }),
+
   clearMidGameState: () =>
-    set({ laneResult: null, damageProfile: null, enemyItemsSpotted: [] }),
+    set({ laneResult: null, damageProfile: null, enemyItemsSpotted: [], enemyContext: [] }),
 }));
