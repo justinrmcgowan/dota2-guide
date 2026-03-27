@@ -61,7 +61,7 @@
 **Milestone Goal:** Transform Prismlab from an item list generator into a strategic coach -- with data-backed timing windows, ability-aware counter-itemization, build path ordering, and win condition framing.
 
 - [x] **Phase 19: Data Foundation & Prompt Architecture** - Ability/timing data pipeline, DataCache extensions, system-prompt-vs-user-message data split (completed 2026-03-27)
-- [ ] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude
+- [x] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude (completed 2026-03-27)
 - [ ] **Phase 21: Timing Benchmarks** - Timing windows in UI, urgency indicators, Claude timing reasoning, GSI live comparison
 - [ ] **Phase 22: Build Path Intelligence** - Component ordering, adaptive build paths, GSI gold tracking
 - [ ] **Phase 23: Win Condition Framing** - Draft classification, strategy anchoring, enemy win condition assessment
@@ -92,7 +92,7 @@ Plans:
   2. At least 5 new counter-item rules fire correctly: channeled ult interrupts (Eul's), single-target ult saves (Lotus/Linken's), escape counters, high-regen counters (Spirit Vessel), and burst/passive counters (Break items)
   3. Counter-item reasoning in the recommendation response names the specific enemy ability being countered (e.g., "Eul's Scepter to interrupt Witch Doctor's Death Ward")
   4. When enemy performance data is available (KDA from screenshots or GSI), counter-item priority escalates against high-performing enemies
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 20-01-PLAN.md -- Schema extension, test fixtures, ability helpers, threat utility
 - [ ] 20-02-PLAN.md -- Refactor 14 rules to ability-first, add 4 new rule methods, threat escalation
@@ -144,7 +144,7 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
-| 20. Counter-Item Intelligence | v4.0 | 2/3 | In Progress|  |
+| 20. Counter-Item Intelligence | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 21. Timing Benchmarks | v4.0 | 0/0 | Not started | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |
