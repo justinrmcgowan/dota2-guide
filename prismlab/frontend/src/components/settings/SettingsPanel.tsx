@@ -38,21 +38,21 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — blood-glass (D-17) */}
       <div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-primary-container/25 backdrop-blur-md z-40"
         onClick={onClose}
         data-testid="settings-backdrop"
       />
-      {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-96 bg-bg-secondary border-l border-bg-elevated z-50 overflow-y-auto shadow-2xl">
+      {/* Panel — surface-container-highest with ambient crimson glow (D-09, D-15) */}
+      <div className="fixed right-0 top-0 h-full w-96 bg-surface-container-highest z-50 overflow-y-auto shadow-glow">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-cyan-accent">Settings</h2>
+            <h2 className="text-lg font-bold text-secondary font-display">Settings</h2>
             <button
               onClick={onClose}
-              className="text-text-muted hover:text-gray-100 transition-colors"
+              className="text-on-surface-variant hover:text-on-surface transition-colors"
               aria-label="Close settings"
             >
               <svg
@@ -68,15 +68,15 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 
           {/* GSI Configuration Section */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wider">
               Game State Integration
             </h3>
 
-            {/* IP Input */}
+            {/* IP Input — Sacrificial Table pattern (D-05) */}
             <div>
               <label
                 htmlFor="gsi-host-input"
-                className="block text-sm text-text-muted mb-1"
+                className="block text-sm text-on-surface-variant mb-1"
               >
                 Your PC's IP address
               </label>
@@ -86,62 +86,62 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
                 placeholder="e.g. 192.168.1.100"
-                className="w-full px-3 py-2 bg-bg-primary border border-bg-elevated rounded text-gray-100 placeholder-gray-600 focus:border-cyan-accent focus:outline-none text-sm"
+                className="w-full px-3 py-2 bg-surface-container-lowest border-b border-outline-variant/15 text-on-surface placeholder-on-surface-variant/40 focus:border-primary focus:outline-none text-sm"
               />
             </div>
 
-            {/* Port Display */}
+            {/* Port Display — Sacrificial Table pattern */}
             <div>
-              <label className="block text-sm text-text-muted mb-1">
+              <label className="block text-sm text-on-surface-variant mb-1">
                 Port
               </label>
-              <div className="px-3 py-2 bg-bg-primary border border-bg-elevated rounded text-gray-400 text-sm">
+              <div className="px-3 py-2 bg-surface-container-lowest border-b border-outline-variant/15 text-on-surface-variant text-sm">
                 8421
               </div>
             </div>
 
-            {/* Download Button */}
+            {/* Download Button — Blade pattern (D-05) */}
             <button
               onClick={handleDownload}
               disabled={!host.trim() || downloading}
-              className="w-full py-2 px-4 bg-cyan-accent/20 text-cyan-accent border border-cyan-accent/30 rounded font-medium text-sm hover:bg-cyan-accent/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-2 px-4 bg-primary-container text-on-surface border border-outline-variant/15 font-medium text-sm hover:outline hover:outline-1 hover:outline-[#AA8986] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {downloading ? "Generating..." : "Download .cfg file"}
             </button>
 
-            {/* Step-by-step Instructions (D-04) */}
+            {/* Step-by-step Instructions */}
             <div className="mt-6 space-y-3">
-              <h4 className="text-sm font-semibold text-gray-300">
+              <h4 className="text-sm font-semibold text-on-surface">
                 Setup Instructions
               </h4>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-text-muted">
+              <ol className="list-decimal list-inside space-y-2 text-sm text-on-surface-variant">
                 <li>
                   Enter your PC's local IP address above (find it with{" "}
-                  <code className="text-cyan-accent bg-bg-primary px-1 rounded">
+                  <code className="text-primary bg-surface-container-lowest px-1">
                     ipconfig
                   </code>{" "}
                   on Windows or{" "}
-                  <code className="text-cyan-accent bg-bg-primary px-1 rounded">
+                  <code className="text-primary bg-surface-container-lowest px-1">
                     ifconfig
                   </code>{" "}
                   on Mac/Linux)
                 </li>
                 <li>
                   Click{" "}
-                  <strong className="text-gray-300">
+                  <strong className="text-on-surface">
                     Download .cfg file
                   </strong>
                 </li>
                 <li>
                   Place the downloaded file in:
-                  <code className="block mt-1 text-cyan-accent bg-bg-primary px-2 py-1 rounded text-xs break-all">
+                  <code className="block mt-1 text-primary bg-surface-container-lowest px-2 py-1 text-xs break-all">
                     Steam/steamapps/common/dota 2
                     beta/game/dota/cfg/gamestate_integration/
                   </code>
                 </li>
                 <li>
                   Create the{" "}
-                  <code className="text-cyan-accent bg-bg-primary px-1 rounded">
+                  <code className="text-primary bg-surface-container-lowest px-1">
                     gamestate_integration
                   </code>{" "}
                   folder if it doesn't exist

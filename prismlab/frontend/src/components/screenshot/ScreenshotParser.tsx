@@ -204,26 +204,26 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — blood-glass (D-17) */}
       <div
-        className="fixed inset-0 bg-black/60 z-40"
+        className="fixed inset-0 bg-primary-container/30 backdrop-blur-md z-40"
         onClick={() => useScreenshotStore.getState().closeModal()}
       />
 
       {/* Modal container */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="max-w-3xl w-full bg-bg-secondary rounded-lg shadow-2xl max-h-[85vh] overflow-y-auto"
+          className="max-w-3xl w-full bg-surface-container-highest shadow-glow max-h-[85vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-bg-elevated">
-            <h2 className="text-lg font-bold text-cyan-accent">
+          {/* Header — No-Line Rule: removed border-b */}
+          <div className="flex items-center justify-between px-5 py-4">
+            <h2 className="text-lg font-bold text-secondary font-display">
               Screenshot Parser
             </h2>
             <button
               onClick={() => useScreenshotStore.getState().closeModal()}
-              className="text-gray-500 hover:text-gray-100 transition-colors"
+              className="text-on-surface-variant hover:text-on-surface transition-colors"
               aria-label="Close"
             >
               <svg
@@ -250,10 +250,10 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-cyan-accent transition-colors"
+                className="border-2 border-dashed border-outline-variant p-8 text-center cursor-pointer hover:border-primary transition-colors"
               >
                 <svg
-                  className="mx-auto mb-3 text-gray-500"
+                  className="mx-auto mb-3 text-on-surface-variant"
                   width="40"
                   height="40"
                   viewBox="0 0 24 24"
@@ -267,10 +267,10 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <path d="M21 15l-5-5L5 21" />
                 </svg>
-                <p className="text-gray-400 text-sm">
+                <p className="text-on-surface-variant text-sm">
                   Drag & drop a screenshot here, or click to browse
                 </p>
-                <p className="text-gray-600 text-xs mt-1">
+                <p className="text-on-surface-variant/50 text-xs mt-1">
                   Supports PNG, JPG, WebP
                 </p>
                 <input
@@ -289,7 +289,7 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
                 <img
                   src={`data:${mimeType};base64,${imageData}`}
                   alt="Pasted screenshot"
-                  className="max-h-48 rounded-lg object-contain border border-bg-elevated"
+                  className="max-h-48 object-contain"
                 />
               </div>
             )}
@@ -297,8 +297,8 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
             {/* Loading state */}
             {isLoading && (
               <div className="flex flex-col items-center py-6 gap-3">
-                <div className="w-8 h-8 border-2 border-cyan-accent border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-gray-400">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-on-surface-variant">
                   Analyzing scoreboard...
                 </p>
               </div>
@@ -306,11 +306,11 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
 
             {/* Error state */}
             {error && !isLoading && (
-              <div className="bg-dire/10 border border-dire/30 rounded-lg px-4 py-3 space-y-2">
+              <div className="bg-dire/10 border border-dire/30 px-4 py-3 space-y-2">
                 <p className="text-sm text-dire">{error}</p>
                 <button
                   onClick={handleRetry}
-                  className="text-xs text-cyan-accent hover:text-cyan-accent/80 underline"
+                  className="text-xs text-primary hover:text-primary/80 underline"
                 >
                   Try Again
                 </button>
@@ -320,7 +320,7 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
             {/* Parse empty result */}
             {parseEmpty && parseAttempted.current && (
               <div className="text-center py-4">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-on-surface-variant">
                   No heroes detected in screenshot
                 </p>
               </div>
@@ -351,24 +351,24 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
 
             {/* Latency indicator */}
             {latencyMs !== null && !isLoading && (
-              <p className="text-xs text-gray-600 text-right">
+              <p className="text-xs text-on-surface-variant/50 text-right">
                 Parsed in {latencyMs}ms
               </p>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between px-5 py-4 border-t border-bg-elevated">
+          {/* Footer — No-Line Rule: removed border-t */}
+          <div className="flex items-center justify-between px-5 py-4">
             <button
               onClick={() => useScreenshotStore.getState().closeModal()}
-              className="px-4 py-2 text-sm text-gray-400 hover:text-gray-100 bg-bg-elevated rounded-md transition-colors"
+              className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface bg-surface-container-high transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleApply}
               disabled={parsedHeroes.length === 0 || isLoading}
-              className="px-4 py-2 text-sm font-medium text-bg-primary bg-cyan-accent rounded-md hover:bg-cyan-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-on-surface bg-primary-container hover:outline hover:outline-1 hover:outline-[#AA8986] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Apply to Build
             </button>

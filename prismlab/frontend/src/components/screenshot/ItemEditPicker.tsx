@@ -60,7 +60,7 @@ function ItemEditPicker({ heroIdx, onClose, items }: ItemEditPickerProps) {
   return (
     <div
       ref={containerRef}
-      className="absolute top-full left-0 z-50 mt-1 w-64 bg-bg-secondary border border-bg-elevated rounded-lg shadow-xl overflow-hidden"
+      className="absolute top-full left-0 z-50 mt-1 w-64 bg-surface-container-highest shadow-glow overflow-hidden"
     >
       <input
         ref={inputRef}
@@ -68,7 +68,7 @@ function ItemEditPicker({ heroIdx, onClose, items }: ItemEditPickerProps) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search items..."
-        className="w-full px-3 py-2 bg-bg-primary border-b border-bg-elevated text-gray-100 placeholder-gray-600 text-sm focus:outline-none focus:border-cyan-accent"
+        className="w-full px-3 py-2 bg-surface-container-lowest border-b border-outline-variant/15 text-on-surface placeholder-on-surface-variant/40 text-sm focus:outline-none focus:border-primary"
       />
       {filtered.length > 0 && (
         <ul className="max-h-48 overflow-y-auto">
@@ -76,7 +76,7 @@ function ItemEditPicker({ heroIdx, onClose, items }: ItemEditPickerProps) {
             <li key={item.internal_name}>
               <button
                 onClick={() => handleSelect(item)}
-                className="w-full px-3 py-1.5 text-left text-sm text-gray-200 hover:bg-bg-elevated transition-colors"
+                className="w-full px-3 py-1.5 text-left text-sm text-on-surface hover:bg-surface-container-high transition-colors"
               >
                 {item.name}
               </button>
@@ -85,7 +85,7 @@ function ItemEditPicker({ heroIdx, onClose, items }: ItemEditPickerProps) {
         </ul>
       )}
       {search.trim() && filtered.length === 0 && (
-        <div className="px-3 py-2 text-xs text-gray-500">No items found</div>
+        <div className="px-3 py-2 text-xs text-on-surface-variant">No items found</div>
       )}
     </div>
   );

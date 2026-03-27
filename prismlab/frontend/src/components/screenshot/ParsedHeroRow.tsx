@@ -26,8 +26,8 @@ function ParsedHeroRow({ hero, heroIdx, onAddItem }: ParsedHeroRowProps) {
       : null;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 bg-bg-elevated rounded-lg">
-      {/* Hero portrait */}
+    <div className="flex items-center gap-3 px-3 py-2 bg-surface-container-high">
+      {/* Hero portrait — keep rounded per D-05 (functional: portrait) */}
       {heroPortrait ? (
         <img
           src={heroPortrait}
@@ -35,17 +35,17 @@ function ParsedHeroRow({ hero, heroIdx, onAddItem }: ParsedHeroRowProps) {
           className="w-10 h-10 rounded object-cover shrink-0"
         />
       ) : (
-        <div className="w-10 h-10 rounded bg-gray-700 shrink-0" />
+        <div className="w-10 h-10 rounded bg-surface-container shrink-0" />
       )}
 
       {/* Hero info column */}
       <div className="min-w-0 shrink-0">
-        <div className="text-sm font-medium text-gray-100 truncate max-w-[100px]">
+        <div className="text-sm font-medium text-on-surface truncate max-w-[100px]">
           {hero.hero_name}
         </div>
-        {kda && <div className="text-xs text-gray-400">{kda}</div>}
+        {kda && <div className="text-xs text-on-surface-variant">{kda}</div>}
         {hero.level !== null && (
-          <div className="text-xs text-gray-500">Lv {hero.level}</div>
+          <div className="text-xs text-on-surface-variant/70">Lv {hero.level}</div>
         )}
       </div>
 
@@ -74,7 +74,7 @@ function ParsedHeroRow({ hero, heroIdx, onAddItem }: ParsedHeroRowProps) {
                       : ""
                 }`}
               />
-              {/* Low confidence badge */}
+              {/* Low confidence badge — keep rounded-full per D-05 (badge dot) */}
               {isLow && (
                 <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-orange-400 text-black text-[8px] font-bold rounded-full flex items-center justify-center">
                   ?
@@ -102,7 +102,7 @@ function ParsedHeroRow({ hero, heroIdx, onAddItem }: ParsedHeroRowProps) {
         {hero.items.length < 6 && (
           <button
             onClick={() => onAddItem(heroIdx)}
-            className="w-8 h-8 rounded border border-dashed border-gray-600 text-gray-500 hover:border-cyan-accent hover:text-cyan-accent flex items-center justify-center text-lg transition-colors"
+            className="w-8 h-8 border border-dashed border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary flex items-center justify-center text-lg transition-colors"
             title="Add item"
           >
             +
@@ -113,7 +113,7 @@ function ParsedHeroRow({ hero, heroIdx, onAddItem }: ParsedHeroRowProps) {
       {/* Remove hero button */}
       <button
         onClick={() => useScreenshotStore.getState().removeHero(heroIdx)}
-        className="shrink-0 p-1 text-gray-600 hover:text-dire transition-colors"
+        className="shrink-0 p-1 text-on-surface-variant/50 hover:text-dire transition-colors"
         title="Remove hero"
       >
         <svg
