@@ -91,7 +91,7 @@ async def refresh_all_data() -> DataRefreshLog:
                     cost=info.get("cost"),
                     components=info.get("components"),
                     is_recipe=internal_name.startswith("recipe_"),
-                    is_neutral=info.get("qual") == "rare",
+                    is_neutral=info.get("qual") == "rare" and not info.get("cost"),
                     tier=info.get("tier"),
                     bonuses=bonuses,
                     active_desc=active_desc,
