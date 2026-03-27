@@ -15,8 +15,8 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 - [x] **DESIGN-04**: Ambient crimson glow shadows replace drop shadows on floating elements
 - [x] **DESIGN-05**: Gold left-accent strips on hero/legendary item cards
 - [x] **DESIGN-06**: "Blood-glass" backdrop-blur overlays on tactical overlays (modals, settings panel, screenshot parser)
-- [ ] **DESIGN-07**: Parchment noise texture overlay on base background
-- [ ] **DESIGN-08**: All existing components pass visual audit against DESIGN.md spec (no rounded corners, no blue links, no #FFFFFF)
+- [x] **DESIGN-07**: Parchment noise texture overlay on base background
+- [x] **DESIGN-08**: All existing components pass visual audit against DESIGN.md spec (no rounded corners, no blue links, no #FFFFFF)
 
 ### Performance
 
@@ -71,8 +71,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DESIGN-04 | Phase 17 | Complete |
 | DESIGN-05 | Phase 17 | Complete |
 | DESIGN-06 | Phase 17 | Complete |
-| DESIGN-07 | Phase 17 | Pending |
-| DESIGN-08 | Phase 17 | Pending |
+| DESIGN-07 | Phase 17 | Complete |
+| DESIGN-08 | Phase 17 | Complete |
 | PERF-01 | Phase 16 | Complete |
 | PERF-02 | Phase 16 | Complete |
 | PERF-03 | Phase 16 | Complete |

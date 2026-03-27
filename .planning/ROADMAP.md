@@ -51,7 +51,7 @@
 
 - [x] **Phase 15: Store Consolidation & Tech Debt** - Merge GSI hooks, deduplicate types, auto-suggest playstyle (completed 2026-03-27)
 - [x] **Phase 16: Backend Data Cache** - In-memory hero/item cache, three-layer cache coordination, session safety (completed 2026-03-27)
-- [ ] **Phase 17: Design System Migration** - Tactical Relic Editorial retheme across all components (see DESIGN.md)
+- [x] **Phase 17: Design System Migration** - Tactical Relic Editorial retheme across all components (see DESIGN.md) (completed 2026-03-27)
 - [ ] **Phase 18: Screenshot KDA Feed-Through** - Feed parsed KDA/level data into recommendation context
 
 ## Phase Details
@@ -105,7 +105,7 @@ Plans:
 - [x] 17-02-PLAN.md — Layout shell (App, Header, Sidebar, MainPanel) and draft-input components migration
 - [x] 17-03-PLAN.md — Timeline components (ItemCard, PhaseCard, NeutralItems) and game-state components migration
 - [x] 17-04-PLAN.md — Floating overlays (SettingsPanel, ScreenshotParser, Toast, ErrorBanner) with blood-glass effects
-- [ ] 17-05-PLAN.md — Parchment noise texture, deprecated token removal, full visual audit and human verification
+- [x] 17-05-PLAN.md — Parchment noise texture, deprecated token removal, full visual audit and human verification
 
 ### Phase 18: Screenshot KDA Feed-Through
 **Goal**: Parsed enemy KDA and level data from screenshots enriches Claude's recommendation reasoning about enemy power levels and timing windows
@@ -131,5 +131,5 @@ Note: Phase 16 is backend-only and could execute in parallel with Phase 15 (fron
 |-------|-----------|----------------|--------|-----------|
 | 15. Store Consolidation & Tech Debt | v3.0 | 2/2 | Complete    | 2026-03-27 |
 | 16. Backend Data Cache | v3.0 | 2/2 | Complete    | 2026-03-27 |
-| 17. Design System Migration | v3.0 | 4/5 | In Progress|  |
+| 17. Design System Migration | v3.0 | 5/5 | Complete   | 2026-03-27 |
 | 18. Screenshot KDA Feed-Through | v3.0 | 0/1 | Not started | - |

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
-status: Ready to execute
-stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-03-27T01:37:45.251Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 17-05-PLAN.md (automated tasks; visual verification checkpoint pending)
+last_updated: "2026-03-27T01:45:21.796Z"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -56,6 +56,7 @@ Plan: 5 of 5
 | Phase 17 P03 | 5min | 2 tasks | 12 files |
 | Phase 17 P04 | 5min | 2 tasks | 6 files |
 | Phase 17 P02 | 6min | 2 tasks | 16 files |
+| Phase 17 P05 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,7 @@ Recent decisions affecting current work:
 - [Phase 17]: Blood-glass backdrop uses primary-container/25 for slide-over, /30 for modal; toast avoids backdrop-blur per Pitfall 13
 - [Phase 17]: Ghost border on toggle buttons: outline-variant/15 inactive, primary/40 active for WCAG state differentiation
 - [Phase 17]: Sidebar CTA uses bg-surface-container-low tonal shift instead of border-t per No-Line Rule
+- [Phase 17]: SVG feTurbulence noise via data URI for zero-dependency parchment texture at 3.5% opacity
 
 ### Pending Todos
 
@@ -95,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T01:37:45.248Z
-Stopped at: Completed 17-02-PLAN.md
+Last session: 2026-03-27T01:45:21.793Z
+Stopped at: Completed 17-05-PLAN.md (automated tasks; visual verification checkpoint pending)
 Resume file: None
