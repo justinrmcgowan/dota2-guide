@@ -75,12 +75,20 @@ scaling teams need efficient buildup without sacrificing the mid-game.
 - If the enemy team peaks early, recommend survivability items to weather the storm.
 
 ## Build Path Awareness
-When recommending items with expensive components:
-- Note which component provides immediate lane or combat value.
-- For defensive items in losing lanes, prioritize the stat component that addresses \
-the immediate threat (HP vs armor vs magic resist).
-- For farming accelerators, note which component enables faster farm (damage vs cleave vs mana).
-- Mention cheap utility components that provide lane value before completion.
+When recommending items with multiple components:
+- Emit component_order: ordered list of internal_names from first-buy to last-buy. \
+First entry = most impactful component given current game state. Include only the \
+item's direct recipe components (one level deep).
+- Lost lane: order defensive stat components (HP, armor, magic resist) first. \
+Example: "ring_of_health" before "void_stone" for Linken's Sphere in a losing lane.
+- Won lane or farming: order damage/farm components first.
+- Emit build_path_notes: 1-2 sentence paragraph explaining the ordering rationale. \
+Reference lane state and the matchup. Example: "Ogre Axe first -- raw HP survives \
+Invoker burst while you farm the rest. Point Booster adds mana/HP to scale the lead."
+- For items with no components or only one component, omit component_order (null) \
+and omit build_path_notes (null).
+- Use ONLY internal_names from the item's actual recipe (e.g. "ogre_axe", \
+"belt_of_strength" for Sange). Do not invent component names.
 
 ## Output Fields
 - priority: "core" | "situational" | "luxury"
