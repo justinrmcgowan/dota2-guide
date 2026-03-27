@@ -20,6 +20,7 @@ from data.matchup_service import (
 from data.opendota_client import OpenDotaClient
 from engine.schemas import EnemyContext, RecommendRequest, RuleResult
 from engine.timing_zones import classify_timing_zones
+from engine.win_condition import classify_draft, WinConditionResult
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,11 @@ class ContextBuilder:
         timing_section = self._build_timing_section(request.hero_id)
         if timing_section:
             sections.append(f"## Item Timing Benchmarks\n{timing_section}")
+
+        # 6c. Team strategy section (WCON-01, WCON-04)
+        strategy_section = self._build_team_strategy_section(request)
+        if strategy_section:
+            sections.append(f"## Team Strategy\n{strategy_section}")
 
         # 7b. Get neutral items catalog (from cache -- zero DB queries)
         neutral_catalog = self._build_neutral_catalog()
@@ -470,4 +476,35 @@ class ContextBuilder:
 
         if not lines:
             return ""
+        return "\n".join(lines)
+
+    def _build_team_strategy_section(self, request: "RecommendRequest") -> str:
+        """Build ## Team Strategy section for Claude context.
+
+        Classifies allied team (from request.allies + request.hero_id) and
+        enemy team (from request.all_opponents) into macro archetypes.
+        Returns empty string if either team has fewer than 3 heroes.
+
+        WCON-01: Allied archetype classification
+        WCON-04: Enemy archetype classification using full all_opponents list
+        """
+        # Allied team: player hero + allies (up to 5 total)
+        allied_ids = [request.hero_id] + list(request.allies)
+        allied_result = classify_draft(allied_ids, self.cache)
+
+        # Enemy team: full opponents list (not lane_opponents -- WCON-04)
+        enemy_result = classify_draft(list(request.all_opponents), self.cache)
+
+        if allied_result is None and enemy_result is None:
+            return ""
+
+        lines: list[str] = []
+        if allied_result:
+            confidence_note = f" ({allied_result.confidence} confidence)"
+            lines.append(f"Allied strategy: {allied_result.archetype}{confidence_note}")
+
+        if enemy_result:
+            confidence_note = f" ({enemy_result.confidence} confidence)"
+            lines.append(f"Enemy strategy: {enemy_result.archetype}{confidence_note}")
+
         return "\n".join(lines)
