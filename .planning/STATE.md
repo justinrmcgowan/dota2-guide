@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Ready to execute
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-03-27T18:40:47.883Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 23-02-PLAN.md
+last_updated: "2026-03-27T18:46:03.182Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 2 of 2
 | Phase 22 P01 | 3 | 3 tasks | 3 files |
 | Phase 22 P02 | 5 | 2 tasks | 4 files |
 | Phase 23-win-condition-framing P01 | 4 | 2 tasks | 5 files |
+| Phase 23-win-condition-framing P02 | 6min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 23-win-condition-framing]: win_condition is post-LLM enrichment only -- never in LLM_OUTPUT_SCHEMA, never Claude-generated
 - [Phase 23-win-condition-framing]: all_opponents (max 5) separate from lane_opponents (max 2) -- draft classification vs matchup rules
 - [Phase 23-win-condition-framing]: MIN_HEROES=3 threshold prevents noisy low-signal context injection into system prompt
+- [Phase 23-win-condition-framing]: WinConditionBadge uses triangle glyphs (HTML entities) for allied/enemy directionality -- zero-dependency, no emojis
+- [Phase 23-win-condition-framing]: Confidence expressed via opacity-100/75/50 only -- show-dont-tell per DESIGN.md, no text labels
+- [Phase 23-win-condition-framing]: all_opponents uses game.opponents (full 5 filtered for nulls); lane_opponents uses game.laneOpponents -- distinct concerns maintained
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T18:40:47.881Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-03-27T18:46:03.179Z
+Stopped at: Completed 23-02-PLAN.md
 Resume file: None
