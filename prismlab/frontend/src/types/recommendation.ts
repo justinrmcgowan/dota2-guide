@@ -35,6 +35,13 @@ export interface BuildPathResponse {
   build_path_notes: string;  // Claude's overall ordering justification paragraph
 }
 
+export interface WinConditionResponse {
+  allied_archetype: string;           // "teamfight" | "split-push" | "pick-off" | "deathball" | "late-game scale"
+  allied_confidence: "high" | "medium" | "low";
+  enemy_archetype: string | null;     // null if enemy team < 3 heroes
+  enemy_confidence: "high" | "medium" | "low" | null;
+}
+
 export interface ItemRecommendation {
   item_id: number;
   item_name: string;
@@ -72,6 +79,7 @@ export interface RecommendResponse {
   neutral_items: NeutralTierRecommendation[];
   timing_data: ItemTimingData[];
   build_paths: BuildPathResponse[];
+  win_condition?: WinConditionResponse | null;
 }
 
 export interface EnemyContext {
@@ -90,6 +98,7 @@ export interface RecommendRequest {
   lane: "safe" | "off" | "mid";
   lane_opponents: number[];
   allies: number[];
+  all_opponents?: number[];  // full 5-hero enemy team for win condition classification
 
   // Mid-game adaptation fields (all optional for backward compatibility)
   lane_result?: "won" | "even" | "lost" | null;
