@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
-status: Ready to execute
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-27T00:18:42.669Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-27T00:27:29.315Z"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 2 of 2
 
 *Updated after each plan completion*
 | Phase 15 P01 | 3min | 1 tasks | 3 files |
+| Phase 15 P02 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [Phase 12]: Replicate recommend() logic in useAutoRefresh via direct store access
 - [Phase 11]: Subscribe to gsiStore outside render cycle via useGsiStore.subscribe()
 - [Phase 15]: Re-export TriggerEvent from refreshStore for backward compat; HERO_PLAYSTYLE_MAP keyed by '{hero_id}-{role}'
+- [Phase 15]: Separate gsiStore.subscribe and recStore.subscribe within consolidated hook to prevent cross-store write cascades
+- [Phase 15]: Playstyle auto-suggest fires only on hero_id change; user manual override persists across GSI ticks
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:18:42.667Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-27T00:27:29.313Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
