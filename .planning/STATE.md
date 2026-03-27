@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
 status: Ready to execute
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-27T01:27:48.902Z"
+stopped_at: Completed 17-04-PLAN.md
+last_updated: "2026-03-27T01:35:52.906Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 9
-  completed_plans: 5
+  completed_plans: 7
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 17 (design-system-migration) — EXECUTING
-Plan: 2 of 5
+Plan: 4 of 5
 
 ## Performance Metrics
 
@@ -53,6 +53,8 @@ Plan: 2 of 5
 | Phase 16 P01 | 3min | 2 tasks | 2 files |
 | Phase 16 P02 | 12min | 2 tasks | 11 files |
 | Phase 17 P01 | 2min | 2 tasks | 4 files |
+| Phase 17 P03 | 5min | 2 tasks | 12 files |
+| Phase 17 P04 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -73,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 16]: AsyncSession retained in context_builder for matchup/popularity methods; ResponseCache.clear() as clean public API; fresh session for DataCache.refresh in pipeline (INT-05)
 - [Phase 17]: Deprecated color aliases (cyan-accent, bg-primary, bg-secondary, bg-elevated, text-muted) remapped to new palette equivalents as bridge tokens for safe incremental migration
 - [Phase 17]: All --radius-* tokens set to explicit 0px for reliable Tailwind v4 resolution; Manrope replaces JetBrains Mono for stats with tnum feature settings
+- [Phase 17]: Core and luxury items both use secondary-fixed gold accent strip per DESIGN.md D-10 Monolith card pattern
+- [Phase 17]: LiveStatsBar uses tertiary-container Tactical HUD background to differentiate tactical data from editorial content
+- [Phase 17]: Blood-glass backdrop uses primary-container/25 for slide-over, /30 for modal; toast avoids backdrop-blur per Pitfall 13
 
 ### Pending Todos
 
@@ -87,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T01:27:48.900Z
-Stopped at: Completed 17-01-PLAN.md
+Last session: 2026-03-27T01:35:52.903Z
+Stopped at: Completed 17-04-PLAN.md
 Resume file: None
