@@ -7,7 +7,7 @@ Only matchup and popularity data are still mocked (they hit external APIs).
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from data.cache import data_cache
+from data.cache import data_cache, DataCache, TimingBucket
 from engine.context_builder import ContextBuilder
 from engine.schemas import RecommendRequest, RuleResult
 
@@ -643,3 +643,103 @@ class TestAbilityAnnotations:
         ):
             result = await builder._build_opponent_lines(1, [9999], test_db_session)
         assert "Threats:" not in result
+
+
+# ---------------------------------------------------------------------------
+# _build_timing_section tests (Phase 21: Timing Benchmarks)
+# ---------------------------------------------------------------------------
+
+
+def _timing_bucket(time_s: int, games: int, wins: int, confidence: str = "strong") -> TimingBucket:
+    """Helper to create a TimingBucket."""
+    return TimingBucket(time=time_s, games=games, wins=wins, confidence=confidence)
+
+
+class TestBuildTimingSection:
+    """Tests for _build_timing_section in context_builder (D-05 format)."""
+
+    def test_timing_section_empty_when_no_data(self):
+        """Returns empty string when cache has no timing data for hero."""
+        mock_cache = MagicMock(spec=DataCache)
+        mock_cache.get_hero_timings.return_value = None
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
+
+        result = cb._build_timing_section(hero_id=1)
+        assert result == ""
+
+    def test_timing_section_formats_correctly(self):
+        """Timing section formats item with good/on-track/late ranges and win rates."""
+        mock_cache = MagicMock(spec=DataCache)
+        mock_cache.get_hero_timings.return_value = {
+            "black_king_bar": [
+                _timing_bucket(600, 200, 110),    # 55% WR, 10 min
+                _timing_bucket(900, 300, 174),     # 58% WR, 15 min
+                _timing_bucket(1200, 250, 130),    # 52% WR, 20 min
+                _timing_bucket(1500, 200, 96),     # 48% WR, 25 min
+                _timing_bucket(1800, 150, 61),     # ~41% WR, 30 min
+            ],
+        }
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
+
+        result = cb._build_timing_section(hero_id=1)
+        assert "Black King Bar" in result
+        assert "good" in result
+        assert "WR" in result
+        assert "min" in result
+        # Should NOT contain raw seconds
+        assert "600" not in result
+        assert "1800" not in result
+
+    def test_timing_section_marks_urgent(self):
+        """Items with steep falloff show [TIMING-CRITICAL] tag."""
+        mock_cache = MagicMock(spec=DataCache)
+        mock_cache.get_hero_timings.return_value = {
+            "bkb": [
+                _timing_bucket(600, 200, 110),    # 55% WR
+                _timing_bucket(900, 300, 174),     # 58% WR
+                _timing_bucket(1200, 250, 130),    # 52% WR
+                _timing_bucket(1500, 200, 96),     # 48% WR
+                _timing_bucket(1800, 150, 61),     # ~41% WR -- steep falloff
+            ],
+        }
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
+
+        result = cb._build_timing_section(hero_id=1)
+        assert "[TIMING-CRITICAL]" in result
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_includes_timing(
+        self, mock_matchup, mock_popularity, test_db_session
+    ):
+        """Full build() includes '## Item Timing Benchmarks' section when data present."""
+        # Use real data_cache but inject timing data for hero_id=1
+        original_timings = data_cache._timing_benchmarks.copy()
+        data_cache._timing_benchmarks[1] = {
+            "power_treads": [
+                _timing_bucket(600, 200, 110),
+                _timing_bucket(900, 300, 150),
+                _timing_bucket(1200, 250, 120),
+            ],
+        }
+        try:
+            mock_opendota = MagicMock()
+            cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
+            req = _make_request()
+            result = await cb.build(req, [], test_db_session)
+            assert "## Item Timing Benchmarks" in result
+            assert "Power Treads" in result
+        finally:
+            data_cache._timing_benchmarks = original_timings

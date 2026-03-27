@@ -18,12 +18,14 @@ from engine.schemas import (
     RecommendResponse,
     RecommendPhase,
     ItemRecommendation,
+    ItemTimingResponse,
     RuleResult,
     LLMRecommendation,
 )
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine, FallbackReason
 from engine.context_builder import ContextBuilder
+from engine.timing_zones import classify_timing_zones
 from data.cache import DataCache
 
 logger = logging.getLogger(__name__)
@@ -159,11 +161,17 @@ class HybridRecommender:
         # Step 6: Validate all item_ids against cache (zero DB queries)
         phases = self._validate_item_ids(phases)
 
+        # Step 6b: Enrich with timing data (zero DB queries, uses DataCache)
+        timing_data: list[ItemTimingResponse] = []
+        if self.cache:
+            timing_data = self._enrich_timing_data(request.hero_id, phases)
+
         elapsed_ms = int((time.monotonic() - start) * 1000)
         response = RecommendResponse(
             phases=phases,
             overall_strategy=overall_strategy,
             neutral_items=neutral_items,
+            timing_data=timing_data,
             fallback=fallback,
             fallback_reason=fallback_reason.value if fallback_reason else None,
             model=LLMEngine.MODEL if not fallback else None,
@@ -314,3 +322,44 @@ class HybridRecommender:
                 )
 
         return validated_phases
+
+    def _enrich_timing_data(
+        self, hero_id: int, phases: list[RecommendPhase]
+    ) -> list[ItemTimingResponse]:
+        """Build timing response data for all recommended items.
+
+        Looks up timing benchmarks from DataCache, classifies zones,
+        and returns pre-computed display data for the frontend.
+        Zero DB queries -- all data from in-memory cache.
+        """
+        timings = self.cache.get_hero_timings(hero_id)
+        if not timings:
+            return []
+
+        # Collect all recommended item internal_names from validated phases
+        recommended_items: set[str] = set()
+        for phase in phases:
+            for item in phase.items:
+                recommended_items.add(item.item_name)
+
+        results: list[ItemTimingResponse] = []
+        for item_name in recommended_items:
+            buckets = timings.get(item_name)
+            if not buckets:
+                continue
+            classified = classify_timing_zones(buckets)
+            if classified is None:
+                continue
+            results.append(ItemTimingResponse(
+                item_name=item_name,
+                buckets=classified["buckets_classified"],
+                is_urgent=classified["is_urgent"],
+                good_range=classified["good_range"],
+                ontrack_range=classified["ontrack_range"],
+                late_range=classified["late_range"],
+                good_win_rate=classified["good_win_rate"],
+                late_win_rate=classified["late_win_rate"],
+                confidence=classified["confidence"],
+                total_games=classified["total_games"],
+            ))
+        return results

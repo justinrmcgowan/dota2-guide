@@ -19,6 +19,7 @@ from data.matchup_service import (
 )
 from data.opendota_client import OpenDotaClient
 from engine.schemas import EnemyContext, RecommendRequest, RuleResult
+from engine.timing_zones import classify_timing_zones
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +124,11 @@ class ContextBuilder:
             sections.append(
                 f"## Popular Items on This Hero\n{popularity_section}"
             )
+
+        # 6b. Build timing benchmarks section (per D-05)
+        timing_section = self._build_timing_section(request.hero_id)
+        if timing_section:
+            sections.append(f"## Item Timing Benchmarks\n{timing_section}")
 
         # 7b. Get neutral items catalog (from cache -- zero DB queries)
         neutral_catalog = self._build_neutral_catalog()
@@ -429,3 +435,39 @@ class ContextBuilder:
             tier_lines.append(f"T{tier}: {', '.join(names)}")
 
         return "\n".join(tier_lines)
+
+    def _build_timing_section(self, hero_id: int) -> str:
+        """Build timing benchmark section for Claude context.
+
+        Format per item: "BKB: good <20min (58% WR), on-track 20-25min (52%), late >25min (41%)"
+        Approximately 200 tokens for 5-8 items. Only includes items with
+        sufficient timing data (per D-06).
+
+        Returns empty string if no timing data available for this hero.
+        """
+        timings = self.cache.get_hero_timings(hero_id)
+        if not timings:
+            return ""
+
+        lines: list[str] = []
+        for item_name, buckets in timings.items():
+            classified = classify_timing_zones(buckets)
+            if classified is None:
+                continue
+
+            display_name = item_name.replace("_", " ").title()
+            good_wr = round(classified["good_win_rate"] * 100)
+            late_wr = round(classified["late_win_rate"] * 100)
+
+            line = (
+                f"{display_name}: good {classified['good_range']} ({good_wr}% WR), "
+                f"on-track {classified['ontrack_range']}, "
+                f"late {classified['late_range']} ({late_wr}% WR)"
+            )
+            if classified["is_urgent"]:
+                line += " [TIMING-CRITICAL]"
+            lines.append(line)
+
+        if not lines:
+            return ""
+        return "\n".join(lines)
