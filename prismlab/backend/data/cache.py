@@ -1,8 +1,9 @@
-"""In-memory hero and item data cache.
+"""In-memory hero, item, ability, and timing data cache.
 
-Preloads all hero and item data from the database at startup into frozen
-dataclasses. Serves all hero/item lookups as synchronous dict reads with
-zero DB queries. Refreshes atomically via reference swap on pipeline cycle.
+Preloads all hero, item, and ability data from the database at startup into
+frozen dataclasses. Serves all lookups as synchronous dict reads with zero DB
+queries. Refreshes atomically via reference swap on pipeline cycle. Timing
+data uses stale-while-revalidate pattern (per-hero, fetched on demand).
 
 Module-level singleton: `data_cache` is the single DataCache instance
 used throughout the application.
@@ -16,7 +17,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from data.models import Hero, Item
+from data.models import Hero, Item, HeroAbilityData, ItemTimingData
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,42 @@ class ItemCached:
     img_url: str | None
 
 
+@dataclass(frozen=True)
+class AbilityCached:
+    """Counter-item-relevant fields for a hero ability."""
+
+    key: str                      # e.g. "enigma_black_hole"
+    dname: str                    # e.g. "Black Hole"
+    behavior: tuple[str, ...]     # e.g. ("AOE", "Point Target", "Channeled")
+    bkbpierce: bool               # True if raw value == "Yes"
+    dispellable: str | None       # "Yes", "No", "Strong Dispels Only", None
+    dmg_type: str | None          # "Magical", "Physical", "Pure", None
+
+    @property
+    def is_channeled(self) -> bool:
+        return "Channeled" in self.behavior
+
+    @property
+    def is_passive(self) -> bool:
+        return "Passive" in self.behavior
+
+
+@dataclass(frozen=True)
+class TimingBucket:
+    """Single time bucket from OpenDota item timing data."""
+
+    time: int          # seconds since game start
+    games: int         # PARSED from string
+    wins: int          # PARSED from string
+    confidence: str    # "strong" | "moderate" | "weak" (D-07)
+
+    @property
+    def win_rate(self) -> float:
+        return self.wins / self.games if self.games > 0 else 0.0
+
+
 class DataCache:
-    """In-memory cache of all hero and item data.
+    """In-memory cache of all hero, item, ability, and timing data.
 
     Loaded at startup after DB seeding, refreshed atomically on pipeline
     cycle. All lookup methods are synchronous pure dict reads -- zero DB
@@ -87,7 +122,10 @@ class DataCache:
         self._heroes: dict[int, HeroCached] = {}
         self._items: dict[int, ItemCached] = {}
         self._hero_name_to_id: dict[str, int] = {}
+        self._hero_internal_name_to_id: dict[str, int] = {}
         self._item_name_to_id: dict[str, int] = {}
+        self._hero_abilities: dict[int, list[AbilityCached]] = {}
+        self._timing_benchmarks: dict[int, dict[str, list[TimingBucket]]] = {}
         self._initialized: bool = False
 
     @property
@@ -107,6 +145,7 @@ class DataCache:
 
         new_heroes: dict[int, HeroCached] = {}
         new_hero_name_to_id: dict[str, int] = {}
+        new_hero_internal_name_to_id: dict[str, int] = {}
 
         for h in hero_rows:
             roles = tuple(h.roles) if h.roles else None
@@ -136,6 +175,7 @@ class DataCache:
             )
             new_heroes[h.id] = cached
             new_hero_name_to_id[h.localized_name] = h.id
+            new_hero_internal_name_to_id[h.internal_name] = h.id
 
         # -- Build item cache --
         item_result = await db.execute(select(Item))
@@ -166,17 +206,73 @@ class DataCache:
             new_items[i.id] = cached
             new_item_name_to_id[i.internal_name] = i.id
 
+        # -- Build ability cache --
+        ability_result = await db.execute(select(HeroAbilityData))
+        ability_rows = ability_result.scalars().all()
+
+        new_hero_abilities: dict[int, list[AbilityCached]] = {}
+        for row in ability_rows:
+            if row.abilities_json:
+                abilities = []
+                for key, data in row.abilities_json.items():
+                    behavior_raw = data.get("behavior", "")
+                    if isinstance(behavior_raw, list):
+                        behavior = tuple(behavior_raw)
+                    elif isinstance(behavior_raw, str) and behavior_raw:
+                        behavior = (behavior_raw,)
+                    else:
+                        behavior = ()
+
+                    abilities.append(AbilityCached(
+                        key=key,
+                        dname=data.get("dname", key),
+                        behavior=behavior,
+                        bkbpierce=data.get("bkbpierce") == "Yes",
+                        dispellable=data.get("dispellable"),
+                        dmg_type=data.get("dmg_type"),
+                    ))
+                new_hero_abilities[row.hero_id] = abilities
+
+        # -- Build timing cache --
+        timing_result = await db.execute(select(ItemTimingData))
+        timing_rows = timing_result.scalars().all()
+
+        new_timing_benchmarks: dict[int, dict[str, list[TimingBucket]]] = {}
+        for row in timing_rows:
+            if row.timings_json:
+                hero_timings: dict[str, list[TimingBucket]] = {}
+                for item_name, buckets_raw in row.timings_json.items():
+                    buckets = []
+                    for bucket in buckets_raw:
+                        games = int(bucket["games"])  # CRITICAL: cast from string (D-07, Pitfall 1)
+                        wins = int(bucket["wins"])    # CRITICAL: cast from string
+                        confidence = (
+                            "strong" if games >= 1000
+                            else "moderate" if games >= 200
+                            else "weak"
+                        )
+                        buckets.append(TimingBucket(
+                            time=bucket["time"],
+                            games=games,
+                            wins=wins,
+                            confidence=confidence,
+                        ))
+                    hero_timings[item_name] = buckets
+                new_timing_benchmarks[row.hero_id] = hero_timings
+
         # -- Atomic swap: replace all references at once --
         self._heroes = new_heroes
         self._items = new_items
         self._hero_name_to_id = new_hero_name_to_id
+        self._hero_internal_name_to_id = new_hero_internal_name_to_id
         self._item_name_to_id = new_item_name_to_id
+        self._hero_abilities = new_hero_abilities
+        self._timing_benchmarks = new_timing_benchmarks
         self._initialized = True
 
         logger.info(
-            "DataCache loaded: %d heroes, %d items",
-            len(new_heroes),
-            len(new_items),
+            "DataCache loaded: %d heroes, %d items, %d heroes with abilities, %d heroes with timings",
+            len(new_heroes), len(new_items), len(new_hero_abilities), len(new_timing_benchmarks),
         )
 
     async def refresh(self, db: AsyncSession) -> None:
@@ -210,6 +306,30 @@ class DataCache:
     def item_name_to_id(self, internal_name: str) -> int | None:
         """Lookup item ID by internal_name. Returns None if not found."""
         return self._item_name_to_id.get(internal_name)
+
+    def hero_internal_name_to_id(self, internal_name: str) -> int | None:
+        """Lookup hero ID by internal_name (e.g. 'npc_dota_hero_antimage' -> 1)."""
+        return self._hero_internal_name_to_id.get(internal_name)
+
+    def get_hero_abilities(self, hero_id: int) -> list[AbilityCached] | None:
+        """Get cached abilities for a hero. Returns None if no ability data."""
+        return self._hero_abilities.get(hero_id)
+
+    def get_hero_timings(self, hero_id: int) -> dict[str, list[TimingBucket]] | None:
+        """Get cached timing benchmarks for a hero. Returns None if no timing data.
+
+        Returns dict of {item_internal_name: [TimingBucket, ...]} sorted by time.
+        """
+        return self._timing_benchmarks.get(hero_id)
+
+    def set_hero_timings(self, hero_id: int, timings: dict[str, list[TimingBucket]]) -> None:
+        """Update timing benchmarks for a single hero in the live cache.
+
+        Called by the stale-while-revalidate timing service after a background
+        refresh. Does NOT trigger ResponseCache clear (timing data changes slowly;
+        5-min ResponseCache TTL is sufficient).
+        """
+        self._timing_benchmarks[hero_id] = timings
 
     def hero_id_to_name(self, hero_id: int) -> str:
         """Lookup hero localized_name by ID. Falls back to 'the enemy'."""

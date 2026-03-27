@@ -324,6 +324,11 @@ async def test_db_setup():
 
         await session.commit()
 
+    # Load data_cache from seeded DB so cache-based tests work
+    from data.cache import data_cache
+    async with test_async_session() as session:
+        await data_cache.load(session)
+
     yield
 
     # Drop all tables for isolation
