@@ -75,6 +75,24 @@ class RuleResult(BaseModel):
     reasoning: str
     phase: str  # "starting" | "laning" | "core" | "late_game"
     priority: str  # "core" | "situational" | "luxury"
+    counter_target: str | None = None  # e.g. "Witch Doctor: Death Ward (channeled)"
+
+
+def compute_threat_level(ec: EnemyContext) -> str:
+    """Classify enemy threat: 'high', 'normal', 'behind'.
+
+    Matches context_builder._build_enemy_context_section logic:
+    - fed/high threat: kills >= 5 and K/D >= 2 (or deaths == 0)
+    - behind: deaths >= 3 and D/K >= 2 (or kills == 0)
+    - normal: everything else
+    """
+    k = ec.kills or 0
+    d = ec.deaths or 0
+    if (k >= 5 and d > 0 and k >= 2 * d) or (k >= 5 and d == 0):
+        return "high"
+    elif (d >= 3 and k > 0 and d >= 2 * k) or (d >= 3 and k == 0):
+        return "behind"
+    return "normal"
 
 
 class ItemRecommendation(BaseModel):

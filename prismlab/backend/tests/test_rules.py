@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 
 from data.cache import data_cache
-from engine.schemas import RecommendRequest, VALID_PLAYSTYLES
+from engine.schemas import RecommendRequest, VALID_PLAYSTYLES, EnemyContext, compute_threat_level
 from engine.rules import RulesEngine
 
 pytestmark = pytest.mark.asyncio
@@ -26,6 +26,7 @@ def _make_request(
     playstyle: str | None = None,
     side: str = "radiant",
     lane: str = "safe",
+    enemy_context: list | None = None,
 ) -> RecommendRequest:
     """Create a minimal valid RecommendRequest for testing."""
     if playstyle is None:
@@ -37,6 +38,7 @@ def _make_request(
         side=side,
         lane=lane,
         lane_opponents=lane_opponents or [],
+        enemy_context=enemy_context or [],
     )
 
 
@@ -291,3 +293,114 @@ class TestRuleCount:
     async def test_minimum_rule_count(self, engine: RulesEngine):
         """Engine has at least 17 rules registered."""
         assert len(engine._rules) >= 17
+
+
+# ------------------------------------------------------------------
+# Phase 20: Counter-Item Intelligence test scaffolds
+# ------------------------------------------------------------------
+
+
+class TestComputeThreatLevel:
+    """Tests for compute_threat_level utility function (pure, no engine fixture)."""
+
+    def test_high_threat_fed_enemy(self):
+        """Fed enemy (kills=7, deaths=1) classified as high."""
+        ec = EnemyContext(hero_id=30, kills=7, deaths=1)
+        assert compute_threat_level(ec) == "high"
+
+    def test_behind_enemy(self):
+        """Behind enemy (kills=0, deaths=5) classified as behind."""
+        ec = EnemyContext(hero_id=30, kills=0, deaths=5)
+        assert compute_threat_level(ec) == "behind"
+
+    def test_normal_enemy(self):
+        """Normal enemy (kills=2, deaths=2) classified as normal."""
+        ec = EnemyContext(hero_id=30, kills=2, deaths=2)
+        assert compute_threat_level(ec) == "normal"
+
+    def test_high_threat_zero_deaths(self):
+        """Fed enemy with zero deaths (kills=5, deaths=0) classified as high."""
+        ec = EnemyContext(hero_id=30, kills=5, deaths=0)
+        assert compute_threat_level(ec) == "high"
+
+    def test_none_kda_is_normal(self):
+        """Enemy with no KDA data classified as normal."""
+        ec = EnemyContext(hero_id=30)
+        assert compute_threat_level(ec) == "normal"
+
+
+class TestAbilityHelpers:
+    """Tests for ability query helper methods on RulesEngine."""
+
+    async def test_has_channeled_witch_doctor(self, engine: RulesEngine):
+        """_has_channeled_ability returns AbilityCached for Witch Doctor (Death Ward)."""
+        result = engine._has_channeled_ability(30)
+        assert result is not None
+        assert result.dname == "Death Ward"
+        assert result.is_channeled is True
+
+    async def test_has_channeled_antimage_none(self, engine: RulesEngine):
+        """_has_channeled_ability returns None for Anti-Mage (no channeled abilities)."""
+        result = engine._has_channeled_ability(1)
+        assert result is None
+
+    async def test_has_passive_antimage(self, engine: RulesEngine):
+        """_has_passive returns AbilityCached for Anti-Mage (Mana Break is passive)."""
+        result = engine._has_passive(1)
+        assert result is not None
+        assert result.is_passive is True
+
+    async def test_has_passive_witch_doctor_none(self, engine: RulesEngine):
+        """_has_passive returns None for Witch Doctor (no passive abilities)."""
+        result = engine._has_passive(30)
+        assert result is None
+
+    async def test_has_bkb_piercing_witch_doctor(self, engine: RulesEngine):
+        """_has_bkb_piercing returns list with Death Ward for Witch Doctor."""
+        result = engine._has_bkb_piercing(30)
+        assert len(result) >= 1
+        dnames = [a.dname for a in result]
+        assert "Death Ward" in dnames
+
+    async def test_has_escape_ability_antimage(self, engine: RulesEngine):
+        """_has_escape_ability returns AbilityCached for Anti-Mage (Blink)."""
+        result = engine._has_escape_ability(1)
+        assert result is not None
+        assert "blink" in result.key
+
+    async def test_has_escape_ability_witch_doctor_none(self, engine: RulesEngine):
+        """_has_escape_ability returns None for Witch Doctor (no escape)."""
+        result = engine._has_escape_ability(30)
+        assert result is None
+
+    async def test_has_undispellable_debuff_witch_doctor(self, engine: RulesEngine):
+        """_has_undispellable_debuff returns Maledict for Witch Doctor (dispellable=No)."""
+        result = engine._has_undispellable_debuff(30)
+        assert result is not None
+        assert result.dname == "Maledict"
+
+
+class TestCounterTargetField:
+    """Test that counter_target field exists on RuleResult and serializes."""
+
+    def test_counter_target_none_serializes(self):
+        """RuleResult with counter_target=None serializes without error."""
+        from engine.schemas import RuleResult
+        result = RuleResult(
+            item_id=100, item_name="Eul's Scepter of Divinity",
+            reasoning="Test reason", phase="core", priority="situational",
+            counter_target=None,
+        )
+        data = result.model_dump()
+        assert data["counter_target"] is None
+
+    def test_counter_target_value_serializes(self):
+        """RuleResult with counter_target set serializes correctly."""
+        from engine.schemas import RuleResult
+        result = RuleResult(
+            item_id=100, item_name="Eul's Scepter of Divinity",
+            reasoning="Test reason", phase="core", priority="situational",
+            counter_target="Witch Doctor: Death Ward (channeled)",
+        )
+        data = result.model_dump()
+        assert data["counter_target"] == "Witch Doctor: Death Ward (channeled)"
