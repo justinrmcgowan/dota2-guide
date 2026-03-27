@@ -4,7 +4,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from data.database import Base, get_db
-from data.models import Hero, Item
+from data.models import Hero, Item, HeroAbilityData, ItemTimingData
 from main import app
 
 
@@ -236,6 +236,91 @@ async def test_db_setup():
             Item(id=302, name="Divine Rapier", internal_name="rapier", cost=5950),
         ]
         session.add_all(items)
+
+        # Seed test ability data for Anti-Mage (hero_id=1) and Crystal Maiden (hero_id=3)
+        ability_data = [
+            HeroAbilityData(
+                hero_id=1,
+                abilities_json={
+                    "antimage_mana_break": {
+                        "dname": "Mana Break",
+                        "behavior": "Passive",
+                        "dmg_type": "Physical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                    "antimage_blink": {
+                        "dname": "Blink",
+                        "behavior": ["Unit Target", "Point Target"],
+                        "dmg_type": None,
+                        "bkbpierce": None,
+                        "dispellable": None,
+                    },
+                    "antimage_counterspell": {
+                        "dname": "Counterspell",
+                        "behavior": "Passive",
+                        "dmg_type": None,
+                        "bkbpierce": None,
+                        "dispellable": None,
+                    },
+                    "antimage_mana_void": {
+                        "dname": "Mana Void",
+                        "behavior": ["Unit Target", "AOE"],
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                },
+            ),
+            HeroAbilityData(
+                hero_id=3,
+                abilities_json={
+                    "crystal_maiden_crystal_nova": {
+                        "dname": "Crystal Nova",
+                        "behavior": ["AOE", "Point Target"],
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": "Yes",
+                    },
+                    "crystal_maiden_frostbite": {
+                        "dname": "Frostbite",
+                        "behavior": "Unit Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": "Yes",
+                    },
+                    "crystal_maiden_freezing_field": {
+                        "dname": "Freezing Field",
+                        "behavior": ["No Target", "Channeled"],
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                },
+            ),
+        ]
+        session.add_all(ability_data)
+
+        # Seed test timing data for Anti-Mage (hero_id=1)
+        timing_data = [
+            ItemTimingData(
+                hero_id=1,
+                timings_json={
+                    "bfury": [
+                        {"time": 720, "games": "40", "wins": "30"},
+                        {"time": 900, "games": "277", "wins": "175"},
+                        {"time": 1200, "games": "284", "wins": "114"},
+                        {"time": 1500, "games": "19", "wins": "8"},
+                    ],
+                    "manta": [
+                        {"time": 1200, "games": "150", "wins": "95"},
+                        {"time": 1500, "games": "300", "wins": "170"},
+                        {"time": 1800, "games": "80", "wins": "30"},
+                    ],
+                },
+            ),
+        ]
+        session.add_all(timing_data)
 
         await session.commit()
 
