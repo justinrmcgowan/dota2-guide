@@ -77,7 +77,11 @@
   2. After a data refresh, the DataCache contains item timing benchmarks (hero, item, time bucket, games, win rate) for all heroes with sufficient sample size
   3. The system prompt stays under 5,000 tokens total and contains only reasoning directives -- no dynamic data (timing numbers, ability descriptions, component lists)
   4. Three-cache coherence is maintained: after refresh, DataCache contains fresh ability + timing data, RulesEngine is re-initialized, and ResponseCache is cleared -- atomically
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 19-01-PLAN.md -- Data layer foundation: OpenDota fetch methods, SQLAlchemy models, test scaffolds
+- [ ] 19-02-PLAN.md -- DataCache extension, timing service, refresh pipeline, seed integration
+- [ ] 19-03-PLAN.md -- System prompt v4.0 directives and token budget tests
 
 ### Phase 20: Counter-Item Intelligence
 **Goal**: Counter-item recommendations are driven by enemy ability properties instead of hardcoded hero ID lists, and Claude's reasoning names the specific ability being countered
@@ -135,7 +139,7 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 19. Data Foundation & Prompt Architecture | v4.0 | 0/0 | Not started | - |
+| 19. Data Foundation & Prompt Architecture | v4.0 | 0/3 | Planned | - |
 | 20. Counter-Item Intelligence | v4.0 | 0/0 | Not started | - |
 | 21. Timing Benchmarks | v4.0 | 0/0 | Not started | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
