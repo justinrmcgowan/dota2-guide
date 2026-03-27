@@ -23,6 +23,9 @@ function makeLiveState(overrides: Partial<GsiLiveState> = {}): GsiLiveState {
     team_side: "radiant",
     is_alive: true,
     timestamp: Date.now(),
+    roshan_state: "alive",
+    radiant_tower_count: 11,
+    dire_tower_count: 11,
     ...overrides,
   };
 }

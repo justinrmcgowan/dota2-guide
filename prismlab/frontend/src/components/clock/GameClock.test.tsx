@@ -32,6 +32,9 @@ function makeLiveState(overrides: Record<string, unknown> = {}) {
     team_side: "radiant",
     is_alive: true,
     timestamp: 1700000000,
+    roshan_state: "alive",
+    radiant_tower_count: 11,
+    dire_tower_count: 11,
     ...overrides,
   };
 }
