@@ -577,6 +577,7 @@ class TestBuildFull:
 class TestAbilityAnnotations:
     """Tests for ability annotations in opponent lines (D-06, D-07)."""
 
+    @pytest.mark.usefixtures("test_db_setup")
     def test_counter_relevant_abilities_wd(self, builder):
         """Witch Doctor ability annotations include channeled and BKB-pierce."""
         result = builder._get_counter_relevant_abilities(30)
@@ -584,29 +585,34 @@ class TestAbilityAnnotations:
         assert "channeled" in result
         assert "BKB-pierce" in result
 
+    @pytest.mark.usefixtures("test_db_setup")
     def test_counter_relevant_abilities_wd_maledict(self, builder):
         """Witch Doctor Maledict shows as undispellable."""
         result = builder._get_counter_relevant_abilities(30)
         assert "Maledict" in result
         assert "undispellable" in result
 
+    @pytest.mark.usefixtures("test_db_setup")
     def test_counter_relevant_abilities_am(self, builder):
         """Anti-Mage ability annotations include Mana Break (passive)."""
         result = builder._get_counter_relevant_abilities(1)
         assert "Mana Break" in result
         assert "passive" in result
 
+    @pytest.mark.usefixtures("test_db_setup")
     def test_counter_relevant_abilities_am_excludes_blink(self, builder):
         """Blink has no counter-relevant properties and is excluded."""
         result = builder._get_counter_relevant_abilities(1)
         # Blink should not appear (no channeled, no passive, no BKB-pierce, no undispellable)
         assert "Blink" not in result
 
+    @pytest.mark.usefixtures("test_db_setup")
     def test_counter_relevant_abilities_unknown_hero(self, builder):
         """Hero with no ability data returns empty string."""
         result = builder._get_counter_relevant_abilities(9999)
         assert result == ""
 
+    @pytest.mark.usefixtures("test_db_setup")
     def test_counter_relevant_abilities_cm(self, builder):
         """Crystal Maiden shows Freezing Field as channeled."""
         result = builder._get_counter_relevant_abilities(3)
