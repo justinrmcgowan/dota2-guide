@@ -1,5 +1,24 @@
 # Milestones
 
+## v3.0 Design Overhaul & Performance (Shipped: 2026-03-27)
+
+**Phases completed:** 4 phases, 10 plans, 19 tasks
+
+**Key accomplishments:**
+
+- HERO_PLAYSTYLE_MAP with ~120 hero+role entries and TriggerEvent deduplicated to single source in triggerDetection.ts
+- Consolidated useGsiSync + useAutoRefresh into single useGameIntelligence hook with playstyle auto-suggest via HERO_PLAYSTYLE_MAP
+- DataCache singleton with frozen HeroCached/ItemCached dataclasses and 12 zero-DB lookup methods; RulesEngine refactored to consume DataCache via constructor injection
+- Eliminated 12-20 DB queries per recommendation request by wiring DataCache into context builder, recommender validation, and API routes with coordinated three-layer cache invalidation
+- Newsreader + Manrope variable fonts installed, @theme block replaced with full DESIGN.md obsidian surface hierarchy, crimson/gold/slate accents, ambient glow shadows, and 0px radius overrides
+- Obsidian surface hierarchy applied across App/Header/Sidebar/MainPanel shell; all 11 draft-input components and constants migrated from cyan-accent to crimson/gold primary/secondary tokens with Blade and Sacrificial Table patterns
+- 12 components migrated to DESIGN.md tokens: Monolith card pattern with gold accent strips on timeline, Blade button and Tactical HUD on game-state panel, No-Line Rule enforced throughout
+- Blood-glass overlays with ambient crimson glow on all floating elements (modals, panels, toasts, banners) using surface-container-highest and backdrop-blur-md
+- Parchment noise texture overlay via SVG feTurbulence, deprecated bridge tokens removed, full visual audit confirms zero old token references across all components
+- End-to-end enemy KDA/level pipeline from screenshot parser through gameStore to Claude's recommendation reasoning with threat annotations
+
+---
+
 ## v2.0 Live Game Intelligence (Shipped: 2026-03-26)
 
 **Phases completed:** 5 phases, 15 plans, 32 tasks
