@@ -36,7 +36,7 @@ function Sidebar() {
   }, [selectedHero, allies, opponents]);
 
   return (
-    <aside className="w-80 bg-surface-container-lowest flex flex-col overflow-hidden shrink-0">
+    <aside className="w-80 bg-surface-container-lowest flex flex-col overflow-hidden shrink-0 border-r border-r-transparent" style={{ borderImage: 'linear-gradient(to bottom, var(--color-secondary-fixed-dim), transparent 80%) 1' }}>
       <div className="p-4 flex-1 overflow-y-auto">
         {/* Your Hero */}
         <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
