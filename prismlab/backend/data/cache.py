@@ -378,7 +378,7 @@ class DataCache:
             and item.cost <= max_cost
         ]
         filtered.sort(key=lambda x: x["cost"])
-        return filtered[:50]
+        return filtered[:80]
 
     def get_neutral_items_by_tier(self) -> dict[int, list[dict]]:
         """Get all neutral items grouped by tier number.
