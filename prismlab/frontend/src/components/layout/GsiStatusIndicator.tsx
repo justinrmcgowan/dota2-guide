@@ -43,7 +43,7 @@ function GsiStatusIndicator() {
         className={`w-2 h-2 rounded-full ${dotColor}`}
         data-testid="gsi-dot"
       />
-      <span className="text-xs text-text-muted">GSI</span>
+      <span className="text-xs text-on-surface-variant">GSI</span>
     </div>
   );
 }

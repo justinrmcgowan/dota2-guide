@@ -41,7 +41,7 @@ function Header({ onOpenSettings }: HeaderProps) {
       : undefined;
 
   return (
-    <header className="h-14 bg-bg-secondary border-b border-bg-elevated px-4 flex items-center shrink-0">
+    <header className="h-14 bg-surface-container-low px-4 flex items-center shrink-0">
       <div className="flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -50,9 +50,9 @@ function Header({ onOpenSettings }: HeaderProps) {
         >
           <defs>
             <linearGradient id="header-prism" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#00d4ff" />
+              <stop offset="0%" stopColor="#FFB4AC" />
               <stop offset="50%" stopColor="#6aff97" />
-              <stop offset="100%" stopColor="#00d4ff" />
+              <stop offset="100%" stopColor="#FFB4AC" />
             </linearGradient>
           </defs>
           <path
@@ -67,7 +67,7 @@ function Header({ onOpenSettings }: HeaderProps) {
             opacity="0.3"
           />
         </svg>
-        <h1 className="text-cyan-accent font-bold text-xl font-body">
+        <h1 className="text-secondary font-bold text-xl font-display tracking-tight">
           Prismlab
         </h1>
       </div>
@@ -83,7 +83,7 @@ function Header({ onOpenSettings }: HeaderProps) {
       <div className="ml-auto flex items-center gap-3">
         {freshnessLabel && (
           <span
-            className="text-xs text-text-muted"
+            className="text-xs text-on-surface-variant"
             title={freshnessTitle}
           >
             {freshnessLabel}
@@ -92,7 +92,7 @@ function Header({ onOpenSettings }: HeaderProps) {
         {onOpenSettings && (
           <button
             onClick={onOpenSettings}
-            className="text-text-muted hover:text-cyan-accent transition-colors"
+            className="text-on-surface-variant hover:text-primary transition-colors"
             title="Settings"
             aria-label="Open settings"
           >

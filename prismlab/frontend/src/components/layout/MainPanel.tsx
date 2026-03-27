@@ -11,7 +11,7 @@ function MainPanel() {
     useRecommendation();
 
   return (
-    <main className="flex-1 bg-bg-primary overflow-y-auto p-6">
+    <main className="flex-1 bg-surface overflow-y-auto p-6">
       {/* Error banner at top (can coexist with timeline data) */}
       {error && (
         <ErrorBanner message={error} onDismiss={() => clear()} type="error" />
@@ -44,10 +44,10 @@ function MainPanel() {
                 className="w-8 h-8 rounded"
                 loading="lazy"
               />
-              <span className="text-gray-200 font-semibold text-sm">
+              <span className="text-on-surface font-semibold text-sm font-display">
                 {selectedHero.localized_name}
               </span>
-              <span className="text-gray-500 text-xs">Item Build</span>
+              <span className="text-on-surface-variant text-xs">Item Build</span>
             </div>
           )}
 
@@ -62,7 +62,7 @@ function MainPanel() {
       {/* Empty states */}
       {!data && !isLoading && !error && (
         <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500 text-sm">
+          <p className="text-on-surface-variant text-sm">
             {selectedHero
               ? "Select a hero and get your build"
               : "Select a hero from the sidebar to get started"}

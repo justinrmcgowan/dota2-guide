@@ -36,10 +36,10 @@ function Sidebar() {
   }, [selectedHero, allies, opponents]);
 
   return (
-    <aside className="w-80 bg-bg-secondary border-r border-bg-elevated flex flex-col overflow-hidden shrink-0">
+    <aside className="w-80 bg-surface-container-lowest flex flex-col overflow-hidden shrink-0">
       <div className="p-4 flex-1 overflow-y-auto">
         {/* Your Hero */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
           Your Hero
         </h2>
         <HeroPicker
@@ -51,19 +51,19 @@ function Sidebar() {
         />
 
         {/* Allies */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-5">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
           Allies
         </h2>
         <AllyPicker excludedHeroIds={excludedIds} />
 
         {/* Opponents */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-5">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
           Opponents
         </h2>
         <OpponentPicker excludedHeroIds={excludedIds} />
 
         {/* Role */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-5">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
           Role
         </h2>
         <RoleSelector />
@@ -74,26 +74,26 @@ function Sidebar() {
             role !== null ? "max-h-40 opacity-100 mt-5" : "max-h-0 opacity-0"
           }`}
         >
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
             Playstyle
           </h2>
           {role !== null && <PlaystyleSelector role={role} />}
         </div>
 
         {/* Side */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-5">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
           Side
         </h2>
         <SideSelector />
 
         {/* Lane */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-5">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
           Lane
         </h2>
         <LaneSelector />
 
         {/* Lane Opponents */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-5">
+        <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
           Lane Opponents
         </h2>
         <LaneOpponentPicker />
@@ -106,7 +106,7 @@ function Sidebar() {
       </div>
 
       {/* CTA Button -- pinned at bottom */}
-      <div className="p-4 border-t border-bg-elevated">
+      <div className="p-4 bg-surface-container-low">
         <GetBuildButton />
       </div>
     </aside>

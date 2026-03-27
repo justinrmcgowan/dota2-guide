@@ -18,7 +18,7 @@ function GameClock() {
 
   return (
     <span
-      className="text-cyan-accent text-sm font-mono font-semibold"
+      className="text-secondary text-sm font-body font-semibold tabular-nums"
       data-testid="game-clock"
     >
       {formatGameClock(liveState.game_clock)}
