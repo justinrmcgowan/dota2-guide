@@ -8,7 +8,9 @@
     "research": true,
     "plan_check": true,
     "verifier": true,
-    "nyquist_validation": true,
-    "_auto_chain_active": true
+    "nyquist_validation": false,
+    "_auto_chain_active": true,
+    "skip_discuss": true,
+    "ui_phase": false
   }
 }
