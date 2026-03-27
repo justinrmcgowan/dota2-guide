@@ -1,18 +1,71 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cyan-accent: oklch(80.4% 0.146 219.5);
-  --color-radiant: oklch(89.5% 0.192 150.6);
-  --color-dire: oklch(68.2% 0.206 24.4);
-  --color-bg-primary: oklch(18.8% 0.013 248.5);
-  --color-bg-secondary: oklch(23.3% 0.022 272.8);
-  --color-bg-elevated: oklch(27% 0.02 260);
+  /* === Surface Hierarchy (DESIGN.md Section 2) === */
+  --color-surface: #131313;
+  --color-surface-dim: #131313;
+  --color-surface-bright: #3A3939;
+  --color-surface-container-lowest: #0E0E0E;
+  --color-surface-container-low: #1C1B1B;
+  --color-surface-container: #201F1F;
+  --color-surface-container-high: #2B2A29;
+  --color-surface-container-highest: #353534;
 
+  /* === Primary (Crimson) === */
+  --color-primary: #FFB4AC;
+  --color-primary-container: #B22222;
+
+  /* === Secondary (Gold) === */
+  --color-secondary: #FFDB3C;
+  --color-secondary-container: #FFDB3C;
+  --color-secondary-fixed: #FFE16D;
+  --color-secondary-fixed-dim: #D4A017;
+
+  /* === Tertiary (Slate) === */
+  --color-tertiary: #8DA4B8;
+  --color-tertiary-container: #4E5E6D;
+
+  /* === Text / Outline === */
+  --color-on-surface: #E5E2E1;
+  --color-on-surface-variant: #E2BEBA;
+  --color-outline-variant: #5A403E;
+
+  /* === Game Colors (PRESERVED) === */
+  --color-radiant: #6AFF97;
+  --color-dire: #FF5555;
+
+  /* === Attribute Colors (PRESERVED) === */
   --color-attr-str: oklch(68% 0.19 25);
   --color-attr-agi: oklch(75% 0.18 145);
   --color-attr-int: oklch(70% 0.15 250);
   --color-attr-all: oklch(80% 0.1 90);
 
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-stats: "JetBrains Mono", ui-monospace, monospace;
+  /* === DEPRECATED — remove after Plan 05 audit confirms zero refs === */
+  --color-cyan-accent: #FFB4AC;
+  --color-bg-primary: #131313;
+  --color-bg-secondary: #1C1B1B;
+  --color-bg-elevated: #2B2A29;
+  --color-text-muted: #E2BEBA;
+
+  /* === Typography (D-11, D-12) === */
+  --font-display: "Newsreader Variable", Georgia, "Times New Roman", serif;
+  --font-display--font-variation-settings: "opsz" 32;
+  --font-body: "Manrope Variable", system-ui, -apple-system, sans-serif;
+  --font-body--font-feature-settings: "tnum";
+  --font-stats: "Manrope Variable", system-ui, -apple-system, sans-serif;
+
+  /* === Ambient Glow Shadows (D-15) === */
+  --shadow-glow: 0 0 32px rgb(255 180 172 / 0.05);
+  --shadow-glow-gold: 0 0 24px rgb(255 219 60 / 0.08);
+  --shadow-glow-active: 0 0 16px rgb(178 34 34 / 0.15);
+
+  /* === Disable all rounded corners (DESIGN.md Section 4) === */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
 }
