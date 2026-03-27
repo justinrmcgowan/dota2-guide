@@ -65,3 +65,49 @@ class OpenDotaClient:
             )
             response.raise_for_status()
             return response.json()
+
+    async def fetch_abilities(self) -> dict:
+        """Fetch all ability constants from OpenDota.
+
+        Returns a dict keyed by ability internal name, e.g.
+        {"antimage_mana_break": {"dname": "Mana Break", "behavior": "Passive", ...}}.
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.BASE_URL}/constants/abilities",
+                params=self.params,
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def fetch_hero_abilities(self) -> dict:
+        """Fetch hero-to-ability mapping from OpenDota.
+
+        Returns a dict keyed by hero internal name, e.g.
+        {"npc_dota_hero_antimage": {"abilities": ["antimage_mana_break", ...], "talents": [...]}}.
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.BASE_URL}/constants/hero_abilities",
+                params=self.params,
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def fetch_item_timings(self, hero_id: int) -> list[dict]:
+        """Fetch item timing benchmark data for a hero from OpenDota scenarios.
+
+        Returns list of dicts with keys: hero_id (int), item (str),
+        time (int), games (str), wins (str).
+        NOTE: games and wins are strings from the API, not ints.
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.BASE_URL}/scenarios/itemTimings",
+                params={**self.params, "hero_id": str(hero_id)},
+                timeout=15.0,
+            )
+            response.raise_for_status()
+            return response.json()
