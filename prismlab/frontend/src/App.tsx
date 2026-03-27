@@ -50,9 +50,9 @@ function App() {
   }, [lastMessage]);
 
   return (
-    <div className="h-screen flex flex-col bg-surface text-on-surface font-body">
+    <div className="h-screen flex flex-col bg-surface text-on-surface font-body noise-overlay relative">
       <Header onOpenSettings={() => setSettingsOpen(true)} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative z-10">
         <Sidebar />
         <MainPanel />
       </div>

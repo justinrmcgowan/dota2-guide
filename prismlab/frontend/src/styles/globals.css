@@ -40,19 +40,11 @@
   --color-attr-int: oklch(70% 0.15 250);
   --color-attr-all: oklch(80% 0.1 90);
 
-  /* === DEPRECATED — remove after Plan 05 audit confirms zero refs === */
-  --color-cyan-accent: #FFB4AC;
-  --color-bg-primary: #131313;
-  --color-bg-secondary: #1C1B1B;
-  --color-bg-elevated: #2B2A29;
-  --color-text-muted: #E2BEBA;
-
   /* === Typography (D-11, D-12) === */
   --font-display: "Newsreader Variable", Georgia, "Times New Roman", serif;
   --font-display--font-variation-settings: "opsz" 32;
   --font-body: "Manrope Variable", system-ui, -apple-system, sans-serif;
   --font-body--font-feature-settings: "tnum";
-  --font-stats: "Manrope Variable", system-ui, -apple-system, sans-serif;
 
   /* === Ambient Glow Shadows (D-15) === */
   --shadow-glow: 0 0 32px rgb(255 180 172 / 0.05);
@@ -68,4 +60,17 @@
   --radius-2xl: 0px;
   --radius-3xl: 0px;
   --radius-4xl: 0px;
+}
+
+/* Parchment noise texture overlay (DESIGN.md Section 6) */
+.noise-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
 }
