@@ -16,6 +16,7 @@ from data.cache import DataCache, HeroCached
 from data.matchup_service import (
     get_or_fetch_matchup,
     get_hero_item_popularity,
+    get_or_fetch_hero_timings,
 )
 from data.opendota_client import OpenDotaClient
 from engine.schemas import EnemyContext, RecommendRequest, RuleResult
@@ -127,7 +128,7 @@ class ContextBuilder:
             )
 
         # 6b. Build timing benchmarks section (per D-05)
-        timing_section = self._build_timing_section(request.hero_id)
+        timing_section = await self._build_timing_section(request.hero_id, db)
         if timing_section:
             sections.append(f"## Item Timing Benchmarks\n{timing_section}")
 
@@ -442,16 +443,20 @@ class ContextBuilder:
 
         return "\n".join(tier_lines)
 
-    def _build_timing_section(self, hero_id: int) -> str:
+    async def _build_timing_section(self, hero_id: int, db: AsyncSession) -> str:
         """Build timing benchmark section for Claude context.
 
         Format per item: "BKB: good <20min (58% WR), on-track 20-25min (52%), late >25min (41%)"
         Approximately 200 tokens for 5-8 items. Only includes items with
         sufficient timing data (per D-06).
 
+        Uses stale-while-revalidate on-demand fetch when cache is empty (DATA-03).
         Returns empty string if no timing data available for this hero.
         """
         timings = self.cache.get_hero_timings(hero_id)
+        if not timings:
+            # On-demand fetch for heroes not yet in cache (DATA-03 debt fix)
+            timings = await get_or_fetch_hero_timings(hero_id, db, self.opendota)
         if not timings:
             return ""
 

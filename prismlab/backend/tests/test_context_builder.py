@@ -658,17 +658,21 @@ def _timing_bucket(time_s: int, games: int, wins: int, confidence: str = "strong
 class TestBuildTimingSection:
     """Tests for _build_timing_section in context_builder (D-05 format)."""
 
-    def test_timing_section_empty_when_no_data(self):
+    @pytest.mark.asyncio
+    @patch("engine.context_builder.get_or_fetch_hero_timings", new_callable=AsyncMock, return_value=None)
+    async def test_timing_section_empty_when_no_data(self, mock_fetch):
         """Returns empty string when cache has no timing data for hero."""
         mock_cache = MagicMock(spec=DataCache)
         mock_cache.get_hero_timings.return_value = None
         mock_opendota = MagicMock()
+        mock_db = MagicMock()
         cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
 
-        result = cb._build_timing_section(hero_id=1)
+        result = await cb._build_timing_section(hero_id=1, db=mock_db)
         assert result == ""
 
-    def test_timing_section_formats_correctly(self):
+    @pytest.mark.asyncio
+    async def test_timing_section_formats_correctly(self):
         """Timing section formats item with good/on-track/late ranges and win rates."""
         mock_cache = MagicMock(spec=DataCache)
         mock_cache.get_hero_timings.return_value = {
@@ -681,9 +685,10 @@ class TestBuildTimingSection:
             ],
         }
         mock_opendota = MagicMock()
+        mock_db = MagicMock()
         cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
 
-        result = cb._build_timing_section(hero_id=1)
+        result = await cb._build_timing_section(hero_id=1, db=mock_db)
         assert "Black King Bar" in result
         assert "good" in result
         assert "WR" in result
@@ -692,7 +697,8 @@ class TestBuildTimingSection:
         assert "600" not in result
         assert "1800" not in result
 
-    def test_timing_section_marks_urgent(self):
+    @pytest.mark.asyncio
+    async def test_timing_section_marks_urgent(self):
         """Items with steep falloff show [TIMING-CRITICAL] tag."""
         mock_cache = MagicMock(spec=DataCache)
         mock_cache.get_hero_timings.return_value = {
@@ -705,9 +711,10 @@ class TestBuildTimingSection:
             ],
         }
         mock_opendota = MagicMock()
+        mock_db = MagicMock()
         cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
 
-        result = cb._build_timing_section(hero_id=1)
+        result = await cb._build_timing_section(hero_id=1, db=mock_db)
         assert "[TIMING-CRITICAL]" in result
 
     @pytest.mark.asyncio

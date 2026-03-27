@@ -31,6 +31,7 @@ from engine.llm import LLMEngine, FallbackReason
 from engine.context_builder import ContextBuilder
 from engine.timing_zones import classify_timing_zones
 from data.cache import DataCache
+from data.matchup_service import get_or_fetch_hero_timings
 
 logger = logging.getLogger(__name__)
 
@@ -165,10 +166,10 @@ class HybridRecommender:
         # Step 6: Validate all item_ids against cache (zero DB queries)
         phases = self._validate_item_ids(phases)
 
-        # Step 6b: Enrich with timing data (zero DB queries, uses DataCache)
+        # Step 6b: Enrich with timing data (cache-first, on-demand fetch fallback)
         timing_data: list[ItemTimingResponse] = []
         if self.cache:
-            timing_data = self._enrich_timing_data(request.hero_id, phases)
+            timing_data = await self._enrich_timing_data(request.hero_id, phases, db)
 
         # Step 6c: Enrich with build path data (zero DB queries, uses DataCache)
         build_paths: list[BuildPathResponse] = []
@@ -179,6 +180,10 @@ class HybridRecommender:
         win_condition: WinConditionResponse | None = None
         if self.cache:
             win_condition = self._enrich_win_condition(request)
+
+        # Step 6e: Adjust item priorities based on win condition (WCON-03)
+        if win_condition:
+            phases = self._adjust_priorities_for_win_condition(phases, win_condition)
 
         elapsed_ms = int((time.monotonic() - start) * 1000)
         response = RecommendResponse(
@@ -339,16 +344,20 @@ class HybridRecommender:
 
         return validated_phases
 
-    def _enrich_timing_data(
-        self, hero_id: int, phases: list[RecommendPhase]
+    async def _enrich_timing_data(
+        self, hero_id: int, phases: list[RecommendPhase], db: AsyncSession
     ) -> list[ItemTimingResponse]:
         """Build timing response data for all recommended items.
 
         Looks up timing benchmarks from DataCache, classifies zones,
         and returns pre-computed display data for the frontend.
-        Zero DB queries -- all data from in-memory cache.
+        Falls back to on-demand fetch when cache is empty (DATA-03).
         """
         timings = self.cache.get_hero_timings(hero_id)
+        if not timings:
+            timings = await get_or_fetch_hero_timings(
+                hero_id, db, self.context_builder.opendota_client
+            )
         if not timings:
             return []
 
@@ -374,6 +383,7 @@ class HybridRecommender:
                 ontrack_range=classified["ontrack_range"],
                 late_range=classified["late_range"],
                 good_win_rate=classified["good_win_rate"],
+                ontrack_win_rate=classified["ontrack_win_rate"],
                 late_win_rate=classified["late_win_rate"],
                 confidence=classified["confidence"],
                 total_games=classified["total_games"],
@@ -469,6 +479,38 @@ class HybridRecommender:
             enemy_archetype=enemy_result.archetype if enemy_result else None,
             enemy_confidence=enemy_result.confidence if enemy_result else None,
         )
+
+    def _adjust_priorities_for_win_condition(
+        self,
+        phases: list[RecommendPhase],
+        win_condition: WinConditionResponse,
+    ) -> list[RecommendPhase]:
+        """Adjust item priorities based on team win condition (WCON-03).
+
+        Early-aggression archetypes (deathball, pick-off) deprioritize luxury
+        late-game items. Scaling archetypes (late-game scale) keep luxury items
+        but flag timing-sensitive mid-game items.
+        """
+        EARLY_ARCHETYPES = {"deathball", "pick-off"}
+        archetype = win_condition.allied_archetype
+
+        if archetype not in EARLY_ARCHETYPES:
+            return phases
+
+        # Downgrade luxury items to situational for early-win-condition drafts
+        adjusted: list[RecommendPhase] = []
+        for phase in phases:
+            if phase.phase_name in ("late_game",):
+                new_items = []
+                for item in phase.items:
+                    if item.priority == "luxury":
+                        new_items.append(item.model_copy(update={"priority": "situational"}))
+                    else:
+                        new_items.append(item)
+                adjusted.append(phase.model_copy(update={"items": new_items}))
+            else:
+                adjusted.append(phase)
+        return adjusted
 
     def _sort_defensive_first(self, component_names: list[str]) -> list[str]:
         """Heuristic: sort components with highest HP/armor/magic resist value first.

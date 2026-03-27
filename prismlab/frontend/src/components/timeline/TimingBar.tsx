@@ -13,6 +13,7 @@ interface TimingBarProps {
   ontrackRange: string;
   lateRange: string;
   goodWinRate: number;
+  ontrackWinRate: number;
   lateWinRate: number;
   totalGames: number;
 }
@@ -29,6 +30,7 @@ function TimingBar({
   ontrackRange,
   lateRange,
   goodWinRate,
+  ontrackWinRate,
   lateWinRate,
   totalGames,
 }: TimingBarProps) {
@@ -126,7 +128,7 @@ function TimingBar({
                   className="text-xs font-semibold text-on-surface"
                   style={{ fontFeatureSettings: '"tnum"' }}
                 >
-                  {Math.round(((goodWinRate + lateWinRate) / 2) * 100)}% WR
+                  {Math.round(ontrackWinRate * 100)}% WR
                 </span>
               </div>
             )}

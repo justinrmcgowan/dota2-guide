@@ -165,6 +165,7 @@ class TestItemTimingResponseSchema:
             ontrack_range="15-20 min",
             late_range="> 20 min",
             good_win_rate=0.565,
+            ontrack_win_rate=0.52,
             late_win_rate=0.445,
             confidence="strong",
             total_games=1100,

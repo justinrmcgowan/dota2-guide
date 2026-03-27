@@ -110,6 +110,7 @@ function ItemCard({
           ontrackRange={timingData.ontrack_range}
           lateRange={timingData.late_range}
           goodWinRate={timingData.good_win_rate}
+          ontrackWinRate={timingData.ontrack_win_rate}
           lateWinRate={timingData.late_win_rate}
           totalGames={timingData.total_games}
         />

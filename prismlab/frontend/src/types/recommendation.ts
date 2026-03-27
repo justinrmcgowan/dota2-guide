@@ -16,6 +16,7 @@ export interface ItemTimingData {
   ontrack_range: string;  // "20-25 min"
   late_range: string;     // "> 25 min"
   good_win_rate: number;  // 0-1 float
+  ontrack_win_rate: number; // 0-1 float
   late_win_rate: number;  // 0-1 float
   confidence: "strong" | "moderate" | "weak";
   total_games: number;

@@ -57,6 +57,11 @@ def classify_timing_zones(
         / sum(b.games for b in good_buckets)
     ) if good_buckets else 0.0
 
+    ontrack_avg_wr = (
+        sum(b.win_rate * b.games for b in ontrack_buckets)
+        / sum(b.games for b in ontrack_buckets)
+    ) if ontrack_buckets else 0.0
+
     late_avg_wr = (
         sum(b.win_rate * b.games for b in late_buckets)
         / sum(b.games for b in late_buckets)
@@ -69,6 +74,7 @@ def classify_timing_zones(
         "ontrack_range": _format_time_range(ontrack_buckets, zone="ontrack"),
         "late_range": _format_time_range(late_buckets, zone="late"),
         "good_win_rate": round(good_avg_wr, 3),
+        "ontrack_win_rate": round(ontrack_avg_wr, 3),
         "late_win_rate": round(late_avg_wr, 3),
         "is_urgent": is_urgent,
         "confidence": _aggregate_confidence(buckets),

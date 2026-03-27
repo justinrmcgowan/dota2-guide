@@ -203,6 +203,7 @@ class ItemTimingResponse(BaseModel):
     ontrack_range: str                # "20-25 min"
     late_range: str                   # "> 25 min"
     good_win_rate: float              # 0-1 float
+    ontrack_win_rate: float           # 0-1 float
     late_win_rate: float              # 0-1 float
     confidence: str                   # "strong" | "moderate" | "weak" (aggregate)
     total_games: int                  # Sample size for tooltip
