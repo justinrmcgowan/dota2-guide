@@ -9,8 +9,8 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 
 ### Design System
 
-- [ ] **DESIGN-01**: Tailwind @theme block replaced with DESIGN.md tokens (obsidian surfaces, crimson/gold palette, 0px corners)
-- [ ] **DESIGN-02**: Newsreader (display/headline) and Manrope (body/label) fonts self-hosted via @fontsource-variable with metric-matching fallbacks
+- [x] **DESIGN-01**: Tailwind @theme block replaced with DESIGN.md tokens (obsidian surfaces, crimson/gold palette, 0px corners)
+- [x] **DESIGN-02**: Newsreader (display/headline) and Manrope (body/label) fonts self-hosted via @fontsource-variable with metric-matching fallbacks
 - [ ] **DESIGN-03**: All components updated to use surface hierarchy (no 1px borders, tonal layering for depth)
 - [ ] **DESIGN-04**: Ambient crimson glow shadows replace drop shadows on floating elements
 - [ ] **DESIGN-05**: Gold left-accent strips on hero/legendary item cards
@@ -65,8 +65,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DESIGN-01 | Phase 17 | Pending |
-| DESIGN-02 | Phase 17 | Pending |
+| DESIGN-01 | Phase 17 | Complete |
+| DESIGN-02 | Phase 17 | Complete |
 | DESIGN-03 | Phase 17 | Pending |
 | DESIGN-04 | Phase 17 | Pending |
 | DESIGN-05 | Phase 17 | Pending |

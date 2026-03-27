@@ -101,7 +101,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 17-01-PLAN.md — Font swap (Newsreader + Manrope) and @theme token replacement in globals.css
+- [x] 17-01-PLAN.md — Font swap (Newsreader + Manrope) and @theme token replacement in globals.css
 - [ ] 17-02-PLAN.md — Layout shell (App, Header, Sidebar, MainPanel) and draft-input components migration
 - [ ] 17-03-PLAN.md — Timeline components (ItemCard, PhaseCard, NeutralItems) and game-state components migration
 - [ ] 17-04-PLAN.md — Floating overlays (SettingsPanel, ScreenshotParser, Toast, ErrorBanner) with blood-glass effects
@@ -131,5 +131,5 @@ Note: Phase 16 is backend-only and could execute in parallel with Phase 15 (fron
 |-------|-----------|----------------|--------|-----------|
 | 15. Store Consolidation & Tech Debt | v3.0 | 2/2 | Complete    | 2026-03-27 |
 | 16. Backend Data Cache | v3.0 | 2/2 | Complete    | 2026-03-27 |
-| 17. Design System Migration | v3.0 | 0/5 | Not started | - |
+| 17. Design System Migration | v3.0 | 1/5 | In Progress|  |
 | 18. Screenshot KDA Feed-Through | v3.0 | 0/1 | Not started | - |
