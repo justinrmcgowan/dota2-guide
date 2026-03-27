@@ -65,11 +65,11 @@
   2. When GSI detects a hero and role, a playstyle is auto-suggested without the user manually selecting one
   3. The `TriggerEvent` interface exists in exactly one file (`triggerDetection.ts`) with all consumers importing from that single source
   4. All existing GSI behavior (hero detection, item marking, event triggers, lane auto-detect, auto-refresh) still works identically
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
+- [ ] 15-01-PLAN.md — TriggerEvent dedup, HERO_PLAYSTYLE_MAP data file
+- [ ] 15-02-PLAN.md — useGameIntelligence hook consolidation, App.tsx wiring, old hook deletion
 
 ### Phase 16: Backend Data Cache
 **Goal**: Hero and item data is served from an in-memory cache, eliminating per-request DB queries on the recommendation hot path
