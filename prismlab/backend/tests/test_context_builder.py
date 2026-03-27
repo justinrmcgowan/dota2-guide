@@ -358,25 +358,25 @@ class TestAllyIntegration:
 class TestSystemPromptAllyRules:
     """Smoke tests confirming system prompt contains ally coordination rules."""
 
-    def test_system_prompt_has_team_coordination(self):
+    def test_system_prompt_has_allies_section(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
 
-        assert "## Team Coordination" in SYSTEM_PROMPT
+        assert "## Allies" in SYSTEM_PROMPT
 
     def test_system_prompt_has_aura_dedup_rule(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
 
-        assert "Aura and utility deduplication" in SYSTEM_PROMPT
+        assert "deduplicate auras" in SYSTEM_PROMPT
 
     def test_system_prompt_has_combo_awareness_rule(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
 
-        assert "Combo and setup awareness" in SYSTEM_PROMPT
+        assert "identify combos" in SYSTEM_PROMPT
 
     def test_system_prompt_has_gap_filling_rule(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
 
-        assert "Team role gap filling" in SYSTEM_PROMPT
+        assert "fill team gaps" in SYSTEM_PROMPT
 
 
 # ---------------------------------------------------------------------------
@@ -448,12 +448,12 @@ class TestSystemPromptNeutralRules:
     def test_system_prompt_has_rank_by_hero_synergy(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
 
-        assert "Rank by hero synergy" in SYSTEM_PROMPT
+        assert "rank 2-3 per tier by hero synergy" in SYSTEM_PROMPT
 
     def test_system_prompt_has_build_path_interaction(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
 
-        assert "Build-path interaction" in SYSTEM_PROMPT
+        assert "build-path interactions" in SYSTEM_PROMPT
 
     def test_system_prompt_has_neutral_items_field(self):
         from engine.prompts.system_prompt import SYSTEM_PROMPT
