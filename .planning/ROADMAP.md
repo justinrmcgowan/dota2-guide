@@ -50,7 +50,7 @@
 **Milestone Goal:** Transform Prismlab's visual identity to the "Tactical Relic Editorial" design system, add in-memory data caching for performance, and close integration gaps from v2.0.
 
 - [x] **Phase 15: Store Consolidation & Tech Debt** - Merge GSI hooks, deduplicate types, auto-suggest playstyle (completed 2026-03-27)
-- [ ] **Phase 16: Backend Data Cache** - In-memory hero/item cache, three-layer cache coordination, session safety
+- [x] **Phase 16: Backend Data Cache** - In-memory hero/item cache, three-layer cache coordination, session safety (completed 2026-03-27)
 - [ ] **Phase 17: Design System Migration** - Tactical Relic Editorial retheme across all components (see DESIGN.md)
 - [ ] **Phase 18: Screenshot KDA Feed-Through** - Feed parsed KDA/level data into recommendation context
 
@@ -85,7 +85,7 @@ Plans:
 
 Plans:
 - [x] 16-01-PLAN.md — DataCache singleton with frozen dataclasses, RulesEngine refactor to consume cache
-- [ ] 16-02-PLAN.md — Hot path wiring (context builder, recommender, routes), lifespan loading, coordinated refresh invalidation
+- [x] 16-02-PLAN.md — Hot path wiring (context builder, recommender, routes), lifespan loading, coordinated refresh invalidation
 
 ### Phase 17: Design System Migration
 **Goal**: Every visual surface in Prismlab matches the "Tactical Relic Editorial" spec in DESIGN.md -- obsidian surfaces, crimson/gold accents, Newsreader/Manrope typography, 0px corners
@@ -128,6 +128,6 @@ Note: Phase 16 is backend-only and could execute in parallel with Phase 15 (fron
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 15. Store Consolidation & Tech Debt | v3.0 | 2/2 | Complete    | 2026-03-27 |
-| 16. Backend Data Cache | v3.0 | 1/2 | In Progress|  |
+| 16. Backend Data Cache | v3.0 | 2/2 | Complete   | 2026-03-27 |
 | 17. Design System Migration | v3.0 | 0/3 | Not started | - |
 | 18. Screenshot KDA Feed-Through | v3.0 | 0/1 | Not started | - |

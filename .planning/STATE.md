@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
-status: Ready to execute
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-27T00:45:48.649Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-27T01:01:53.362Z"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 2 of 2
 | Phase 15 P01 | 3min | 1 tasks | 3 files |
 | Phase 15 P02 | 5min | 2 tasks | 6 files |
 | Phase 16 P01 | 3min | 2 tasks | 2 files |
+| Phase 16 P02 | 12min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Recent decisions affecting current work:
 - [Phase 15]: Separate gsiStore.subscribe and recStore.subscribe within consolidated hook to prevent cross-store write cascades
 - [Phase 15]: Playstyle auto-suggest fires only on hero_id change; user manual override persists across GSI ticks
 - [Phase 16]: Frozen dataclasses for cache immutability; atomic swap refresh safe in single-threaded async; RulesEngine consumes DataCache via constructor injection
+- [Phase 16]: AsyncSession retained in context_builder for matchup/popularity methods; ResponseCache.clear() as clean public API; fresh session for DataCache.refresh in pipeline (INT-05)
 
 ### Pending Todos
 
@@ -82,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:45:48.647Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-27T01:01:53.359Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None

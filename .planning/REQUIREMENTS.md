@@ -21,7 +21,7 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 ### Performance
 
 - [x] **PERF-01**: In-memory DataCache singleton preloads hero and item data at startup, eliminating per-request DB queries
-- [ ] **PERF-02**: DataCache refreshes atomically on 6h pipeline cycle (coordinated with ResponseCache and RulesEngine invalidation)
+- [x] **PERF-02**: DataCache refreshes atomically on 6h pipeline cycle (coordinated with ResponseCache and RulesEngine invalidation)
 - [x] **PERF-03**: Context builder and recommendation engine consume DataCache instead of direct DB queries
 
 ### Integration
@@ -30,8 +30,8 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 - [x] **INT-02**: Playstyle auto-suggested (first valid option for role) when GSI detects hero and role
 - [ ] **INT-03**: Screenshot-parsed KDA and level data fed into recommendation request context for Claude reasoning
 - [x] **INT-04**: TriggerEvent interface deduplicated (single source in triggerDetection.ts)
-- [ ] **INT-05**: refresh_lookups() session safety fixed (fresh session or atomic swap)
-- [ ] **INT-06**: ResponseCache cleared on data pipeline refresh (coordinated with DataCache)
+- [x] **INT-05**: refresh_lookups() session safety fixed (fresh session or atomic swap)
+- [x] **INT-06**: ResponseCache cleared on data pipeline refresh (coordinated with DataCache)
 
 ## Future Requirements
 
@@ -74,14 +74,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DESIGN-07 | Phase 17 | Pending |
 | DESIGN-08 | Phase 17 | Pending |
 | PERF-01 | Phase 16 | Complete |
-| PERF-02 | Phase 16 | Pending |
+| PERF-02 | Phase 16 | Complete |
 | PERF-03 | Phase 16 | Complete |
 | INT-01 | Phase 15 | Complete |
 | INT-02 | Phase 15 | Complete |
 | INT-03 | Phase 18 | Pending |
 | INT-04 | Phase 15 | Complete |
-| INT-05 | Phase 16 | Pending |
-| INT-06 | Phase 16 | Pending |
+| INT-05 | Phase 16 | Complete |
+| INT-06 | Phase 16 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 17 total
