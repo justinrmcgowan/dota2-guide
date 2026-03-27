@@ -52,7 +52,7 @@ Exceptions: TimingBar height is 6px (not a spacing token -- it is a fixed compon
 |------|------|--------|-------------|-------------|
 | Body | 14px (text-sm) | 400 (normal) | 1.5 (leading-relaxed) | Manrope Variable |
 | Label | 12px (text-xs) | 600 (semibold) | 1.33 | Manrope Variable |
-| Heading | 14px (text-sm) | 700 (bold) | 1.2 | Newsreader Variable |
+| Heading | 14px (text-sm) | 600 (semibold) | 1.2 | Newsreader Variable |
 | Display | not used this phase | -- | -- | -- |
 
 ### Phase-Specific Typography Applications
@@ -213,6 +213,8 @@ interface TimingBarProps {
 #### ItemCard.tsx Modifications
 
 **Current state:** Button with item image (48x48), gold cost label below. No timing data.
+
+**Focal point:** The TimingBar is the primary new visual element in the ItemCard; the UrgencyBorder takes visual priority when active.
 
 **Changes:**
 1. Accept new prop: `timingData: TimingBarData | null` (null = no timing data for this item)
