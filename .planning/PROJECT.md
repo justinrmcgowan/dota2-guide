@@ -35,17 +35,15 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Active
 
-## Current Milestone: v3.0 Design Overhaul & Performance
+## Current Milestone: v4.0 Coaching Intelligence
 
-**Goal:** Transform Prismlab's visual identity to the "Tactical Relic Editorial" design system, add in-memory data caching for performance, and close integration gaps from v2.0.
+**Goal:** Transform Prismlab from an item list generator into a strategic coach — with data-backed timing windows, ability-aware counter-itemization, build path ordering, and win condition framing.
 
 **Target features:**
-- DESIGN.md "Tactical Relic Editorial" retheme — obsidian surfaces, Newsreader + Manrope typography, 0px corners, crimson/gold palette
-- In-memory hero/item data cache — load at startup, refresh on pipeline cycle, eliminate DB queries on hot path
-- Auto-suggest playstyle when GSI detects hero+role
-- Feed KDA/level data from screenshots into recommendation context
-- Store subscription consolidation (useGsiSync + useAutoRefresh)
-- Tech debt cleanup (TriggerEvent dedup, session safety fix)
+- Timing benchmarks — mine OpenDota purchase-timing data, surface urgency signals, integrate into rules + prompt
+- Counter-item depth — ability-specific counters beyond current rules (Eul's vs channeled ults, Spirit Vessel vs regen heroes), driven by hero ability data
+- Build path intelligence — component-level ordering, not just final item recommendations
+- Win condition framing — classify team compositions into macro strategies, frame item builds around how the game is won
 
 ### Out of Scope
 
@@ -56,13 +54,13 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ## Context
 
-- **Shipped:** v1.0 MVP (2026-03-21), v1.1 Allied Synergy & Neutral Items (2026-03-23), v2.0 Live Game Intelligence (2026-03-26)
+- **Shipped:** v1.0 MVP (2026-03-21), v1.1 Allied Synergy & Neutral Items (2026-03-23), v2.0 Live Game Intelligence (2026-03-26), v3.0 Design Overhaul & Performance (2026-03-27)
 - **Codebase:** React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
 - **Test suite:** 160+ tests (backend pytest + frontend vitest), zero failures
 - **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
 - **Core problem:** Player knows Dota itemization theory but loses track of matchup nuances during live games
 - **Data sources:** OpenDota API for hero stats, win rates, item popularity. Steam CDN for images. Dota 2 GSI for live game state.
-- **Known tech debt:** TriggerEvent duplication, refresh_lookups() session safety, KDA display-only in screenshots, store subscription duplication
+- **Design system:** "Tactical Relic Editorial" — obsidian surfaces, Newsreader + Manrope typography, crimson/gold palette (see DESIGN.md)
 
 ## Constraints
 
@@ -108,4 +106,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 — v3.0 Design Overhaul & Performance milestone started*
+*Last updated: 2026-03-27 — v4.0 Coaching Intelligence milestone started*
