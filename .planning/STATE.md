@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
 status: Ready to execute
-stopped_at: Completed 17-04-PLAN.md
-last_updated: "2026-03-27T01:35:52.906Z"
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-03-27T01:37:45.251Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 17 (design-system-migration) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: 4 of 5
 | Phase 17 P01 | 2min | 2 tasks | 4 files |
 | Phase 17 P03 | 5min | 2 tasks | 12 files |
 | Phase 17 P04 | 5min | 2 tasks | 6 files |
+| Phase 17 P02 | 6min | 2 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 17]: Core and luxury items both use secondary-fixed gold accent strip per DESIGN.md D-10 Monolith card pattern
 - [Phase 17]: LiveStatsBar uses tertiary-container Tactical HUD background to differentiate tactical data from editorial content
 - [Phase 17]: Blood-glass backdrop uses primary-container/25 for slide-over, /30 for modal; toast avoids backdrop-blur per Pitfall 13
+- [Phase 17]: Ghost border on toggle buttons: outline-variant/15 inactive, primary/40 active for WCAG state differentiation
+- [Phase 17]: Sidebar CTA uses bg-surface-container-low tonal shift instead of border-t per No-Line Rule
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T01:35:52.903Z
-Stopped at: Completed 17-04-PLAN.md
+Last session: 2026-03-27T01:37:45.248Z
+Stopped at: Completed 17-02-PLAN.md
 Resume file: None
