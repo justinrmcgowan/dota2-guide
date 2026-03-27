@@ -125,7 +125,7 @@ export function useGameIntelligence(heroes: Hero[]): void {
     const request: RecommendRequest = {
       hero_id: game.selectedHero.id,
       role: game.role,
-      playstyle: game.playstyle ?? "balanced",
+      playstyle: game.playstyle ?? PLAYSTYLE_OPTIONS[game.role]?.[0] ?? "Farm-first",
       side: game.side ?? "radiant",
       lane: game.lane ?? "safe",
       lane_opponents: game.laneOpponents.map((h) => h.id),
