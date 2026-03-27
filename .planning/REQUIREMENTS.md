@@ -12,9 +12,9 @@ Requirements for v3.0 release. Each maps to roadmap phases.
 - [x] **DESIGN-01**: Tailwind @theme block replaced with DESIGN.md tokens (obsidian surfaces, crimson/gold palette, 0px corners)
 - [x] **DESIGN-02**: Newsreader (display/headline) and Manrope (body/label) fonts self-hosted via @fontsource-variable with metric-matching fallbacks
 - [x] **DESIGN-03**: All components updated to use surface hierarchy (no 1px borders, tonal layering for depth)
-- [ ] **DESIGN-04**: Ambient crimson glow shadows replace drop shadows on floating elements
+- [x] **DESIGN-04**: Ambient crimson glow shadows replace drop shadows on floating elements
 - [x] **DESIGN-05**: Gold left-accent strips on hero/legendary item cards
-- [ ] **DESIGN-06**: "Blood-glass" backdrop-blur overlays on tactical overlays (modals, settings panel, screenshot parser)
+- [x] **DESIGN-06**: "Blood-glass" backdrop-blur overlays on tactical overlays (modals, settings panel, screenshot parser)
 - [ ] **DESIGN-07**: Parchment noise texture overlay on base background
 - [ ] **DESIGN-08**: All existing components pass visual audit against DESIGN.md spec (no rounded corners, no blue links, no #FFFFFF)
 
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DESIGN-01 | Phase 17 | Complete |
 | DESIGN-02 | Phase 17 | Complete |
 | DESIGN-03 | Phase 17 | Complete |
-| DESIGN-04 | Phase 17 | Pending |
+| DESIGN-04 | Phase 17 | Complete |
 | DESIGN-05 | Phase 17 | Complete |
-| DESIGN-06 | Phase 17 | Pending |
+| DESIGN-06 | Phase 17 | Complete |
 | DESIGN-07 | Phase 17 | Pending |
 | DESIGN-08 | Phase 17 | Pending |
 | PERF-01 | Phase 16 | Complete |
