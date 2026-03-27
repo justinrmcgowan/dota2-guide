@@ -1,4 +1,4 @@
-import type { RecommendPhase } from "../../types/recommendation";
+import type { RecommendPhase, ItemTimingData } from "../../types/recommendation";
 import { useRecommendationStore } from "../../stores/recommendationStore";
 import ItemCard from "./ItemCard";
 import DecisionTreeCard from "./DecisionTreeCard";
@@ -7,6 +7,9 @@ interface PhaseCardProps {
   phase: RecommendPhase;
   selectedItemId: string | null;
   onSelectItem: (key: string | null) => void;
+  timingDataMap?: Map<string, ItemTimingData>;
+  currentGameClock?: number | null;
+  currentGold?: number | null;
 }
 
 const PHASE_COLORS: Record<string, string> = {
@@ -25,7 +28,14 @@ const PHASE_LABELS: Record<string, string> = {
   situational: "SITUATIONAL",
 };
 
-function PhaseCard({ phase, selectedItemId, onSelectItem }: PhaseCardProps) {
+function PhaseCard({
+  phase,
+  selectedItemId,
+  onSelectItem,
+  timingDataMap,
+  currentGameClock = null,
+  currentGold = null,
+}: PhaseCardProps) {
   const purchasedItems = useRecommendationStore((s) => s.purchasedItems);
   const togglePurchased = useRecommendationStore((s) => s.togglePurchased);
 
@@ -72,6 +82,9 @@ function PhaseCard({ phase, selectedItemId, onSelectItem }: PhaseCardProps) {
                 onSelect={() => onSelectItem(key)}
                 isPurchased={purchasedItems.has(key)}
                 onTogglePurchased={() => togglePurchased(key)}
+                timingData={timingDataMap?.get(item.item_name) ?? null}
+                currentGameClock={currentGameClock}
+                currentGold={currentGold}
               />
             );
           })}

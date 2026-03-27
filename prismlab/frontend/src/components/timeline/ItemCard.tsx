@@ -1,5 +1,6 @@
-import type { ItemRecommendation } from "../../types/recommendation";
+import type { ItemRecommendation, ItemTimingData } from "../../types/recommendation";
 import { itemImageUrl } from "../../utils/imageUrls";
+import TimingBar from "./TimingBar";
 
 interface ItemCardProps {
   item: ItemRecommendation;
@@ -8,6 +9,9 @@ interface ItemCardProps {
   onSelect: () => void;
   isPurchased: boolean;
   onTogglePurchased: () => void;
+  timingData?: ItemTimingData | null;
+  currentGameClock?: number | null;
+  currentGold?: number | null;
 }
 
 const PRIORITY_BORDER: Record<ItemRecommendation["priority"], string> = {
@@ -29,6 +33,9 @@ function ItemCard({
   onSelect,
   isPurchased,
   onTogglePurchased,
+  timingData = null,
+  currentGameClock = null,
+  currentGold = null,
 }: ItemCardProps) {
   const borderClass = PRIORITY_BORDER[item.priority];
   const imgSrc = itemImageUrl(item.item_name);
@@ -48,6 +55,7 @@ function ItemCard({
         isSelected
           ? "ring-1 ring-secondary-fixed bg-surface-container-high/50"
           : "bg-transparent hover:bg-surface-container-high/30",
+        timingData?.is_urgent && !isPurchased ? "timing-urgent" : "",
       ].join(" ")}
     >
       <div className="relative">
@@ -88,6 +96,23 @@ function ItemCard({
         <span className="text-secondary text-xs truncate max-w-[56px] text-center">
           {formatItemName(item.item_name)}
         </span>
+      )}
+      {timingData && !isPurchased && (
+        <TimingBar
+          buckets={timingData.buckets}
+          confidence={timingData.confidence}
+          isUrgent={timingData.is_urgent}
+          isPurchased={isPurchased}
+          currentGameClock={currentGameClock ?? null}
+          currentGold={currentGold ?? null}
+          itemCost={item.gold_cost ?? null}
+          goodRange={timingData.good_range}
+          ontrackRange={timingData.ontrack_range}
+          lateRange={timingData.late_range}
+          goodWinRate={timingData.good_win_rate}
+          lateWinRate={timingData.late_win_rate}
+          totalGames={timingData.total_games}
+        />
       )}
     </button>
   );

@@ -1,4 +1,5 @@
-import type { RecommendResponse } from "../../types/recommendation";
+import { useMemo } from "react";
+import type { RecommendResponse, ItemTimingData } from "../../types/recommendation";
 import PhaseCard from "./PhaseCard";
 import NeutralItemSection from "./NeutralItemSection";
 import { useGsiStore } from "../../stores/gsiStore";
@@ -13,9 +14,21 @@ interface ItemTimelineProps {
 function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps) {
   const gsiStatus = useGsiStore((s) => s.gsiStatus);
   const gameClock = useGsiStore((s) => s.liveState?.game_clock ?? null);
-  const currentTier = gsiStatus === "connected" && gameClock != null
+  const gold = useGsiStore((s) => s.liveState?.gold ?? null);
+  const isGsiConnected = gsiStatus === "connected";
+  const currentTier = isGsiConnected && gameClock != null
     ? getCurrentTier(gameClock)
     : null;
+
+  const timingDataMap = useMemo(() => {
+    const map = new Map<string, ItemTimingData>();
+    if (data.timing_data) {
+      for (const td of data.timing_data) {
+        map.set(td.item_name, td);
+      }
+    }
+    return map;
+  }, [data.timing_data]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -38,6 +51,9 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
           phase={phase}
           selectedItemId={selectedItemId}
           onSelectItem={onSelectItem}
+          timingDataMap={timingDataMap}
+          currentGameClock={isGsiConnected ? gameClock : null}
+          currentGold={isGsiConnected ? gold : null}
         />
       ))}
 
