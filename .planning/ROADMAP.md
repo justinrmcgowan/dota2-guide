@@ -81,11 +81,11 @@ Plans:
   3. The `refresh_lookups()` function uses a fresh session (not the pipeline's session) for safe async operation
   4. `/api/heroes` and `/api/items` endpoints serve data from cache with sub-millisecond reads
   5. On cold start, the cache loads after seeding completes (no empty-cache race condition)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md — DataCache singleton with frozen dataclasses, RulesEngine refactor to consume cache
+- [ ] 16-02-PLAN.md — Hot path wiring (context builder, recommender, routes), lifespan loading, coordinated refresh invalidation
 
 ### Phase 17: Design System Migration
 **Goal**: Every visual surface in Prismlab matches the "Tactical Relic Editorial" spec in DESIGN.md -- obsidian surfaces, crimson/gold accents, Newsreader/Manrope typography, 0px corners
