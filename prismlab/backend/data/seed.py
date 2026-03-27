@@ -102,7 +102,7 @@ async def seed_if_empty():
                 cost=info.get("cost"),
                 components=info.get("components"),
                 is_recipe=internal_name.startswith("recipe_"),
-                is_neutral=info.get("tier") is not None,
+                is_neutral=info.get("qual") == "rare" or (info.get("tier") is not None and not info.get("cost")),
                 tier=info.get("tier"),
                 bonuses=bonuses,
                 active_desc=active_desc,
