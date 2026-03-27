@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Coaching Intelligence
-status: Executing Phase 20
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-03-27T16:09:39Z"
+status: Ready to execute
+stopped_at: Completed 20-03-PLAN.md
+last_updated: "2026-03-27T16:05:49.877Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 20 (counter-item-intelligence) — EXECUTING
-Plan: 2 of 3 complete
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -45,8 +45,7 @@ Plan: 2 of 3 complete
 | Phase 19 P01 | 5min | 2 tasks | 4 files |
 | Phase 19 P02 | 6min | 2 tasks | 5 files |
 | Phase 19 P03 | 4min | 2 tasks | 2 files |
-| Phase 20 P01 | 6min | 2 tasks | 4 files |
-| Phase 20 P02 | 10min | 2 tasks | 2 files |
+| Phase 20 P03 | 5min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,10 +65,7 @@ Recent decisions affecting current work:
 - [Phase 19]: Ability refresh is non-fatal try/except -- heroes/items always commit
 - [Phase 19]: v4.0 directives use conditional If guards for optional context sections
 - [Phase 19]: System prompt data boundary enforced: directives only, no dynamic data (token budget <5000, no percentages)
-- [Phase 20]: Ability-first + fallback pattern: query abilities first, fallback to hero IDs for heroes without ability data
-- [Phase 20]: Fallback hero ID sets stay full-size because most heroes lack ability data in DataCache
-- [Phase 20]: BKB-pierce warning appended to BKB reasoning, not a separate rule method
-- [Phase 20]: counter_target format: "{hero_name}: {ability.dname} ({property})" for structured downstream use
+- [Phase 20]: Counter-relevant ability properties limited to 4: channeled, passive, BKB-pierce, undispellable
 
 ### Pending Todos
 
@@ -82,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T16:09:39Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-03-27T16:05:49.875Z
+Stopped at: Completed 20-03-PLAN.md
 Resume file: None

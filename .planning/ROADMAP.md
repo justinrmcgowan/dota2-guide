@@ -95,8 +95,8 @@ Plans:
 **Plans:** 2/3 plans executed
 Plans:
 - [x] 20-01-PLAN.md -- Schema extension, test fixtures, ability helpers, threat utility
-- [x] 20-02-PLAN.md -- Refactor 14 rules to ability-first, add 4 new rule methods, threat escalation
-- [ ] 20-03-PLAN.md -- Context builder ability annotations for Claude user message
+- [ ] 20-02-PLAN.md -- Refactor 14 rules to ability-first, add 4 new rule methods, threat escalation
+- [x] 20-03-PLAN.md -- Context builder ability annotations for Claude user message
 
 ### Phase 21: Timing Benchmarks
 **Goal**: Users see data-backed timing windows on recommended items -- how early is good, when is on-track, when is late -- with urgency signals for timing-sensitive purchases and live tracking during GSI games
@@ -144,7 +144,7 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
-| 20. Counter-Item Intelligence | v4.0 | 2/3 | In Progress | - |
+| 20. Counter-Item Intelligence | v4.0 | 2/3 | In Progress|  |
 | 21. Timing Benchmarks | v4.0 | 0/0 | Not started | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |

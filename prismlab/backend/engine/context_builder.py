@@ -232,13 +232,41 @@ class ContextBuilder:
         """Look up a hero by ID from the in-memory cache."""
         return self.cache.get_hero(hero_id)
 
+    def _get_counter_relevant_abilities(self, hero_id: int) -> str:
+        """Pre-filter abilities to only counter-relevant properties.
+
+        Returns a compact string like:
+        "Death Ward (channeled, BKB-pierce); Maledict (undispellable)"
+
+        Only includes abilities with at least one counter-relevant property:
+        channeled, passive, BKB-pierce, or undispellable debuff.
+        Per D-06: ~150 tokens total across all opponents.
+        """
+        abilities = self.cache.get_hero_abilities(hero_id)
+        if not abilities:
+            return ""
+        tags: list[str] = []
+        for a in abilities:
+            props: list[str] = []
+            if a.is_channeled:
+                props.append("channeled")
+            if a.is_passive:
+                props.append("passive")
+            if a.bkbpierce:
+                props.append("BKB-pierce")
+            if a.dispellable and a.dispellable.lower() in ("no", "strong dispels only"):
+                props.append("undispellable")
+            if props:
+                tags.append(f"{a.dname} ({', '.join(props)})")
+        return "; ".join(tags)
+
     async def _build_opponent_lines(
         self,
         hero_id: int,
         lane_opponents: list[int],
         db: AsyncSession,
     ) -> str:
-        """Build opponent section with matchup win rates."""
+        """Build opponent section with matchup win rates and ability threats."""
         lines: list[str] = []
         for opp_id in lane_opponents:
             opp_hero = self._get_hero(opp_id)
@@ -255,6 +283,11 @@ class ContextBuilder:
                 )
             else:
                 lines.append(f"- {opp_name}: no matchup data available")
+
+            # Inline ability annotations (D-06, D-07)
+            ability_tags = self._get_counter_relevant_abilities(opp_id)
+            if ability_tags:
+                lines.append(f"  Threats: {ability_tags}")
 
         return "\n".join(lines)
 
