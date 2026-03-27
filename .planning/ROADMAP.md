@@ -61,7 +61,7 @@
 **Milestone Goal:** Transform Prismlab from an item list generator into a strategic coach -- with data-backed timing windows, ability-aware counter-itemization, build path ordering, and win condition framing.
 
 - [x] **Phase 19: Data Foundation & Prompt Architecture** - Ability/timing data pipeline, DataCache extensions, system-prompt-vs-user-message data split (completed 2026-03-27)
-- [x] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude (completed 2026-03-27)
+- [x] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude (completed 2026-03-27)
 - [ ] **Phase 21: Timing Benchmarks** - Timing windows in UI, urgency indicators, Claude timing reasoning, GSI live comparison
 - [ ] **Phase 22: Build Path Intelligence** - Component ordering, adaptive build paths, GSI gold tracking
 - [ ] **Phase 23: Win Condition Framing** - Draft classification, strategy anchoring, enemy win condition assessment
@@ -107,8 +107,10 @@ Plans:
   2. Items with steep win-rate falloff at later purchase times show a distinct urgency indicator, visually separating timing-critical items from flexible ones
   3. Claude's reasoning references specific timing benchmarks when explaining item urgency (e.g., "BKB before 25 minutes has a 58% win rate vs. 41% after 30 minutes")
   4. During GSI-connected games, the user can see how their current gold and game clock compare against the timing benchmark window for upcoming items
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 2 plans
+Plans:
+- [ ] 21-01-PLAN.md -- Backend zone classification, schema extension, context builder timing section, recommender enrichment
+- [ ] 21-02-PLAN.md -- Frontend TimingBar component, CSS urgency animation, ItemCard/PhaseCard/ItemTimeline wiring, GSI integration
 
 ### Phase 22: Build Path Intelligence
 **Goal**: Users see the optimal component purchase order for each recommended item, with reasoning for why to buy each component in that order, adapting to game state
@@ -145,6 +147,6 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 |-------|-----------|----------------|--------|-----------|
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 20. Counter-Item Intelligence | v4.0 | 2/3 | Complete    | 2026-03-27 |
-| 21. Timing Benchmarks | v4.0 | 0/0 | Not started | - |
+| 21. Timing Benchmarks | v4.0 | 0/2 | Planned | - |
 | 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |
