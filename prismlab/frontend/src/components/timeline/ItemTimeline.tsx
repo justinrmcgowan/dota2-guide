@@ -22,10 +22,10 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
       {/* Overall strategy summary */}
       {data.overall_strategy && (
         <div className="mb-2">
-          <span className="text-cyan-accent text-xs font-semibold uppercase tracking-wide">
+          <span className="text-secondary text-xs font-semibold uppercase tracking-wide font-display">
             Strategy
           </span>
-          <p className="text-gray-400 text-sm italic mt-1">
+          <p className="text-on-surface-variant text-sm italic mt-1">
             {data.overall_strategy}
           </p>
         </div>

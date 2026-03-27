@@ -3,19 +3,19 @@ const SKELETON_PHASES = ["Starting", "Laning", "Core", "Late Game"] as const;
 function SkeletonItemBlock() {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="w-12 h-12 bg-bg-elevated rounded animate-pulse" />
-      <div className="h-3 w-10 bg-bg-elevated rounded animate-pulse" />
+      <div className="w-12 h-12 bg-surface-container-high animate-pulse" />
+      <div className="h-3 w-10 bg-surface-container-high animate-pulse" />
     </div>
   );
 }
 
 function SkeletonPhaseCard({ label }: { label: string }) {
   return (
-    <div className="bg-bg-secondary rounded-lg p-4 border border-bg-elevated">
+    <div className="bg-surface-container-low p-[1.75rem]">
       {/* Phase header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="h-6 w-24 bg-bg-elevated rounded animate-pulse" />
-        <span className="text-xs text-gray-600 animate-pulse">{label}</span>
+        <div className="h-6 w-24 bg-surface-container-high animate-pulse" />
+        <span className="text-xs text-on-surface-variant/30 animate-pulse">{label}</span>
       </div>
 
       {/* Item placeholders row */}

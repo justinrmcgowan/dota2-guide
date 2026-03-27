@@ -11,9 +11,9 @@ interface ItemCardProps {
 }
 
 const PRIORITY_BORDER: Record<ItemRecommendation["priority"], string> = {
-  core: "border-l-cyan-accent",
-  situational: "border-l-amber-400",
-  luxury: "border-l-purple-400",
+  core: "border-l-secondary-fixed",
+  situational: "border-l-outline-variant",
+  luxury: "border-l-secondary-fixed",
 };
 
 function formatItemName(name: string): string {
@@ -24,7 +24,7 @@ function formatItemName(name: string): string {
 
 function ItemCard({
   item,
-  phaseKey,
+  phaseKey: _phaseKey,
   isSelected,
   onSelect,
   isPurchased,
@@ -43,11 +43,11 @@ function ItemCard({
       onClick={handleClick}
       title={formatItemName(item.item_name)}
       className={[
-        "flex flex-col items-center gap-1 p-2 rounded-md border-l-2 cursor-pointer transition-all",
+        "flex flex-col items-center gap-1 p-2 border-l-2 cursor-pointer transition-all",
         borderClass,
         isSelected
-          ? "ring-1 ring-cyan-accent bg-bg-elevated/50"
-          : "bg-transparent hover:bg-bg-elevated/30",
+          ? "ring-1 ring-secondary-fixed bg-surface-container-high/50"
+          : "bg-transparent hover:bg-surface-container-high/30",
       ].join(" ")}
     >
       <div className="relative">
@@ -81,11 +81,11 @@ function ItemCard({
         )}
       </div>
       {item.gold_cost != null ? (
-        <span className="text-amber-400 text-xs text-center">
+        <span className="text-secondary text-xs text-center">
           {item.gold_cost}
         </span>
       ) : (
-        <span className="text-amber-400 text-xs truncate max-w-[56px] text-center">
+        <span className="text-secondary text-xs truncate max-w-[56px] text-center">
           {formatItemName(item.item_name)}
         </span>
       )}

@@ -10,11 +10,11 @@ interface PhaseCardProps {
 }
 
 const PHASE_COLORS: Record<string, string> = {
-  starting: "text-gray-400",
-  laning: "text-cyan-accent",
-  core: "text-amber-400",
-  late_game: "text-purple-400",
-  situational: "text-amber-400",
+  starting: "text-on-surface-variant",
+  laning: "text-primary",
+  core: "text-secondary",
+  late_game: "text-tertiary",
+  situational: "text-secondary",
 };
 
 const PHASE_LABELS: Record<string, string> = {
@@ -42,17 +42,17 @@ function PhaseCard({ phase, selectedItemId, onSelectItem }: PhaseCardProps) {
   });
 
   return (
-    <div className="bg-bg-secondary rounded-lg p-4 border border-bg-elevated">
+    <div className="bg-surface-container-low p-[1.75rem]">
       {/* Phase header */}
       <div className="flex items-center gap-3 mb-3">
-        <h3 className={`text-sm font-bold tracking-wider ${colorClass}`}>
+        <h3 className={`text-sm font-bold tracking-wider font-display ${colorClass}`}>
           {label}
         </h3>
         {phase.timing && (
-          <span className="text-xs text-gray-500">{phase.timing}</span>
+          <span className="text-xs text-on-surface-variant">{phase.timing}</span>
         )}
         {phase.gold_budget !== null && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-on-surface-variant">
             ~{phase.gold_budget.toLocaleString()}g
           </span>
         )}
@@ -87,11 +87,11 @@ function PhaseCard({ phase, selectedItemId, onSelectItem }: PhaseCardProps) {
 
       {/* Expandable reasoning panel */}
       {selectedItem && (
-        <div className="bg-bg-elevated/50 rounded-lg p-4 mt-3 border-l-2 border-cyan-accent">
-          <span className="text-cyan-accent text-xs font-semibold uppercase tracking-wide">
+        <div className="bg-surface-container-high/50 p-[1.75rem] mt-[1.75rem] border-l-2 border-secondary-fixed">
+          <span className="text-secondary text-xs font-semibold uppercase tracking-wide font-display">
             {selectedItem.item_name.replace(/_/g, " ")}
           </span>
-          <p className="text-gray-300 text-sm leading-relaxed mt-1">
+          <p className="text-on-surface-variant text-sm leading-relaxed mt-1">
             {selectedItem.reasoning}
           </p>
         </div>

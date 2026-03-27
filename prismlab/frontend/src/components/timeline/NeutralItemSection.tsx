@@ -30,9 +30,9 @@ function formatDisplayName(name: string): string {
 }
 
 const RANK_COLORS: Record<number, string> = {
-  1: "bg-cyan-accent text-bg-primary",
-  2: "bg-gray-600 text-gray-200",
-  3: "bg-gray-700 text-gray-300",
+  1: "bg-secondary text-surface",
+  2: "bg-surface-container-high text-on-surface",
+  3: "bg-surface-container text-on-surface-variant",
 };
 
 function formatCountdown(seconds: number): string {
@@ -47,9 +47,9 @@ function NeutralItemSection({ neutralItems, currentTier, gameClock }: NeutralIte
   const sorted = [...neutralItems].sort((a, b) => a.tier - b.tier);
 
   return (
-    <div className="bg-bg-secondary rounded-lg p-4 border border-bg-elevated">
+    <div className="bg-surface-container-low p-[1.75rem]">
       {/* Section header */}
-      <h3 className="text-cyan-accent text-sm font-bold tracking-wider mb-4">
+      <h3 className="text-secondary text-sm font-bold tracking-wider font-display mb-4">
         BEST NEUTRAL ITEMS
       </h3>
 
@@ -67,10 +67,10 @@ function NeutralItemSection({ neutralItems, currentTier, gameClock }: NeutralIte
           return (
             <div
               key={tierRec.tier}
-              className={`bg-bg-elevated/50 rounded-lg p-3${isActive ? " ring-1 ring-cyan-accent" : ""}${isPast ? " opacity-50" : ""}`}
+              className={`bg-surface-container-high/50 p-3${isActive ? " ring-1 ring-secondary-fixed" : ""}${isPast ? " opacity-50" : ""}`}
             >
               {/* Tier sub-header */}
-              <div className="text-gray-400 text-xs font-semibold mb-2">
+              <div className="text-on-surface-variant text-xs font-semibold mb-2">
                 T{tierRec.tier}{timing && ` (${timing})`}
               </div>
 
@@ -104,11 +104,11 @@ function NeutralItemSection({ neutralItems, currentTier, gameClock }: NeutralIte
 
                       {/* Name and reasoning */}
                       <div className="min-w-0">
-                        <span className="text-gray-300 text-xs font-medium">
+                        <span className="text-on-surface text-xs font-medium">
                           {formatDisplayName(pick.item_name)}
                         </span>
                         {pick.reasoning && (
-                          <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">
+                          <p className="text-on-surface-variant text-xs mt-0.5 leading-relaxed">
                             {pick.reasoning}
                           </p>
                         )}
@@ -127,7 +127,7 @@ function NeutralItemSection({ neutralItems, currentTier, gameClock }: NeutralIte
         const nextTier = getNextTierCountdown(gameClock);
         if (!nextTier) return null;
         return (
-          <p className="text-text-muted text-xs mt-2 text-center">
+          <p className="text-on-surface-variant text-xs mt-2 text-center">
             Next: Tier {nextTier.tier} in {formatCountdown(nextTier.secondsRemaining)}
           </p>
         );

@@ -13,25 +13,25 @@ function formatItemName(name: string): string {
 
 function DecisionTreeCard({ items }: DecisionTreeCardProps) {
   return (
-    <div className="bg-bg-elevated/30 rounded-lg p-3 border border-amber-500/20">
-      <h4 className="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-2">
+    <div className="bg-surface-container-high/30 p-[1.75rem]">
+      <h4 className="text-secondary text-xs font-semibold uppercase tracking-wide font-display mb-2">
         Situational Options
       </h4>
 
-      <div className="flex flex-col divide-y divide-bg-elevated">
+      <div className="flex flex-col gap-[1.75rem]">
         {items.map((item) => (
           <div
             key={item.item_id}
-            className="flex items-center gap-2 py-2 first:pt-0 last:pb-0"
+            className="flex items-center gap-2"
           >
             {/* Condition text */}
-            <span className="text-gray-400 text-xs flex-1 min-w-0">
+            <span className="text-on-surface-variant text-xs flex-1 min-w-0">
               {item.conditions}
             </span>
 
             {/* Arrow */}
             <svg
-              className="w-4 h-4 text-gray-600 shrink-0"
+              className="w-4 h-4 text-outline-variant shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -52,7 +52,7 @@ function DecisionTreeCard({ items }: DecisionTreeCardProps) {
                 className="w-8 h-8 object-contain rounded"
                 loading="lazy"
               />
-              <span className="text-gray-300 text-xs">
+              <span className="text-on-surface text-xs">
                 {formatItemName(item.item_name)}
               </span>
             </div>
