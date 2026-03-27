@@ -121,7 +121,10 @@ Plans:
   2. Each component step includes reasoning for its position in the order (e.g., "Ogre Axe first for +10 STR survivability in a losing lane")
   3. During GSI-connected games, components that are affordable at the player's current gold are visually highlighted
   4. Component ordering adapts to game state: losing lane shifts defensive components earlier, winning lane prioritizes offensive components
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 22-01-PLAN.md -- Backend: ComponentStep/BuildPathResponse schemas, _enrich_build_paths enrichment, system prompt directive
+- [ ] 22-02-PLAN.md -- Frontend: BuildPathSteps component, PhaseCard integration, GSI gold affordability
 **UI hint**: yes
 
 ### Phase 23: Win Condition Framing
@@ -133,7 +136,10 @@ Plans:
   2. The win condition statement appears in the recommendation response and visibly anchors the overall_strategy -- item recommendations reflect the team's win condition, not just individual matchup counters
   3. When the win condition favors early aggression, luxury late-game items are deprioritized in favor of earlier power spikes; when it favors scaling, timing-sensitive mid-game items are still flagged but the build path extends toward late-game
   4. The system assesses the enemy team's likely win condition and recommends counter-strategy items (e.g., "Enemy draft wins through teamfight -- consider split-push enabling items to avoid 5v5")
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 22-01-PLAN.md -- Backend: ComponentStep/BuildPathResponse schemas, _enrich_build_paths enrichment, system prompt directive
+- [ ] 22-02-PLAN.md -- Frontend: BuildPathSteps component, PhaseCard integration, GSI gold affordability
 **UI hint**: yes
 
 ## Progress
@@ -148,5 +154,5 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | 19. Data Foundation & Prompt Architecture | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 20. Counter-Item Intelligence | v4.0 | 2/3 | Complete    | 2026-03-27 |
 | 21. Timing Benchmarks | v4.0 | 2/2 | Complete    | 2026-03-27 |
-| 22. Build Path Intelligence | v4.0 | 0/0 | Not started | - |
+| 22. Build Path Intelligence | v4.0 | 0/2 | In progress | - |
 | 23. Win Condition Framing | v4.0 | 0/0 | Not started | - |
