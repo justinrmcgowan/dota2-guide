@@ -1,7 +1,8 @@
-import type { RecommendPhase, ItemTimingData } from "../../types/recommendation";
+import type { RecommendPhase, ItemTimingData, BuildPathResponse } from "../../types/recommendation";
 import { useRecommendationStore } from "../../stores/recommendationStore";
 import ItemCard from "./ItemCard";
 import DecisionTreeCard from "./DecisionTreeCard";
+import BuildPathSteps from "./BuildPathSteps";
 
 interface PhaseCardProps {
   phase: RecommendPhase;
@@ -10,6 +11,7 @@ interface PhaseCardProps {
   timingDataMap?: Map<string, ItemTimingData>;
   currentGameClock?: number | null;
   currentGold?: number | null;
+  buildPathMap?: Map<string, BuildPathResponse>;
 }
 
 const PHASE_COLORS: Record<string, string> = {
@@ -35,6 +37,7 @@ function PhaseCard({
   timingDataMap,
   currentGameClock = null,
   currentGold = null,
+  buildPathMap = new Map(),
 }: PhaseCardProps) {
   const purchasedItems = useRecommendationStore((s) => s.purchasedItems);
   const togglePurchased = useRecommendationStore((s) => s.togglePurchased);
@@ -107,6 +110,13 @@ function PhaseCard({
           <p className="text-on-surface-variant text-sm leading-relaxed mt-1">
             {selectedItem.reasoning}
           </p>
+          {/* Component build path (PATH-01, PATH-02, PATH-03) */}
+          {(() => {
+            const buildPath = buildPathMap.get(selectedItem.item_name);
+            return buildPath && buildPath.steps.length > 0 ? (
+              <BuildPathSteps buildPath={buildPath} currentGold={currentGold} />
+            ) : null;
+          })()}
         </div>
       )}
     </div>

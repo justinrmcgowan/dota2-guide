@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { RecommendResponse, ItemTimingData } from "../../types/recommendation";
+import type { RecommendResponse, ItemTimingData, BuildPathResponse } from "../../types/recommendation";
 import PhaseCard from "./PhaseCard";
 import NeutralItemSection from "./NeutralItemSection";
 import { useGsiStore } from "../../stores/gsiStore";
@@ -30,6 +30,16 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
     return map;
   }, [data.timing_data]);
 
+  const buildPathMap = useMemo(() => {
+    const map = new Map<string, BuildPathResponse>();
+    if (data.build_paths) {
+      for (const bp of data.build_paths) {
+        map.set(bp.item_name, bp);
+      }
+    }
+    return map;
+  }, [data.build_paths]);
+
   return (
     <div className="flex flex-col gap-4">
       {/* Overall strategy summary */}
@@ -54,6 +64,7 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
           timingDataMap={timingDataMap}
           currentGameClock={isGsiConnected ? gameClock : null}
           currentGold={isGsiConnected ? gold : null}
+          buildPathMap={buildPathMap}
         />
       ))}
 
