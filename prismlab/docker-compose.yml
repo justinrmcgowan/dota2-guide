@@ -8,9 +8,9 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./data/prismlab.db
+      - DATABASE_URL=sqlite+aiosqlite:///./db-data/prismlab.db
     volumes:
-      - ./data:/app/data
+      - ./data:/app/db-data
     networks:
       - prismlab-net
 
