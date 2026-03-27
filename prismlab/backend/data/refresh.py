@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from data.database import async_session
-from data.models import Hero, Item, DataRefreshLog
+from data.models import Hero, Item, DataRefreshLog, HeroAbilityData
 from data.opendota_client import OpenDotaClient
 from config import settings
 
@@ -102,6 +102,57 @@ async def refresh_all_data() -> DataRefreshLog:
                 await session.merge(item)
                 item_count += 1
 
+            # Refresh ability constants (D-03: daily alongside heroes/items)
+            try:
+                abilities_data = await client.fetch_abilities()
+                hero_abilities_data = await client.fetch_hero_abilities()
+
+                # Build hero internal_name -> id lookup from just-fetched heroes
+                hero_internal_to_id: dict[str, int] = {}
+                for _hid_str, hinfo in heroes_data.items():
+                    hero_internal_to_id[hinfo["name"]] = hinfo["id"]
+
+                ability_count = 0
+                for hero_internal_name, hero_ab_info in hero_abilities_data.items():
+                    hero_id = hero_internal_to_id.get(hero_internal_name)
+                    if hero_id is None:
+                        continue
+
+                    raw_abilities = hero_ab_info.get("abilities", [])
+                    # Filter out generic_hidden and talent entries (Pitfall 6)
+                    filtered = [
+                        a for a in raw_abilities
+                        if not a.startswith("generic_")
+                        and not a.startswith("special_bonus_")
+                        and a in abilities_data
+                    ]
+
+                    # Build ability dict for this hero
+                    hero_ability_dict: dict = {}
+                    for ability_key in filtered:
+                        ab_data = abilities_data[ability_key]
+                        hero_ability_dict[ability_key] = {
+                            "dname": ab_data.get("dname", ability_key),
+                            "behavior": ab_data.get("behavior", ""),
+                            "dmg_type": ab_data.get("dmg_type"),
+                            "bkbpierce": ab_data.get("bkbpierce"),
+                            "dispellable": ab_data.get("dispellable"),
+                        }
+
+                    record = HeroAbilityData(
+                        hero_id=hero_id,
+                        abilities_json=hero_ability_dict,
+                        updated_at=datetime.now(timezone.utc),
+                    )
+                    await session.merge(record)
+                    ability_count += 1
+
+                logger.info("Refreshed ability data for %d heroes.", ability_count)
+
+            except Exception as e:
+                logger.warning("Ability data refresh failed (non-fatal): %s", str(e))
+                # Non-fatal: ability data is supplementary. Heroes/items still refreshed.
+
             await session.commit()
 
             # Log success
@@ -134,9 +185,8 @@ async def refresh_all_data() -> DataRefreshLog:
             logger.info("ResponseCache cleared after data refresh.")
 
             logger.info(
-                "Data refresh completed: %d heroes, %d items updated.",
-                hero_count,
-                item_count,
+                "Data refresh completed: %d heroes, %d items, ability data refreshed.",
+                hero_count, item_count,
             )
             return log_entry
 

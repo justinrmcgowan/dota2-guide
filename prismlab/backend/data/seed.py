@@ -5,7 +5,7 @@ import logging
 from sqlalchemy import select, func
 
 from data.database import async_session
-from data.models import Hero, Item
+from data.models import Hero, Item, HeroAbilityData
 from data.opendota_client import OpenDotaClient
 from config import settings
 
@@ -112,6 +112,52 @@ async def seed_if_empty():
             session.add(item)
             item_count_seeded += 1
 
+        # Seed ability data (D-03: loaded at startup)
+        try:
+            abilities_data = await client.fetch_abilities()
+            hero_abilities_data = await client.fetch_hero_abilities()
+
+            # Build internal_name -> id from just-seeded heroes
+            hero_internal_to_id: dict[str, int] = {}
+            for _hid_str, info in heroes_data.items():
+                hero_internal_to_id[info["name"]] = info["id"]
+
+            ability_count = 0
+            for hero_internal_name, hero_ab_info in hero_abilities_data.items():
+                hero_id = hero_internal_to_id.get(hero_internal_name)
+                if hero_id is None:
+                    continue
+
+                raw_abilities = hero_ab_info.get("abilities", [])
+                filtered = [
+                    a for a in raw_abilities
+                    if not a.startswith("generic_")
+                    and not a.startswith("special_bonus_")
+                    and a in abilities_data
+                ]
+
+                hero_ability_dict: dict = {}
+                for ability_key in filtered:
+                    ab_data = abilities_data[ability_key]
+                    hero_ability_dict[ability_key] = {
+                        "dname": ab_data.get("dname", ability_key),
+                        "behavior": ab_data.get("behavior", ""),
+                        "dmg_type": ab_data.get("dmg_type"),
+                        "bkbpierce": ab_data.get("bkbpierce"),
+                        "dispellable": ab_data.get("dispellable"),
+                    }
+
+                session.add(HeroAbilityData(
+                    hero_id=hero_id,
+                    abilities_json=hero_ability_dict,
+                ))
+                ability_count += 1
+
+            logger.info("Seeded ability data for %d heroes.", ability_count)
+
+        except Exception as e:
+            logger.warning("Ability data seeding failed (non-fatal): %s", str(e))
+
         await session.commit()
-        print(f"Seeded {hero_count_seeded} heroes and {item_count_seeded} items.")
-        logger.info("Seeded %d heroes and %d items.", hero_count_seeded, item_count_seeded)
+        print(f"Seeded {hero_count_seeded} heroes, {item_count_seeded} items, and ability data.")
+        logger.info("Seeded %d heroes, %d items, and ability data.", hero_count_seeded, item_count_seeded)

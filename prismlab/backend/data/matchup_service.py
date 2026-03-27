@@ -1,8 +1,8 @@
-"""Matchup data fetch/cache pipeline.
+"""Matchup and timing data fetch/cache pipeline.
 
-Fetches hero-vs-hero win rates and item popularity from OpenDota,
-caches in SQLite MatchupData table. Returns stale data without blocking
-on refresh. Deduplicates concurrent fetches per matchup pair.
+Fetches hero-vs-hero win rates, item popularity, and item timing benchmarks
+from OpenDota. Caches in SQLite tables. Returns stale data without blocking
+on refresh. Deduplicates concurrent fetches per matchup pair / per hero.
 """
 
 import asyncio
@@ -12,7 +12,8 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from data.models import MatchupData, Item
+from data.models import MatchupData, Item, ItemTimingData
+from data.cache import TimingBucket
 from data.opendota_client import OpenDotaClient
 
 logger = logging.getLogger(__name__)
@@ -201,3 +202,156 @@ async def get_relevant_items(
 
     filtered.sort(key=lambda x: x["cost"])
     return filtered[:50]
+
+
+async def get_or_fetch_hero_timings(
+    hero_id: int,
+    db: AsyncSession,
+    client: OpenDotaClient,
+) -> dict[str, list[TimingBucket]] | None:
+    """Get timing benchmarks for a hero. Stale-while-revalidate pattern (D-01).
+
+    Returns dict of {item_name: [TimingBucket, ...]} from DataCache.
+    If not in cache/DB, fetches from OpenDota and populates both.
+    Only fetches heroes that are actually queried -- no batch crawl.
+    """
+    from data.cache import data_cache
+
+    try:
+        # 1. Check DataCache first (zero DB, instant)
+        cached = data_cache.get_hero_timings(hero_id)
+        if cached is not None:
+            # Check DB staleness for background refresh
+            result = await db.execute(
+                select(ItemTimingData).where(ItemTimingData.hero_id == hero_id)
+            )
+            db_row = result.scalar_one_or_none()
+            if db_row and db_row.updated_at:
+                age = datetime.now(timezone.utc) - db_row.updated_at.replace(
+                    tzinfo=timezone.utc
+                )
+                if age > STALE_THRESHOLD:
+                    asyncio.create_task(
+                        _refresh_hero_timings(hero_id, db, client)
+                    )
+            return cached
+
+        # 2. Check DB (cache might be empty after restart but DB has data)
+        result = await db.execute(
+            select(ItemTimingData).where(ItemTimingData.hero_id == hero_id)
+        )
+        db_row = result.scalar_one_or_none()
+
+        if db_row and db_row.timings_json:
+            # Parse into cache and return
+            timings = _parse_timings_json(db_row.timings_json)
+            data_cache.set_hero_timings(hero_id, timings)
+
+            # Check staleness for background refresh
+            if db_row.updated_at:
+                age = datetime.now(timezone.utc) - db_row.updated_at.replace(
+                    tzinfo=timezone.utc
+                )
+                if age > STALE_THRESHOLD:
+                    asyncio.create_task(
+                        _refresh_hero_timings(hero_id, db, client)
+                    )
+            return timings
+
+        # 3. No cache, no DB -- first request must wait
+        return await _refresh_hero_timings(hero_id, db, client)
+
+    except Exception:
+        logger.exception(
+            "Error in get_or_fetch_hero_timings(hero=%d)", hero_id
+        )
+        return None
+
+
+def _parse_timings_json(
+    timings_json: dict[str, list[dict]],
+) -> dict[str, list[TimingBucket]]:
+    """Parse raw timings JSON blob into typed TimingBucket dicts.
+
+    Handles games/wins string-to-int conversion (Pitfall 1) and
+    confidence classification (D-07: strong >= 1000, moderate >= 200, weak < 200).
+    """
+    result: dict[str, list[TimingBucket]] = {}
+    for item_name, buckets_raw in timings_json.items():
+        buckets = []
+        for bucket in buckets_raw:
+            games = int(bucket["games"])
+            wins = int(bucket["wins"])
+            confidence = (
+                "strong" if games >= 1000
+                else "moderate" if games >= 200
+                else "weak"
+            )
+            buckets.append(TimingBucket(
+                time=bucket["time"],
+                games=games,
+                wins=wins,
+                confidence=confidence,
+            ))
+        result[item_name] = buckets
+    return result
+
+
+async def _refresh_hero_timings(
+    hero_id: int,
+    db: AsyncSession,
+    client: OpenDotaClient,
+) -> dict[str, list[TimingBucket]] | None:
+    """Fetch fresh timing data from OpenDota and cache in DB + DataCache.
+
+    Uses per-hero locking to deduplicate concurrent fetches.
+    One API call returns all items for a hero.
+    """
+    from data.cache import data_cache
+
+    lock_key = f"timing_{hero_id}"
+    if lock_key not in _fetch_locks:
+        _fetch_locks[lock_key] = asyncio.Lock()
+
+    async with _fetch_locks[lock_key]:
+        try:
+            raw_rows = await client.fetch_item_timings(hero_id)
+            if raw_rows is None:
+                return None
+
+            # Group by item name: {item: [{time, games, wins}, ...]}
+            grouped: dict[str, list[dict]] = {}
+            for row in raw_rows:
+                item = row["item"]
+                if item not in grouped:
+                    grouped[item] = []
+                grouped[item].append({
+                    "time": row["time"],
+                    "games": row["games"],  # Keep as string for DB storage
+                    "wins": row["wins"],    # Keep as string for DB storage
+                })
+
+            # Store in DB (one row per hero with all items)
+            record = ItemTimingData(
+                hero_id=hero_id,
+                timings_json=grouped,
+                updated_at=datetime.now(timezone.utc),
+            )
+            await db.merge(record)
+            await db.commit()
+
+            # Parse and update DataCache
+            timings = _parse_timings_json(grouped)
+            data_cache.set_hero_timings(hero_id, timings)
+
+            logger.info(
+                "Refreshed timing data for hero %d: %d items",
+                hero_id, len(timings),
+            )
+            return timings
+
+        except Exception:
+            logger.exception(
+                "Failed to refresh timing data for hero %d", hero_id
+            )
+            return None
