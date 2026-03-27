@@ -39,18 +39,18 @@ function ErrorBanner({
       : "AI reasoning unavailable \u2014 showing basic recommendations";
 
     return (
-      <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg px-4 py-3 mb-4">
-        <p className="text-amber-400/80 text-xs">{displayMessage}</p>
+      <div className="bg-secondary/10 border border-outline-variant/15 px-4 py-3 mb-4">
+        <p className="text-secondary/80 text-xs">{displayMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-3 mb-4 flex items-center justify-between transition-opacity duration-300">
-      <p className="text-amber-400 text-sm">{message}</p>
+    <div className="bg-primary-container/15 border border-outline-variant/15 px-4 py-3 mb-4 flex items-center justify-between transition-opacity duration-300">
+      <p className="text-primary text-sm">{message}</p>
       <button
         onClick={onDismiss}
-        className="text-amber-400 hover:text-amber-300 ml-4 shrink-0 transition-colors"
+        className="text-primary hover:text-primary/80 ml-4 shrink-0 transition-colors"
         aria-label="Dismiss error"
       >
         <svg
