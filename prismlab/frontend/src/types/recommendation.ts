@@ -1,5 +1,26 @@
 /** TypeScript interfaces matching backend Pydantic schemas in engine/schemas.py */
 
+export interface TimingBucketUI {
+  time: number;          // seconds
+  games: number;
+  win_rate: number;      // 0-1 float (snake_case matches backend JSON)
+  confidence: "strong" | "moderate" | "weak";
+  zone: "good" | "ontrack" | "late";
+}
+
+export interface ItemTimingData {
+  item_name: string;
+  buckets: TimingBucketUI[];
+  is_urgent: boolean;
+  good_range: string;     // pre-formatted "< 20 min"
+  ontrack_range: string;  // "20-25 min"
+  late_range: string;     // "> 25 min"
+  good_win_rate: number;  // 0-1 float
+  late_win_rate: number;  // 0-1 float
+  confidence: "strong" | "moderate" | "weak";
+  total_games: number;
+}
+
 export interface ItemRecommendation {
   item_id: number;
   item_name: string;
@@ -35,6 +56,7 @@ export interface RecommendResponse {
   model: string | null;
   latency_ms: number | null;
   neutral_items: NeutralTierRecommendation[];
+  timing_data: ItemTimingData[];
 }
 
 export interface EnemyContext {

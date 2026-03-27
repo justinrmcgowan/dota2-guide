@@ -62,6 +62,23 @@
   --radius-4xl: 0px;
 }
 
+/* Timing urgency pulse (Phase 21, D-02) */
+@keyframes pulse-urgency {
+  0%, 100% { box-shadow: 0 0 0px rgba(178, 34, 34, 0); }
+  50% { box-shadow: 0 0 12px rgba(178, 34, 34, 0.15); }
+}
+
+.timing-urgent {
+  animation: pulse-urgency 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timing-urgent {
+    animation: none;
+    border-left: 1px solid var(--color-primary-container);
+  }
+}
+
 /* Parchment noise texture overlay (DESIGN.md Section 6) */
 .noise-overlay::before {
   content: "";
