@@ -82,7 +82,8 @@ class TestNoMatchReturnsEmpty:
         # No opponent-dependent rules should produce results
         opponent_item_ids = {
             36, 116, 225, 235, 119, 102, 271, 40, 43, 249,
-            56, 190, 231, 168, 185,  # New rule item IDs
+            56, 190, 231, 168, 185,  # Phase 14 rule item IDs
+            100, 226, 194, 250, 206,  # Phase 20 counter-item IDs
         }
         opponent_results = [r for r in results if r.item_id in opponent_item_ids]
         assert len(opponent_results) == 0
@@ -179,7 +180,8 @@ class TestReasoningNamesEnemy:
             # Find opponent-triggered results (exclude role-only results like boots)
             opponent_item_ids = {
                 36, 116, 225, 235, 119, 102, 271, 40, 43, 249,
-                56, 190, 231, 168, 185,  # New rule item IDs
+                56, 190, 231, 168, 185,  # Phase 14 rule item IDs
+                100, 226, 194, 250, 206,  # Phase 20 counter-item IDs
             }
             opponent_results = [r for r in results if r.item_id in opponent_item_ids]
             for result in opponent_results:
@@ -291,8 +293,8 @@ class TestGhostScepterRule:
 
 class TestRuleCount:
     async def test_minimum_rule_count(self, engine: RulesEngine):
-        """Engine has at least 17 rules registered."""
-        assert len(engine._rules) >= 17
+        """Engine has at least 22 rules registered."""
+        assert len(engine._rules) >= 22
 
 
 # ------------------------------------------------------------------
@@ -405,3 +407,186 @@ class TestCounterTargetField:
         )
         data = result.model_dump()
         assert data["counter_target"] == "Witch Doctor: Death Ward (channeled)"
+
+
+# ------------------------------------------------------------------
+# Phase 20 Plan 02: Ability-driven rules, new counter rules, threat escalation
+# ------------------------------------------------------------------
+
+
+class TestAbilityDrivenRules:
+    """Verifies CNTR-01: rules query ability properties instead of only hero IDs."""
+
+    async def test_silver_edge_via_ability(self, engine: RulesEngine):
+        """Silver Edge fires via ability query for Bristleback passive."""
+        req = _make_request(lane_opponents=[69], role=1)  # BB has bristleback_bristleback (Passive)
+        results = engine.evaluate(req)
+        se = [r for r in results if r.item_name == "Silver Edge"]
+        assert len(se) >= 1
+        assert se[0].counter_target is not None
+        assert "passive" in se[0].counter_target.lower()
+
+    async def test_orchid_via_ability(self, engine: RulesEngine):
+        """Orchid fires via ability query for Puck escape (illusory_orb)."""
+        req = _make_request(lane_opponents=[13], role=2)  # Puck has illusory_orb
+        results = engine.evaluate(req)
+        orchid = [r for r in results if r.item_name == "Orchid Malevolence"]
+        assert len(orchid) >= 1
+        assert orchid[0].counter_target is not None
+        assert "escape" in orchid[0].counter_target.lower()
+
+    async def test_raindrops_via_ability(self, engine: RulesEngine):
+        """Raindrops fires via ability query for magical damage."""
+        req = _make_request(lane_opponents=[30], role=1)  # WD has Magical abilities
+        results = engine.evaluate(req)
+        raindrop = [r for r in results if r.item_name == "Infused Raindrops"]
+        assert len(raindrop) >= 1
+
+    async def test_dust_via_ability(self, engine: RulesEngine):
+        """Dust fires via ability query for Riki invis (cloak_and_dagger)."""
+        req = _make_request(lane_opponents=[32], role=5)  # Riki has cloak_and_dagger
+        results = engine.evaluate(req)
+        dust = [r for r in results if r.item_name == "Dust of Appearance"]
+        assert len(dust) >= 1
+        assert dust[0].counter_target is not None
+
+    async def test_bkb_via_ability(self, engine: RulesEngine):
+        """BKB fires via ability query for Witch Doctor's magical abilities."""
+        req = _make_request(lane_opponents=[30], role=1)  # WD has magical abilities
+        results = engine.evaluate(req)
+        bkb = [r for r in results if r.item_name == "Black King Bar"]
+        assert len(bkb) >= 1
+        assert bkb[0].counter_target is not None
+
+
+class TestNewCounterRules:
+    """Verifies CNTR-02: 5 new counter-rule categories fire correctly."""
+
+    async def test_euls_vs_witch_doctor(self, engine: RulesEngine):
+        """Eul's recommended against WD's Death Ward (channeled)."""
+        req = _make_request(lane_opponents=[30], role=3)  # WD Death Ward is channeled
+        results = engine.evaluate(req)
+        euls = [r for r in results if r.item_name == "Eul's Scepter of Divinity"]
+        assert len(euls) >= 1
+        assert "Death Ward" in euls[0].reasoning
+        assert "channeled" in euls[0].counter_target.lower()
+
+    async def test_euls_vs_enigma(self, engine: RulesEngine):
+        """Eul's recommended against Enigma's Black Hole (channeled)."""
+        req = _make_request(lane_opponents=[33], role=3)
+        results = engine.evaluate(req)
+        euls = [r for r in results if r.item_name == "Eul's Scepter of Divinity"]
+        assert len(euls) >= 1
+        assert "Black Hole" in euls[0].reasoning
+
+    async def test_euls_not_vs_non_channeled(self, engine: RulesEngine):
+        """Eul's channel rule does NOT fire against heroes without channeled abilities."""
+        req = _make_request(lane_opponents=[12], role=3)  # PA has no channeled
+        results = engine.evaluate(req)
+        euls_channel = [
+            r for r in results
+            if r.item_name == "Eul's Scepter of Divinity"
+            and "channeled" in (r.counter_target or "").lower()
+        ]
+        assert len(euls_channel) == 0
+
+    async def test_hex_vs_escape(self, engine: RulesEngine):
+        """Scythe of Vyse recommended for cores against escape heroes."""
+        req = _make_request(lane_opponents=[1], role=2)  # AM has blink (escape)
+        results = engine.evaluate(req)
+        hex_results = [r for r in results if r.item_name == "Scythe of Vyse"]
+        assert len(hex_results) >= 1
+        assert "Blink" in hex_results[0].reasoning
+        assert "escape" in hex_results[0].counter_target.lower()
+
+    async def test_atos_vs_escape_for_support(self, engine: RulesEngine):
+        """Rod of Atos recommended for supports against escape heroes."""
+        req = _make_request(lane_opponents=[1], role=4)  # AM has blink
+        results = engine.evaluate(req)
+        atos = [r for r in results if r.item_name == "Rod of Atos"]
+        assert len(atos) >= 1
+
+    async def test_bkb_pierce_warning(self, engine: RulesEngine):
+        """BKB rule includes pierce warning when enemy has BKB-piercing ability."""
+        req = _make_request(lane_opponents=[30], role=1)  # WD Death Ward pierces BKB
+        results = engine.evaluate(req)
+        bkb = [r for r in results if r.item_name == "Black King Bar"]
+        assert len(bkb) >= 1
+        assert "pierces BKB" in bkb[0].reasoning
+
+    async def test_dispel_vs_undispellable(self, engine: RulesEngine):
+        """Dispel item recommended against hero with undispellable debuff."""
+        req = _make_request(lane_opponents=[30], role=3)  # WD maledict is dispellable=No
+        results = engine.evaluate(req)
+        dispel = [
+            r for r in results
+            if r.counter_target and "undispellable" in r.counter_target.lower()
+        ]
+        assert len(dispel) >= 1
+
+
+class TestReasoningNamesAbility:
+    """Verifies CNTR-03: ability-driven rules name the specific ability in reasoning."""
+
+    async def test_counter_reasoning_names_ability(self, engine: RulesEngine):
+        """Ability-driven rules name the specific ability in reasoning."""
+        cases = [
+            (30, 3, "Death Ward"),     # WD channeled -> Eul's
+            (69, 1, "Bristleback"),    # BB passive -> Silver Edge (ability dname)
+            (1, 2, "Blink"),           # AM escape -> Orchid or Hex
+        ]
+        for opp_id, role, expected_ability in cases:
+            req = _make_request(lane_opponents=[opp_id], role=role)
+            results = engine.evaluate(req)
+            # Find results with counter_target set
+            counter_results = [r for r in results if r.counter_target is not None]
+            assert len(counter_results) >= 1, (
+                f"No counter_target results for opponent {opp_id}"
+            )
+            # At least one counter result should name the expected ability
+            found = any(expected_ability in r.reasoning for r in counter_results)
+            assert found, (
+                f"No reasoning mentions '{expected_ability}' for opponent {opp_id}. "
+                f"Got: {[r.reasoning for r in counter_results]}"
+            )
+
+
+class TestThreatEscalation:
+    """Verifies CNTR-04: threat-level priority adjustment in evaluate()."""
+
+    async def test_fed_enemy_upgrades_priority(self, engine: RulesEngine):
+        """Fed enemy upgrades counter-item priority from situational to core."""
+        enemy_ctx = [EnemyContext(hero_id=69, kills=7, deaths=1)]
+        req = _make_request(lane_opponents=[69], role=1, enemy_context=enemy_ctx)
+        results = engine.evaluate(req)
+        # Silver Edge vs BB should be "core" when BB is fed (normally "situational")
+        se = [r for r in results if r.item_name == "Silver Edge"]
+        assert len(se) >= 1
+        assert se[0].priority == "core", f"Expected 'core' but got '{se[0].priority}'"
+
+    async def test_behind_enemy_downgrades_priority(self, engine: RulesEngine):
+        """Behind enemy downgrades counter-item priority from core to situational."""
+        enemy_ctx = [EnemyContext(hero_id=30, kills=0, deaths=5)]
+        req = _make_request(lane_opponents=[30], role=1, enemy_context=enemy_ctx)
+        results = engine.evaluate(req)
+        # BKB vs WD is normally "core" -- should downgrade when WD is behind
+        bkb = [r for r in results if r.item_name == "Black King Bar"]
+        if bkb and bkb[0].counter_target:
+            assert bkb[0].priority == "situational"
+
+    async def test_normal_enemy_no_adjustment(self, engine: RulesEngine):
+        """Normal threat enemy gets no priority adjustment."""
+        enemy_ctx = [EnemyContext(hero_id=69, kills=2, deaths=2)]
+        req = _make_request(lane_opponents=[69], role=1, enemy_context=enemy_ctx)
+        results = engine.evaluate(req)
+        se = [r for r in results if r.item_name == "Silver Edge"]
+        assert len(se) >= 1
+        assert se[0].priority == "situational"  # No change
+
+    async def test_no_enemy_context_no_adjustment(self, engine: RulesEngine):
+        """Without enemy_context, no threat adjustment occurs."""
+        req = _make_request(lane_opponents=[69], role=1)  # No enemy_context
+        results = engine.evaluate(req)
+        se = [r for r in results if r.item_name == "Silver Edge"]
+        assert len(se) >= 1
+        assert se[0].priority == "situational"  # Original priority preserved
