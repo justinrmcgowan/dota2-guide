@@ -131,7 +131,8 @@ async def seed_if_empty():
                 raw_abilities = hero_ab_info.get("abilities", [])
                 filtered = [
                     a for a in raw_abilities
-                    if not a.startswith("generic_")
+                    if isinstance(a, str)
+                    and not a.startswith("generic_")
                     and not a.startswith("special_bonus_")
                     and a in abilities_data
                 ]

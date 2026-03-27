@@ -154,7 +154,7 @@ class RecommendPhase(BaseModel):
     phase: str  # "starting" | "laning" | "core" | "late_game" | "situational"
     items: list[ItemRecommendation]
     timing: str | None = None
-    gold_budget: int | None = None
+    gold_budget: int | str | None = None  # Claude sometimes returns "unlimited"
 
 
 class NeutralItemPick(BaseModel):
