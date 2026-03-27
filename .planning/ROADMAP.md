@@ -52,7 +52,7 @@
 - [x] **Phase 15: Store Consolidation & Tech Debt** - Merge GSI hooks, deduplicate types, auto-suggest playstyle (completed 2026-03-27)
 - [x] **Phase 16: Backend Data Cache** - In-memory hero/item cache, three-layer cache coordination, session safety (completed 2026-03-27)
 - [x] **Phase 17: Design System Migration** - Tactical Relic Editorial retheme across all components (see DESIGN.md) (completed 2026-03-27)
-- [ ] **Phase 18: Screenshot KDA Feed-Through** - Feed parsed KDA/level data into recommendation context
+- [x] **Phase 18: Screenshot KDA Feed-Through** - Feed parsed KDA/level data into recommendation context (completed 2026-03-27)
 
 ## Phase Details
 
@@ -118,7 +118,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 18-01-PLAN.md — EnemyContext schema, context builder KDA section, system prompt update, frontend store + handleApply wiring
+- [x] 18-01-PLAN.md — EnemyContext schema, context builder KDA section, system prompt update, frontend store + handleApply wiring
 
 ## Progress
 
@@ -132,4 +132,4 @@ Note: Phase 16 is backend-only and could execute in parallel with Phase 15 (fron
 | 15. Store Consolidation & Tech Debt | v3.0 | 2/2 | Complete    | 2026-03-27 |
 | 16. Backend Data Cache | v3.0 | 2/2 | Complete    | 2026-03-27 |
 | 17. Design System Migration | v3.0 | 5/5 | Complete    | 2026-03-27 |
-| 18. Screenshot KDA Feed-Through | v3.0 | 0/1 | Not started | - |
+| 18. Screenshot KDA Feed-Through | v3.0 | 1/1 | Complete   | 2026-03-27 |

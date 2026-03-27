@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Design Overhaul & Performance
-status: Ready to plan
-stopped_at: Completed 17-05-PLAN.md (automated tasks; visual verification checkpoint pending)
-last_updated: "2026-03-27T01:53:21.215Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-03-27T02:04:50.680Z"
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 17 — design-system-migration
+**Current focus:** Phase 18 — screenshot-kda-feed-through
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
+Phase: 18 (screenshot-kda-feed-through) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: Not started
 | Phase 17 P04 | 5min | 2 tasks | 6 files |
 | Phase 17 P02 | 6min | 2 tasks | 16 files |
 | Phase 17 P05 | 5min | 2 tasks | 4 files |
+| Phase 18 P01 | 3min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,7 @@ Recent decisions affecting current work:
 - [Phase 17]: Ghost border on toggle buttons: outline-variant/15 inactive, primary/40 active for WCAG state differentiation
 - [Phase 17]: Sidebar CTA uses bg-surface-container-low tonal shift instead of border-t per No-Line Rule
 - [Phase 17]: SVG feTurbulence noise via data URI for zero-dependency parchment texture at 3.5% opacity
+- [Phase 18]: Threat annotations: fed if kills>=5 and K/D>=2, behind if deaths>=3 and D/K>=2; enemy context section between Lane Opponents and Mid-Game Update in prompt
 
 ### Pending Todos
 
@@ -97,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T01:45:21.793Z
-Stopped at: Completed 17-05-PLAN.md (automated tasks; visual verification checkpoint pending)
+Last session: 2026-03-27T02:04:50.678Z
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None
