@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isValidSteamId } from "../../utils/steamId";
+import { api } from "../../api/client";
 
 interface SettingsPanelProps {
   open: boolean;
@@ -8,6 +10,25 @@ interface SettingsPanelProps {
 function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [host, setHost] = useState("");
   const [downloading, setDownloading] = useState(false);
+  const [steamId, setSteamId] = useState(
+    () => localStorage.getItem("prismlab_steam_id") ?? "",
+  );
+  const [steamIdValid, setSteamIdValid] = useState(true);
+
+  // Pre-fill Steam ID from backend .env if localStorage is empty (D-10)
+  useEffect(() => {
+    if (!localStorage.getItem("prismlab_steam_id")) {
+      api
+        .getSettingsDefaults()
+        .then((defaults) => {
+          if (defaults.steam_id) {
+            setSteamId(defaults.steam_id);
+            localStorage.setItem("prismlab_steam_id", defaults.steam_id);
+          }
+        })
+        .catch(() => {}); // Silent fail -- not critical
+    }
+  }, []);
 
   if (!open) return null;
 
@@ -33,6 +54,19 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
       console.error("Config download failed:", err);
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleSteamIdChange = (value: string) => {
+    setSteamId(value);
+    if (value === "") {
+      setSteamIdValid(true);
+      localStorage.removeItem("prismlab_steam_id");
+    } else if (isValidSteamId(value)) {
+      setSteamIdValid(true);
+      localStorage.setItem("prismlab_steam_id", value);
+    } else {
+      setSteamIdValid(false);
     }
   };
 
@@ -152,6 +186,43 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   <span className="text-radiant">green</span>
                 </li>
               </ol>
+            </div>
+          </div>
+
+          {/* Steam ID Section */}
+          <div className="space-y-4 mt-8">
+            <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wider">
+              Steam ID
+            </h3>
+
+            <div>
+              <label
+                htmlFor="steam-id-input"
+                className="block text-sm text-on-surface-variant mb-1"
+              >
+                Your Steam ID (64-bit)
+              </label>
+              <input
+                id="steam-id-input"
+                type="text"
+                value={steamId}
+                onChange={(e) => handleSteamIdChange(e.target.value)}
+                placeholder="e.g. 76561198353796011"
+                className={`w-full px-3 py-2 bg-surface-container-lowest border-b text-on-surface placeholder-on-surface-variant/40 focus:border-primary focus:outline-none text-sm ${
+                  steamIdValid
+                    ? "border-outline-variant/15"
+                    : "border-dire"
+                }`}
+              />
+              {!steamIdValid && (
+                <p className="text-dire text-xs mt-1">
+                  Enter a valid 17-digit Steam ID
+                </p>
+              )}
+              <p className="text-xs text-on-surface-variant/60 mt-1">
+                Find your Steam ID at steamid.io — use the 17-digit ID
+                from your profile URL
+              </p>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { Hero } from "../types/hero";
+import type { LiveMatchResponse } from "../types/livematch";
 import type {
   RecommendRequest,
   RecommendResponse,
@@ -59,4 +60,8 @@ export const api = {
       "/parse-screenshot",
       req,
     ),
+  getLiveMatch: (accountId: number) =>
+    fetchJson<LiveMatchResponse | null>(`/live-match/${accountId}`),
+  getSettingsDefaults: () =>
+    fetchJson<{ steam_id: string | null }>("/settings/defaults"),
 };
