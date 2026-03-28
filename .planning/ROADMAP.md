@@ -74,7 +74,7 @@
 
 - [ ] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control
 - [x] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID (completed 2026-03-28)
-- [ ] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning
+- [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [ ] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection
 - [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
 - [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
@@ -196,12 +196,12 @@ Plans:
 **Goal:** 3-mode recommendation engine (Fast/Auto/Deep) with local LLM via Ollama, API cost tracking with budget cap, and training data pipeline for fine-tuning
 **Requirements**: ENG-01, ENG-02, ENG-03, ENG-04, ENG-05, ENG-06, ENG-07
 **Depends on:** Phase 23
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 26-01-PLAN.md -- Backend: OllamaEngine, CostTracker, mode routing in HybridRecommender, config/schema extensions
-- [ ] 26-02-PLAN.md -- Frontend: Mode selector in Settings, budget display, mode wiring to recommend requests
-- [ ] 26-03-PLAN.md -- Training data generation script for Ollama fine-tuning
+- [x] 26-02-PLAN.md -- Frontend: Mode selector in Settings, budget display, mode wiring to recommend requests
+- [x] 26-03-PLAN.md -- Training data generation script for Ollama fine-tuning
 
 ### Phase 27: Game Lifecycle Management
 
