@@ -73,7 +73,7 @@
 **Milestone Goal:** Transform Prismlab into the definitive Dota 2 companion -- with audio coaching, auto-populated drafts from live API data, sub-5s recommendation latency, graceful game lifecycle handling, and patch 7.41 data freshness.
 
 - [ ] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control
-- [ ] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID
+- [x] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID (completed 2026-03-28)
 - [ ] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning
 - [ ] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection
 - [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
@@ -184,11 +184,11 @@ Plans:
 **Goal:** Auto-populate allies and opponents from OpenDota/Stratz live match API using Steam ID, replacing manual hero selection during active games
 **Requirements**: DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04, DRAFT-05
 **Depends on:** Phase 23
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 25-01-PLAN.md -- Backend: Stratz GraphQL client, OpenDota live extension, /api/live-match endpoint, settings defaults
-- [ ] 25-02-PLAN.md -- Frontend: Steam ID settings, live draft polling hook, auto-draft trigger, API client extension
+- [x] 25-02-PLAN.md -- Frontend: Steam ID settings, live draft polling hook, auto-draft trigger, API client extension
 
 ### Phase 26: Engine Optimization
 

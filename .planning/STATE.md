@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
 status: Planning
-stopped_at: Completed 25-01-PLAN.md
-last_updated: "2026-03-28T16:58:36.622Z"
+stopped_at: Completed 25-02-PLAN.md
+last_updated: "2026-03-28T17:07:51.062Z"
 progress:
   total_phases: 10
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 23-win-condition-framing P01 | 4 | 2 tasks | 5 files |
 | Phase 23-win-condition-framing P02 | 6min | 2 tasks | 4 files |
 | Phase 25-api-draft-input P01 | 4min | 2 tasks | 6 files |
+| Phase 25-api-draft-input P02 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - [Phase 23-win-condition-framing]: all_opponents uses game.opponents (full 5 filtered for nulls); lane_opponents uses game.laneOpponents -- distinct concerns maintained
 - [Phase 25-api-draft-input]: Raw httpx POST for Stratz GraphQL -- no gql library needed for simple queries
 - [Phase 25-api-draft-input]: Dual-source live match: Stratz primary with OpenDota fallback, independent error handling per source
+- [Phase 25-api-draft-input]: useLiveDraft is standalone hook at App.tsx level, not nested inside useGameIntelligence -- independent GSI subscriptions for decoupled concerns
 
 ### Pending Todos
 
@@ -103,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T16:58:36.619Z
-Stopped at: Completed 25-01-PLAN.md
+Last session: 2026-03-28T17:07:51.060Z
+Stopped at: Completed 25-02-PLAN.md
 Resume file: None
