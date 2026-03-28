@@ -40,3 +40,48 @@ export interface MatchLogPayload {
   items: MatchItemPayload[];
   recommendations: MatchRecommendationPayload[];
 }
+
+/* ---------- Match History GET response types ---------- */
+
+export interface MatchHistoryItem {
+  id: number;
+  match_id: string;
+  hero_id: number;
+  hero_name: string;
+  role: number;
+  playstyle: string | null;
+  side: string | null;
+  lane: string | null;
+  win: boolean;
+  duration_seconds: number | null;
+  kills: number;
+  deaths: number;
+  assists: number;
+  gpm: number;
+  xpm: number;
+  net_worth: number;
+  engine_mode: string | null;
+  was_fallback: boolean;
+  overall_strategy: string | null;
+  follow_rate: number | null;
+  played_at: string;
+  items: MatchItemPayload[];
+  recommendations: MatchRecommendationPayload[];
+}
+
+export interface MatchHistoryResponse {
+  matches: MatchHistoryItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface MatchStatsResponse {
+  total_games: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+  avg_follow_rate: number | null;
+  avg_follow_rate_wins: number | null;
+  avg_follow_rate_losses: number | null;
+}

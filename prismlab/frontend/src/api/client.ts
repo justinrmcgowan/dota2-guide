@@ -1,6 +1,10 @@
 import type { Hero } from "../types/hero";
 import type { LiveMatchResponse } from "../types/livematch";
-import type { MatchLogPayload } from "../types/matchLog";
+import type {
+  MatchLogPayload,
+  MatchHistoryResponse,
+  MatchStatsResponse,
+} from "../types/matchLog";
 import type {
   EngineBudget,
   RecommendRequest,
@@ -80,4 +84,23 @@ export const api = {
       "/match-log",
       payload,
     ),
+  getMatchHistory: (params?: {
+    hero_id?: number;
+    result?: string;
+    mode?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.hero_id) qs.set("hero_id", String(params.hero_id));
+    if (params?.result) qs.set("result", params.result);
+    if (params?.mode) qs.set("mode", params.mode);
+    if (params?.limit) qs.set("limit", String(params.limit));
+    if (params?.offset) qs.set("offset", String(params.offset));
+    const query = qs.toString();
+    return fetchJson<MatchHistoryResponse>(
+      `/match-history${query ? `?${query}` : ""}`,
+    );
+  },
+  getMatchStats: () => fetchJson<MatchStatsResponse>("/match-stats"),
 };
