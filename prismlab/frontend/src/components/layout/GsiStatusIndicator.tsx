@@ -7,12 +7,14 @@ function GsiStatusIndicator() {
     connected: "bg-radiant",
     idle: "bg-gray-500",
     lost: "bg-dire",
+    reconnecting: "bg-amber-400 animate-pulse",
   }[gsiStatus];
 
   const statusLabel = {
     connected: "Connected",
     idle: "Idle",
     lost: "Lost",
+    reconnecting: "Reconnecting...",
   }[gsiStatus];
 
   // Build tooltip text per D-08
@@ -24,6 +26,9 @@ function GsiStatusIndicator() {
     tooltipLines.push(
       `Last update: ${new Date(lastUpdate).toLocaleTimeString()}`,
     );
+  }
+  if (gsiStatus === "reconnecting") {
+    tooltipLines.push("Waiting for GSI data (auto-clears after 10 min)");
   }
   if (liveState?.game_clock != null && gsiStatus === "connected") {
     const mins = Math.floor(liveState.game_clock / 60);

@@ -29,7 +29,7 @@ export interface GsiLiveState {
 interface GsiStore {
   // Connection state
   wsStatus: "connected" | "disconnected" | "connecting";
-  gsiStatus: "connected" | "idle" | "lost";
+  gsiStatus: "connected" | "idle" | "lost" | "reconnecting";
   lastUpdate: number | null;
 
   // Live game data
@@ -53,10 +53,11 @@ export const useGsiStore = create<GsiStore>()((set, get) => ({
 
   setWsStatus: (wsStatus) => {
     const prev = get().gsiStatus;
-    // If WS disconnects and we had GSI data, status goes to "lost"
+    // If WS disconnects and we had GSI data, enter "reconnecting" state.
+    // "lost" is reserved for post-timeout expiry (D-11).
     let gsiStatus = prev;
     if (wsStatus === "disconnected" && prev === "connected") {
-      gsiStatus = "lost";
+      gsiStatus = "reconnecting";
     }
     set({ wsStatus, gsiStatus });
   },
