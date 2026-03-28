@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Ready to execute
-stopped_at: Completed 27-01-PLAN.md
-last_updated: "2026-03-28T18:14:09.893Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 27-02-PLAN.md
+last_updated: "2026-03-28T18:24:06.847Z"
 progress:
   total_phases: 10
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -58,6 +58,7 @@ Plan: 2 of 2
 | Phase 26-engine-optimization P03 | 3min | 1 tasks | 2 files |
 | Phase 26-engine-optimization P02 | 3min | 2 tasks | 3 files |
 | Phase 27-game-lifecycle P01 | 6min | 2 tasks | 6 files |
+| Phase 27-game-lifecycle P02 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 26-engine-optimization]: DRY mode injection: api.recommend() wrapper auto-reads localStorage, not each callsite
 - [Phase 27-game-lifecycle]: match_id change is primary new-game trigger; hero_selection state is logged but not gated on
 - [Phase 27-game-lifecycle]: Custom storage adapter for Set<string> serialization in recommendationStore persist middleware
+- [Phase 27-game-lifecycle]: gsiStatus 'reconnecting' replaces immediate 'lost' on WS disconnect; 'lost' reserved for post-timeout expiry
+- [Phase 27-game-lifecycle]: In-memory dict session store for V1 single-user; frontend sync wiring deferred
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:14:09.890Z
-Stopped at: Completed 27-01-PLAN.md
+Last session: 2026-03-28T18:24:06.844Z
+Stopped at: Completed 27-02-PLAN.md
 Resume file: None

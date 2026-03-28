@@ -75,7 +75,7 @@
 - [ ] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control
 - [x] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID (completed 2026-03-28)
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
-- [ ] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection
+- [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
 - [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
 - [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
 
@@ -213,11 +213,11 @@ Plans:
   2. When a new match starts (different GSI match ID), all match state is cleared but settings are preserved
   3. On GSI disconnect, match state is preserved for 10 minutes with a "Reconnecting..." indicator; auto-clears after timeout
   4. Backend session sync endpoint accepts and returns session state for multi-device durability
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 27-01-PLAN.md -- localStorage persistence (Zustand persist), match_id pipeline, new game detection + reset
-- [ ] 27-02-PLAN.md -- Disconnect timeout handling, reconnect indicator, backend session sync endpoint
+- [x] 27-02-PLAN.md -- Disconnect timeout handling, reconnect indicator, backend session sync endpoint
 
 ### Phase 28: Patch 7.41 Data Refresh
 
