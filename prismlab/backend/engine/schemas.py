@@ -46,6 +46,9 @@ class RecommendRequest(BaseModel):
     purchased_items: list[int] = Field(default_factory=list)  # item_ids already purchased
     enemy_context: list[EnemyContext] = Field(default_factory=list)
 
+    # Engine mode override (Phase 26): "fast" | "auto" | "deep" | None (uses settings default)
+    mode: str | None = None
+
     @field_validator("playstyle")
     @classmethod
     def validate_playstyle(cls, v: str, info) -> str:
@@ -222,6 +225,9 @@ class RecommendResponse(BaseModel):
     fallback_reason: str | None = None  # "timeout" | "parse_error" | "api_error" | "rate_limited"
     model: str | None = None
     latency_ms: int | None = None
+    engine_mode: str | None = None  # "fast" | "auto" | "deep"
+    budget_used: float | None = None  # Current month's Claude API spend in USD
+    budget_limit: float | None = None  # Monthly budget cap in USD
 
 
 # Hand-crafted inline JSON schema for Anthropic structured output.

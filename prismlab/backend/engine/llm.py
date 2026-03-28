@@ -30,6 +30,8 @@ class FallbackReason(str, Enum):
     parse_error = "parse_error"
     api_error = "api_error"
     rate_limited = "rate_limited"
+    ollama_error = "ollama_error"
+    budget_exceeded = "budget_exceeded"
 
 
 class LLMEngine:
@@ -42,6 +44,7 @@ class LLMEngine:
 
     def __init__(self) -> None:
         self.client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self.last_usage: dict[str, int] | None = None  # {"input_tokens": ..., "output_tokens": ...}
 
     async def generate(
         self, user_message: str
@@ -65,6 +68,12 @@ class LLMEngine:
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_message}],
             )
+
+            # Track token usage for cost accounting
+            self.last_usage = {
+                "input_tokens": response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens,
+            }
 
             text = response.content[0].text.strip()
             # Strip markdown code fences if present
