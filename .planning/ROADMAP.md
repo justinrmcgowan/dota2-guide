@@ -206,12 +206,18 @@ Plans:
 ### Phase 27: Game Lifecycle Management
 
 **Goal:** Gracefully handle mid-game abandons, new game detection, full state reset between matches, purchased items clearing, and GSI reconnection without stale data leaking between games
-**Requirements**: TBD
+**Requirements**: LIFE-01, LIFE-02, LIFE-03, LIFE-04, LIFE-05
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. Game state (hero, role, playstyle, allies, opponents, purchased items, dismissed items, lane result) persists across page refreshes via localStorage
+  2. When a new match starts (different GSI match ID), all match state is cleared but settings are preserved
+  3. On GSI disconnect, match state is preserved for 10 minutes with a "Reconnecting..." indicator; auto-clears after timeout
+  4. Backend session sync endpoint accepts and returns session state for multi-device durability
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 27 to break down)
+- [ ] 27-01-PLAN.md -- localStorage persistence (Zustand persist), match_id pipeline, new game detection + reset
+- [ ] 27-02-PLAN.md -- Disconnect timeout handling, reconnect indicator, backend session sync endpoint
 
 ### Phase 28: Patch 7.41 Data Refresh
 
