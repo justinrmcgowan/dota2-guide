@@ -77,6 +77,7 @@
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
 - [x] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes (completed 2026-03-28)
+- [ ] **Phase 29: Game Analytics & Match Logging** — Log every match, track recommendations vs actual purchases, win/loss, match history dashboard
 
 ## Phase Details
 
@@ -233,3 +234,13 @@ Plans:
 Plans:
 - [x] 28-01-PLAN.md -- Seed upsert fix, test fixture updates, automated 7.41 data correctness tests
 - [x] 28-02-PLAN.md -- Rules engine audit against 7.41, system prompt meta hints
+
+### Phase 29: Game Analytics & Match Logging
+
+**Goal:** Log every match with full data: items purchased, game length, win/loss, hero, role, opponents, recommendations given vs items actually bought, KDA, GPM, XPM. Store in DB for tracking recommendation effectiveness over time. Match history dashboard for reviewing past games and accuracy metrics.
+**Requirements**: TBD
+**Depends on:** Phase 27
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 29 to break down)
