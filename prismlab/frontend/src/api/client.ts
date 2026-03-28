@@ -1,6 +1,7 @@
 import type { Hero } from "../types/hero";
 import type { LiveMatchResponse } from "../types/livematch";
 import type {
+  EngineBudget,
   RecommendRequest,
   RecommendResponse,
 } from "../types/recommendation";
@@ -52,8 +53,16 @@ export interface DataFreshness {
 
 export const api = {
   getHeroes: () => fetchJson<Hero[]>("/heroes"),
-  recommend: (req: RecommendRequest) =>
-    postJson<RecommendRequest, RecommendResponse>("/recommend", req),
+  recommend: (req: RecommendRequest) => {
+    // Auto-inject engine mode from localStorage if not already set on the request
+    const mode = localStorage.getItem("prismlab_engine_mode") as
+      | "fast"
+      | "auto"
+      | "deep"
+      | null;
+    const enriched: RecommendRequest = { ...req, mode: req.mode ?? mode ?? undefined };
+    return postJson<RecommendRequest, RecommendResponse>("/recommend", enriched);
+  },
   getDataFreshness: () => fetchJson<DataFreshness>("/data-freshness"),
   parseScreenshot: (req: ScreenshotParseRequest) =>
     postJson<ScreenshotParseRequest, ScreenshotParseResponse>(
@@ -64,4 +73,5 @@ export const api = {
     fetchJson<LiveMatchResponse | null>(`/live-match/${accountId}`),
   getSettingsDefaults: () =>
     fetchJson<{ steam_id: string | null }>("/settings/defaults"),
+  getEngineBudget: () => fetchJson<EngineBudget>("/settings/budget"),
 };
