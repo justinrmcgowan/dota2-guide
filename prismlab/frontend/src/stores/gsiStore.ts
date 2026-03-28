@@ -17,6 +17,7 @@ export interface GsiLiveState {
   has_aghanims_scepter: boolean;
   game_clock: number;
   game_state: string;
+  match_id: string;
   team_side: string;
   is_alive: boolean;
   timestamp: number;
@@ -33,6 +34,7 @@ interface GsiStore {
 
   // Live game data
   liveState: GsiLiveState | null;
+  matchId: string | null;
 
   // Actions
   setWsStatus: (
@@ -47,6 +49,7 @@ export const useGsiStore = create<GsiStore>()((set, get) => ({
   gsiStatus: "idle",
   lastUpdate: null,
   liveState: null,
+  matchId: null,
 
   setWsStatus: (wsStatus) => {
     const prev = get().gsiStatus;
@@ -63,6 +66,7 @@ export const useGsiStore = create<GsiStore>()((set, get) => ({
       liveState: data,
       gsiStatus: "connected",
       lastUpdate: Date.now(),
+      ...(data.match_id ? { matchId: data.match_id } : {}),
     }),
 
   clearLiveState: () =>

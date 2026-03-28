@@ -320,6 +320,21 @@ class TestGsiStateManager:
         manager = GsiStateManager()
         assert manager.to_broadcast_dict() is None
 
+    def test_match_id_in_parsed_state(self):
+        """matchid from GSI payload flows into ParsedGsiState.match_id."""
+        manager = GsiStateManager()
+        manager.update(SAMPLE_GSI_PAYLOAD)
+        state = manager.get_state()
+        assert state.match_id == "1234567890"
+
+    def test_match_id_in_broadcast_dict(self):
+        """match_id appears in to_broadcast_dict() output."""
+        manager = GsiStateManager()
+        manager.update(SAMPLE_GSI_PAYLOAD)
+        d = manager.to_broadcast_dict()
+        assert "match_id" in d
+        assert d["match_id"] == "1234567890"
+
 
 # --- Roshan / Buildings data tests ---
 
