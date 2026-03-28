@@ -22,8 +22,10 @@ export function useRecommendation() {
     store.clearResults();
     store.setLoading(true);
 
-    // Get purchased item IDs for filtering
+    // Get purchased + dismissed item IDs (both excluded from re-recommendations)
     const purchasedItemIds = store.getPurchasedItemIds();
+    const dismissedItemIds = store.getDismissedItemIds();
+    const excludedItemIds = [...new Set([...purchasedItemIds, ...dismissedItemIds])];
 
     // Use selected playstyle, or first valid option for the role
     const playstyle =
@@ -47,7 +49,7 @@ export function useRecommendation() {
           ? game.enemyItemsSpotted
           : undefined,
       purchased_items:
-        purchasedItemIds.length > 0 ? purchasedItemIds : undefined,
+        excludedItemIds.length > 0 ? excludedItemIds : undefined,
       enemy_context:
         game.enemyContext.length > 0 ? game.enemyContext : undefined,
     };

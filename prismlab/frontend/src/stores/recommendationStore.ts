@@ -7,15 +7,18 @@ interface RecommendationStore {
   error: string | null;
   selectedItemId: string | null; // Composite key "phase-itemId" for expanded reasoning
   purchasedItems: Set<string>; // Set of composite keys "phase-itemId"
+  dismissedItems: Set<string>; // Set of composite keys for denied/dismissed items
 
   setData: (data: RecommendResponse) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string) => void;
   selectItem: (phaseItemKey: string | null) => void;
   togglePurchased: (phaseItemKey: string) => void;
+  dismissItem: (phaseItemKey: string) => void;
   getPurchasedItemIds: () => number[];
-  clearResults: () => void; // Clears data/error/selection but KEEPS purchasedItems
-  clear: () => void; // Full reset including purchasedItems
+  getDismissedItemIds: () => number[];
+  clearResults: () => void; // Clears data/error/selection but KEEPS purchasedItems/dismissed
+  clear: () => void; // Full reset including purchasedItems/dismissed
 }
 
 export const useRecommendationStore = create<RecommendationStore>()(
@@ -25,6 +28,7 @@ export const useRecommendationStore = create<RecommendationStore>()(
     error: null,
     selectedItemId: null,
     purchasedItems: new Set<string>(),
+    dismissedItems: new Set<string>(),
 
     setData: (data) => {
       // Re-apply purchased state: match old purchased item_ids to new phase keys
@@ -74,8 +78,28 @@ export const useRecommendationStore = create<RecommendationStore>()(
       set({ purchasedItems: next });
     },
 
+    dismissItem: (phaseItemKey) => {
+      const next = new Set(get().dismissedItems);
+      next.add(phaseItemKey);
+      set({ dismissedItems: next });
+    },
+
     getPurchasedItemIds: () => {
       const keys = get().purchasedItems;
+      const idSet = new Set<number>();
+      for (const key of keys) {
+        const parts = key.split("-");
+        const idStr = parts[parts.length - 1];
+        const id = parseInt(idStr, 10);
+        if (!isNaN(id)) {
+          idSet.add(id);
+        }
+      }
+      return [...idSet];
+    },
+
+    getDismissedItemIds: () => {
+      const keys = get().dismissedItems;
       const idSet = new Set<number>();
       for (const key of keys) {
         const parts = key.split("-");
@@ -98,6 +122,7 @@ export const useRecommendationStore = create<RecommendationStore>()(
         error: null,
         selectedItemId: null,
         purchasedItems: new Set<string>(),
+        dismissedItems: new Set<string>(),
       }),
   }),
 );

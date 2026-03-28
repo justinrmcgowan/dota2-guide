@@ -355,25 +355,15 @@ class DataCache:
             for item_id, item in self._items.items()
         }
 
-    # Items that must ALWAYS appear in the catalog regardless of tier caps.
-    # These are universally important items that Claude must be able to recommend.
-    _MUST_INCLUDE_ITEMS = {
-        "aghanims_shard",       # 1400g - hero-defining upgrade for every hero
-        "ultimate_scepter",     # 4200g - Aghanim's Scepter
-        "blink",                # 2250g - Blink Dagger
-        "black_king_bar",       # 4050g - BKB
-        "magic_wand",           # 450g  - universal lane item
-        "dust",                 # 80g   - invis detection
-        "ward_sentry",          # 50g   - invis detection
-        "ward_observer",        # 0g    - warding (excluded by cost>0, but listed for clarity)
-    }
-
     def get_relevant_items(self, role: int) -> list[dict]:
         """Filter item catalog to items relevant to this role.
 
-        Guarantees must-include items (Shard, Scepter, BKB, Blink, Wand)
-        are always present. Remaining items partitioned by cost tier:
-        - Tier 1 (0-2000g): capped at 40 items (starting + laning)
+        Excludes pure component items (basic stat sticks that only serve
+        as recipe ingredients — Ogre Axe, Platemail, etc.) to prevent
+        Claude from recommending components instead of completed items.
+
+        Partitioned by cost tier:
+        - Tier 1 (0-2000g): capped at 50 items (starting + laning)
         - Tier 2 (2001-5000g): ALL included (core power spikes)
         - Tier 3 (5001g+): ALL included (late-game scaling)
 
@@ -382,49 +372,46 @@ class DataCache:
         supports (Pos 4-5).
         """
         max_cost = 10000 if role <= 3 else 6500
-        all_items = [
-            {"id": item.id, "name": item.name, "cost": item.cost,
-             "internal_name": item.internal_name}
-            for item in self._items.values()
-            if not item.is_recipe
-            and not item.is_neutral
-            and item.cost is not None
-            and item.cost > 0
-            and item.cost <= max_cost
-        ]
 
-        # Separate must-include items from the rest
-        must_include = []
-        remaining = []
-        must_ids: set[int] = set()
-        for item in all_items:
-            if item["internal_name"] in self._MUST_INCLUDE_ITEMS:
-                must_include.append(item)
-                must_ids.add(item["id"])
-            else:
-                remaining.append(item)
+        # Build set of internal_names used as components in other items
+        component_of_other: set[str] = set()
+        for item in self._items.values():
+            if item.components:
+                for comp_name in item.components:
+                    component_of_other.add(comp_name)
 
-        # Partition remaining by cost tier
+        all_items = []
+        for item in self._items.values():
+            if (item.is_recipe or item.is_neutral
+                    or item.cost is None or item.cost <= 0
+                    or item.cost > max_cost):
+                continue
+
+            # Exclude pure components: basic items (no sub-components) that
+            # build into something else. These are stat sticks like Ogre Axe,
+            # Platemail, Claymore — never useful to recommend standalone.
+            is_basic = not item.components or len(item.components) == 0
+            is_component = item.internal_name in component_of_other
+            if is_basic and is_component:
+                continue
+
+            all_items.append({"id": item.id, "name": item.name, "cost": item.cost})
+
+        # Partition by cost tier
         cheap = sorted(
-            [i for i in remaining if i["cost"] <= 2000],
+            [i for i in all_items if i["cost"] <= 2000],
             key=lambda x: x["cost"],
-        )[:40]
+        )[:50]
         mid = sorted(
-            [i for i in remaining if 2000 < i["cost"] <= 5000],
+            [i for i in all_items if 2000 < i["cost"] <= 5000],
             key=lambda x: x["cost"],
         )
         expensive = sorted(
-            [i for i in remaining if i["cost"] > 5000],
+            [i for i in all_items if i["cost"] > 5000],
             key=lambda x: x["cost"],
         )
 
-        # Combine: must-include first (sorted by cost), then tiers
-        must_include.sort(key=lambda x: x["cost"])
-        combined = must_include + cheap + mid + expensive
-
-        # Strip internal_name before returning (not needed by caller)
-        return [{"id": i["id"], "name": i["name"], "cost": i["cost"]}
-                for i in combined]
+        return cheap + mid + expensive
 
     def get_neutral_items_by_tier(self) -> dict[int, list[dict]]:
         """Get all neutral items grouped by tier number.

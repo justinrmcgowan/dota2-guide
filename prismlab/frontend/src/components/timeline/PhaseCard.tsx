@@ -41,6 +41,8 @@ function PhaseCard({
 }: PhaseCardProps) {
   const purchasedItems = useRecommendationStore((s) => s.purchasedItems);
   const togglePurchased = useRecommendationStore((s) => s.togglePurchased);
+  const dismissedItems = useRecommendationStore((s) => s.dismissedItems);
+  const dismissItem = useRecommendationStore((s) => s.dismissItem);
 
   const colorClass = PHASE_COLORS[phase.phase] ?? "text-gray-400";
   const label = PHASE_LABELS[phase.phase] ?? phase.phase.toUpperCase();
@@ -84,7 +86,9 @@ function PhaseCard({
                 isSelected={selectedItemId === key}
                 onSelect={() => onSelectItem(key)}
                 isPurchased={purchasedItems.has(key)}
+                isDismissed={dismissedItems.has(key)}
                 onTogglePurchased={() => togglePurchased(key)}
+                onDismiss={() => dismissItem(key)}
                 timingData={timingDataMap?.get(item.item_name) ?? null}
                 currentGameClock={currentGameClock}
                 currentGold={currentGold}

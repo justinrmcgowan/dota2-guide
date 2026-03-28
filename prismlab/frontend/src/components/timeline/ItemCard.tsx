@@ -8,7 +8,9 @@ interface ItemCardProps {
   isSelected: boolean;
   onSelect: () => void;
   isPurchased: boolean;
+  isDismissed: boolean;
   onTogglePurchased: () => void;
+  onDismiss: () => void;
   timingData?: ItemTimingData | null;
   currentGameClock?: number | null;
   currentGold?: number | null;
@@ -32,7 +34,9 @@ function ItemCard({
   isSelected,
   onSelect,
   isPurchased,
+  isDismissed,
   onTogglePurchased,
+  onDismiss,
   timingData = null,
   currentGameClock = null,
   currentGold = null,
@@ -40,9 +44,16 @@ function ItemCard({
   const borderClass = PRIORITY_BORDER[item.priority];
   const imgSrc = itemImageUrl(item.item_name);
 
+  if (isDismissed) return null;
+
   const handleClick = () => {
     onTogglePurchased();
     onSelect();
+  };
+
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDismiss();
   };
 
   return (
@@ -50,7 +61,7 @@ function ItemCard({
       onClick={handleClick}
       title={formatItemName(item.item_name)}
       className={[
-        "flex flex-col items-center gap-1 p-2 border-l-2 cursor-pointer transition-all",
+        "group relative flex flex-col items-center gap-1 p-2 border-l-2 cursor-pointer transition-all",
         borderClass,
         isSelected
           ? "ring-1 ring-secondary-fixed bg-surface-container-high/50"
@@ -58,6 +69,17 @@ function ItemCard({
         timingData?.is_urgent && !isPurchased ? "timing-urgent" : "",
       ].join(" ")}
     >
+      {/* Dismiss button — visible on hover */}
+      <span
+        onClick={handleDismiss}
+        className="absolute -top-1 -left-1 w-4 h-4 bg-surface-container-high rounded-full items-center justify-center cursor-pointer hover:bg-dire/80 hidden group-hover:flex z-10"
+        title="Dismiss this item"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-on-surface-variant">
+          <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
+        </svg>
+      </span>
+
       <div className="relative">
         <img
           src={imgSrc}
