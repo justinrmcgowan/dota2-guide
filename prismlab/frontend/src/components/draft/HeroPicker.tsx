@@ -150,6 +150,7 @@ function HeroPicker({
         }}
         onFocus={() => setIsOpen(true)}
         placeholder={placeholder}
+        autoFocus={compact}
         className={`w-full bg-surface-container-lowest border-b border-outline-variant/15 text-on-surface placeholder-on-surface-variant/40 px-3 py-2 ${inputTextSize} focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent`}
       />
 

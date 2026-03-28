@@ -355,11 +355,24 @@ class DataCache:
             for item_id, item in self._items.items()
         }
 
+    # Items that must ALWAYS appear in the catalog regardless of tier caps.
+    # These are universally important items that Claude must be able to recommend.
+    _MUST_INCLUDE_ITEMS = {
+        "aghanims_shard",       # 1400g - hero-defining upgrade for every hero
+        "ultimate_scepter",     # 4200g - Aghanim's Scepter
+        "blink",                # 2250g - Blink Dagger
+        "black_king_bar",       # 4050g - BKB
+        "magic_wand",           # 450g  - universal lane item
+        "dust",                 # 80g   - invis detection
+        "ward_sentry",          # 50g   - invis detection
+        "ward_observer",        # 0g    - warding (excluded by cost>0, but listed for clarity)
+    }
+
     def get_relevant_items(self, role: int) -> list[dict]:
         """Filter item catalog to items relevant to this role.
 
-        Partitions items by cost tier to guarantee late-game items are
-        always present in the catalog (not cut off by a flat cap):
+        Guarantees must-include items (Shard, Scepter, BKB, Blink, Wand)
+        are always present. Remaining items partitioned by cost tier:
         - Tier 1 (0-2000g): capped at 40 items (starting + laning)
         - Tier 2 (2001-5000g): ALL included (core power spikes)
         - Tier 3 (5001g+): ALL included (late-game scaling)
@@ -370,7 +383,8 @@ class DataCache:
         """
         max_cost = 10000 if role <= 3 else 6500
         all_items = [
-            {"id": item.id, "name": item.name, "cost": item.cost}
+            {"id": item.id, "name": item.name, "cost": item.cost,
+             "internal_name": item.internal_name}
             for item in self._items.values()
             if not item.is_recipe
             and not item.is_neutral
@@ -379,21 +393,38 @@ class DataCache:
             and item.cost <= max_cost
         ]
 
-        # Partition by cost tier
+        # Separate must-include items from the rest
+        must_include = []
+        remaining = []
+        must_ids: set[int] = set()
+        for item in all_items:
+            if item["internal_name"] in self._MUST_INCLUDE_ITEMS:
+                must_include.append(item)
+                must_ids.add(item["id"])
+            else:
+                remaining.append(item)
+
+        # Partition remaining by cost tier
         cheap = sorted(
-            [i for i in all_items if i["cost"] <= 2000],
+            [i for i in remaining if i["cost"] <= 2000],
             key=lambda x: x["cost"],
         )[:40]
         mid = sorted(
-            [i for i in all_items if 2000 < i["cost"] <= 5000],
+            [i for i in remaining if 2000 < i["cost"] <= 5000],
             key=lambda x: x["cost"],
         )
         expensive = sorted(
-            [i for i in all_items if i["cost"] > 5000],
+            [i for i in remaining if i["cost"] > 5000],
             key=lambda x: x["cost"],
         )
 
-        return cheap + mid + expensive
+        # Combine: must-include first (sorted by cost), then tiers
+        must_include.sort(key=lambda x: x["cost"])
+        combined = must_include + cheap + mid + expensive
+
+        # Strip internal_name before returning (not needed by caller)
+        return [{"id": i["id"], "name": i["name"], "cost": i["cost"]}
+                for i in combined]
 
     def get_neutral_items_by_tier(self) -> dict[int, list[dict]]:
         """Get all neutral items grouped by tier number.
