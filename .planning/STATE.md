@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Planning
-stopped_at: Completed 26-02-PLAN.md
-last_updated: "2026-03-28T17:56:15.527Z"
+status: Ready to execute
+stopped_at: Completed 27-01-PLAN.md
+last_updated: "2026-03-28T18:14:09.893Z"
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 19
+  completed_plans: 18
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 ## Current Position
 
-Phase: 24-28 (not yet planned)
-Plan: Not started
+Phase: 27-game-lifecycle
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: Not started
 | Phase 26-engine-optimization P01 | 11min | 2 tasks | 10 files |
 | Phase 26-engine-optimization P03 | 3min | 1 tasks | 2 files |
 | Phase 26-engine-optimization P02 | 3min | 2 tasks | 3 files |
+| Phase 27-game-lifecycle P01 | 6min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 26-engine-optimization]: 3-mode engine routing (fast/auto/deep) with Ollama primary + Claude fallback in Auto mode; budget_ok defaults True when no cost_tracker
 - [Phase 26-engine-optimization]: Training data script uses conservative manual hero role map (~100 heroes) with DB-role fallback; ChatML JSONL output; line-level flush for resume safety
 - [Phase 26-engine-optimization]: DRY mode injection: api.recommend() wrapper auto-reads localStorage, not each callsite
+- [Phase 27-game-lifecycle]: match_id change is primary new-game trigger; hero_selection state is logged but not gated on
+- [Phase 27-game-lifecycle]: Custom storage adapter for Set<string> serialization in recommendationStore persist middleware
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:56:15.524Z
-Stopped at: Completed 26-02-PLAN.md
+Last session: 2026-03-28T18:14:09.890Z
+Stopped at: Completed 27-01-PLAN.md
 Resume file: None

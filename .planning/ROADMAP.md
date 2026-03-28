@@ -213,10 +213,10 @@ Plans:
   2. When a new match starts (different GSI match ID), all match state is cleared but settings are preserved
   3. On GSI disconnect, match state is preserved for 10 minutes with a "Reconnecting..." indicator; auto-clears after timeout
   4. Backend session sync endpoint accepts and returns session state for multi-device durability
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 27-01-PLAN.md -- localStorage persistence (Zustand persist), match_id pipeline, new game detection + reset
+- [x] 27-01-PLAN.md -- localStorage persistence (Zustand persist), match_id pipeline, new game detection + reset
 - [ ] 27-02-PLAN.md -- Disconnect timeout handling, reconnect indicator, backend session sync endpoint
 
 ### Phase 28: Patch 7.41 Data Refresh
