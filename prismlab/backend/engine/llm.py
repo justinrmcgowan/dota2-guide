@@ -36,7 +36,7 @@ class LLMEngine:
     """Claude API wrapper with JSON output, timeout, and prompt caching."""
 
     MODEL = "claude-haiku-4-5-20251001"
-    MAX_TOKENS = 4096
+    MAX_TOKENS = 8192
     TEMPERATURE = 0.3
     TIMEOUT_SECONDS = 45.0
 

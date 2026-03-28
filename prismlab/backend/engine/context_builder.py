@@ -1,7 +1,7 @@
 """Context builder for Claude API user messages.
 
 Assembles game state, matchup data, item catalog, and rules engine output
-into a compact user message. Targets under 1500 tokens for the user message.
+into the user message for Claude's recommendation generation.
 
 All hero/item lookups come from DataCache -- zero DB queries for hero/item
 data on the hot path. Only matchup and popularity data still hit the DB.
@@ -53,7 +53,6 @@ class ContextBuilder:
     ) -> str:
         """Build the user message for Claude from game state + matchup data.
 
-        Target: under 1500 tokens for the user message.
         The system prompt (static, cached) is separate.
         """
         # 1. Fetch player's hero (from cache -- zero DB queries)
@@ -142,24 +141,29 @@ class ContextBuilder:
         if neutral_catalog:
             sections.append(f"## Neutral Items Catalog\n{neutral_catalog}")
 
-        # Final instruction: adjust for mid-game re-evaluation
+        # Final instruction: the last thing Claude reads before generating
         if request.purchased_items:
             sections.append(
+                "## Instructions\n"
                 "Recommend items for REMAINING unpurchased slots only. "
                 "Focus reasoning on how the game state changes affect "
-                "remaining item choices."
+                "remaining item choices. Still cover ALL remaining phases "
+                "(core, late_game, situational) — never leave the build incomplete."
             )
         else:
-            if request.lane_opponents:
-                sections.append(
-                    "Recommend items for each game phase. Be specific about WHY "
-                    "each item is good in THIS matchup."
-                )
-            else:
-                sections.append(
-                    "Recommend items for each game phase. Focus on WHY "
-                    "each item synergizes with this hero's kit and role."
-                )
+            matchup_focus = (
+                "Be specific about WHY each item counters THIS matchup."
+                if request.lane_opponents
+                else "Focus on WHY each item synergizes with this hero's kit and role."
+            )
+            sections.append(
+                f"## Instructions\n"
+                f"Build a COMPLETE item guide covering ALL 5 phases: "
+                f"starting, laning, core, late_game, and situational. "
+                f"Do NOT skip any phase. The player needs to know what to buy "
+                f"from minute 0 through six-slotted. {matchup_focus}\n"
+                f"Include timing and gold_budget for each phase."
+            )
 
         return "\n\n".join(sections)
 

@@ -356,7 +356,7 @@ class HybridRecommender:
         timings = self.cache.get_hero_timings(hero_id)
         if not timings:
             timings = await get_or_fetch_hero_timings(
-                hero_id, db, self.context_builder.opendota_client
+                hero_id, db, self.context_builder.opendota
             )
         if not timings:
             return []
@@ -500,7 +500,7 @@ class HybridRecommender:
         # Downgrade luxury items to situational for early-win-condition drafts
         adjusted: list[RecommendPhase] = []
         for phase in phases:
-            if phase.phase_name in ("late_game",):
+            if phase.phase in ("late_game",):
                 new_items = []
                 for item in phase.items:
                     if item.priority == "luxury":

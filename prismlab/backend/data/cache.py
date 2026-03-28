@@ -356,19 +356,20 @@ class DataCache:
         }
 
     def get_relevant_items(self, role: int) -> list[dict]:
-        """Filter item catalog to ~40-50 items relevant to this role.
+        """Filter item catalog to items relevant to this role.
 
-        Replicates matchup_service.get_relevant_items logic:
-        - Excludes recipes, neutral items, zero-cost items
-        - Applies role budget: max 10000g for cores (Pos 1-3), 5500g for
-          supports (Pos 4-5)
-        - Returns list of {"id", "name", "cost"} dicts sorted by cost,
-          capped at 50
+        Partitions items by cost tier to guarantee late-game items are
+        always present in the catalog (not cut off by a flat cap):
+        - Tier 1 (0-2000g): capped at 40 items (starting + laning)
+        - Tier 2 (2001-5000g): ALL included (core power spikes)
+        - Tier 3 (5001g+): ALL included (late-game scaling)
 
-        Note: does not take hero_id -- the original function ignores it too.
+        Excludes recipes, neutral items, zero-cost items.
+        Applies role budget: max 10000g for cores (Pos 1-3), 6500g for
+        supports (Pos 4-5).
         """
-        max_cost = 10000 if role <= 3 else 5500
-        filtered = [
+        max_cost = 10000 if role <= 3 else 6500
+        all_items = [
             {"id": item.id, "name": item.name, "cost": item.cost}
             for item in self._items.values()
             if not item.is_recipe
@@ -377,8 +378,22 @@ class DataCache:
             and item.cost > 0
             and item.cost <= max_cost
         ]
-        filtered.sort(key=lambda x: x["cost"])
-        return filtered[:80]
+
+        # Partition by cost tier
+        cheap = sorted(
+            [i for i in all_items if i["cost"] <= 2000],
+            key=lambda x: x["cost"],
+        )[:40]
+        mid = sorted(
+            [i for i in all_items if 2000 < i["cost"] <= 5000],
+            key=lambda x: x["cost"],
+        )
+        expensive = sorted(
+            [i for i in all_items if i["cost"] > 5000],
+            key=lambda x: x["cost"],
+        )
+
+        return cheap + mid + expensive
 
     def get_neutral_items_by_tier(self) -> dict[int, list[dict]]:
         """Get all neutral items grouped by tier number.
