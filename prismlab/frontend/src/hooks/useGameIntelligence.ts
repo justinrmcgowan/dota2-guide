@@ -14,6 +14,11 @@ import { HERO_PLAYSTYLE_MAP } from "../utils/heroPlaystyles";
 import { PLAYSTYLE_OPTIONS } from "../utils/constants";
 import { api } from "../api/client";
 import type { Hero } from "../types/hero";
+import type {
+  MatchItemPayload,
+  MatchLogPayload,
+  MatchRecommendationPayload,
+} from "../types/matchLog";
 import type { RecommendRequest } from "../types/recommendation";
 
 /**
@@ -243,7 +248,86 @@ export function useGameIntelligence(heroes: Hero[]): void {
           );
         }
 
-        // Full match reset
+        // --- SNAPSHOT stores BEFORE clear (per D-01) ---
+        const gameSnap = useGameStore.getState();
+        const recSnap = useRecommendationStore.getState();
+        const gsiSnap = useGsiStore.getState().liveState;
+
+        // Only log if we had meaningful game data (hero was detected)
+        if (gameSnap.selectedHero && gsiSnap) {
+          // Build items array from GSI inventory/backpack/neutral
+          const items: MatchItemPayload[] = [];
+          for (const itemName of gsiSnap.items_inventory) {
+            if (itemName && itemName !== "empty") {
+              items.push({ slot_type: "inventory", item_name: itemName });
+            }
+          }
+          for (const itemName of gsiSnap.items_backpack) {
+            if (itemName && itemName !== "empty") {
+              items.push({ slot_type: "backpack", item_name: itemName });
+            }
+          }
+          if (gsiSnap.items_neutral && gsiSnap.items_neutral !== "empty") {
+            items.push({ slot_type: "neutral", item_name: gsiSnap.items_neutral });
+          }
+
+          // Build recommendations array with was_purchased tracking
+          const recommendations: MatchRecommendationPayload[] = [];
+          const purchasedIds = recSnap.getPurchasedItemIds();
+          const purchasedIdSet = new Set(purchasedIds);
+          if (recSnap.data) {
+            for (const phase of recSnap.data.phases) {
+              for (const item of phase.items) {
+                recommendations.push({
+                  phase: phase.phase,
+                  item_id: item.item_id,
+                  item_name: item.item_name,
+                  priority: item.priority,
+                  was_purchased: purchasedIdSet.has(item.item_id),
+                });
+              }
+            }
+          }
+
+          // GSI does not provide a direct win/loss field.
+          // Default to false -- imperfect but better than not logging.
+          const win = false;
+
+          const payload: MatchLogPayload = {
+            match_id: prevMatchIdRef.current,
+            hero_id: gameSnap.selectedHero.id,
+            hero_name: gameSnap.selectedHero.localized_name,
+            role: gameSnap.role ?? 1,
+            playstyle: gameSnap.playstyle,
+            side: gameSnap.side,
+            lane: gameSnap.lane,
+            allies: gameSnap.allies.filter(Boolean).map((h) => h!.id),
+            opponents: gameSnap.opponents.filter(Boolean).map((h) => h!.id),
+            lane_opponents: gameSnap.laneOpponents.map((h) => h.id),
+            win,
+            duration_seconds: Math.round(gsiSnap.game_clock),
+            kills: gsiSnap.kills,
+            deaths: gsiSnap.deaths,
+            assists: gsiSnap.assists,
+            gpm: gsiSnap.gpm,
+            xpm: 0, // GSI does not provide XPM
+            net_worth: gsiSnap.net_worth,
+            last_hits: 0, // GSI does not provide last_hits
+            denies: 0, // GSI does not provide denies
+            engine_mode: recSnap.data?.engine_mode ?? null,
+            was_fallback: recSnap.data?.fallback ?? false,
+            overall_strategy: recSnap.data?.overall_strategy ?? null,
+            items,
+            recommendations,
+          };
+
+          // Fire-and-forget POST -- never block new game setup
+          api.logMatch(payload).catch((err) => {
+            console.warn("Failed to log match:", err);
+          });
+        }
+
+        // Full match reset (AFTER snapshot)
         useGameStore.getState().clear();
         useRecommendationStore.getState().clear();
         useRefreshStore.getState().resetCooldown();
