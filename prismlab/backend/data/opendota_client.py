@@ -1,4 +1,8 @@
+import logging
+
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 class OpenDotaClient:
@@ -95,6 +99,50 @@ class OpenDotaClient:
             )
             response.raise_for_status()
             return response.json()
+
+    async def fetch_live_match_for_player(self, account_id: int) -> dict | None:
+        """Scan OpenDota /live endpoint for a specific player's game.
+
+        Note: OpenDota /live only returns top/popular games sorted by spectator
+        count + MMR. Low-MMR or unranked games may not appear. This method is
+        intended as a fallback when Stratz is unavailable.
+
+        Args:
+            account_id: Player's 32-bit Steam account ID.
+
+        Returns:
+            The matching live game dict if the player is found, None otherwise.
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.BASE_URL}/live",
+                    params=self.params,
+                    timeout=15.0,
+                )
+                response.raise_for_status()
+                games = response.json()
+
+            for game in games:
+                for player in game.get("players", []):
+                    if player.get("account_id") == account_id:
+                        logger.info(
+                            "OpenDota: found live match %s for account %d",
+                            game.get("match_id"),
+                            account_id,
+                        )
+                        return game
+            return None
+        except httpx.HTTPStatusError as exc:
+            logger.warning(
+                "OpenDota /live HTTP error for account %d: %s",
+                account_id,
+                exc.response.status_code,
+            )
+            return None
+        except httpx.TimeoutException:
+            logger.warning("OpenDota /live timeout for account %d", account_id)
+            return None
 
     async def fetch_item_timings(self, hero_id: int) -> list[dict]:
         """Fetch item timing benchmark data for a hero from OpenDota scenarios.
