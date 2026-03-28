@@ -1,5 +1,6 @@
 import type { Hero } from "../types/hero";
 import type { LiveMatchResponse } from "../types/livematch";
+import type { MatchLogPayload } from "../types/matchLog";
 import type {
   EngineBudget,
   RecommendRequest,
@@ -74,4 +75,9 @@ export const api = {
   getSettingsDefaults: () =>
     fetchJson<{ steam_id: string | null }>("/settings/defaults"),
   getEngineBudget: () => fetchJson<EngineBudget>("/settings/budget"),
+  logMatch: (payload: MatchLogPayload) =>
+    postJson<MatchLogPayload, { status: string; id: number; follow_rate: number }>(
+      "/match-log",
+      payload,
+    ),
 };
