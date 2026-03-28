@@ -7,7 +7,9 @@
 - [x] **v2.0 Live Game Intelligence** - Phases 10-14 (shipped 2026-03-26)
 - [x] **v3.0 Design Overhaul & Performance** - Phases 15-18 (shipped 2026-03-27)
 - [x] **v4.0 Coaching Intelligence** - Phases 19-23 (shipped 2026-03-28)
-- [ ] **v5.0 Supreme Companion** - Phases 24-28 (in progress)
+- [ ] **v5.0 Supreme Companion** - Phases 24-29 (in progress)
+- [ ] **v6.0 Draft Intelligence** - Phases 30-31 (planned)
+- [ ] **v7.0 Desktop Distribution** - Phase 32 (planned)
 
 ## Phases
 
@@ -77,7 +79,17 @@
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
 - [x] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes (completed 2026-03-28)
-- [ ] **Phase 29: Game Analytics & Match Logging** — Log every match, track recommendations vs actual purchases, win/loss, match history dashboard
+- [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
+- [ ] **Phase 33: Game Analytics & Match Logging** — Log every match, track recommendations vs actual purchases, win/loss, match history dashboard
+
+### v6.0 Draft Intelligence (Planned)
+
+- [ ] **Phase 30: ML Win Predictor** - XGBoost/logistic regression model trained on 200k+ recent matches, draft win probability, synergy/counter matrices by MMR bracket
+- [ ] **Phase 31: Hero Selector** - Role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value
+
+### v7.0 Desktop Distribution (Planned)
+
+- [ ] **Phase 32: Tauri Desktop App** - Native Windows app via Tauri (React frontend in native webview, Python backend as sidecar), first-run wizard with API key entry, auto-detect Dota 2 path, GSI cfg placement, system tray, native notifications
 
 ## Phase Details
 
@@ -235,7 +247,17 @@ Plans:
 - [x] 28-01-PLAN.md -- Seed upsert fix, test fixture updates, automated 7.41 data correctness tests
 - [x] 28-02-PLAN.md -- Rules engine audit against 7.41, system prompt meta hints
 
-### Phase 29: Game Analytics & Match Logging
+### Phase 29: Stream Deck Integration
+
+**Goal:** Elgato Stream Deck plugin (Node.js, SDK v2) that connects to Prismlab's existing WebSocket broadcast as a display consumer, rendering live game state data (gold, KDA, game clock, items, Rosh status, tower counts, alive/dead) to Stream Deck XL buttons with no backend changes required
+**Requirements**: TBD
+**Depends on:** Phase 10 (GSI + WebSocket pipeline must be operational)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 29 to break down)
+
+### Phase 33: Game Analytics & Match Logging
 
 **Goal:** Log every match with full data: items purchased, game length, win/loss, hero, role, opponents, recommendations given vs items actually bought, KDA, GPM, XPM. Store in DB for tracking recommendation effectiveness over time. Match history dashboard for reviewing past games and accuracy metrics.
 **Requirements**: TBD
@@ -243,4 +265,50 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 29 to break down)
+- [ ] TBD (run /gsd:plan-phase 33 to break down)
+
+### v6.0 Draft Intelligence (Planned)
+
+**Milestone Goal:** Add statistical ML-driven draft analysis — win probability prediction from hero compositions and intelligent hero suggestions filtered by role, lane, and team context. Combines data-driven predictions with Prismlab's existing Claude reasoning for high-confidence draft decisions.
+
+### Phase 30: ML Win Predictor
+
+**Goal:** Train a logistic regression / XGBoost model on 200k+ recent matches (mined from OpenDota bulk data) to predict draft win probability from hero compositions, with precomputed synergy and counter matrices by MMR bracket. Expose win probability alongside Claude's qualitative win condition assessment so users see both statistical and reasoning-based signals. Inspired by andreiapostoae/dota2-predictor, modernized for current patch and integrated into Prismlab's existing data pipeline
+**Requirements**: TBD
+**Depends on:** Phase 28 (current patch data must be in place), Phase 23 (win condition framing for comparison)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 30 to break down)
+
+### Phase 31: Hero Selector
+
+**Goal:** Given a partial draft (0-9 heroes picked), user's intended role (Pos 1-5), and lane assignment, suggest the top N hero picks ranked by predicted win rate, synergy with allies, and counter-value against enemies. Uses Phase 30's ML model to score all unpicked heroes and filters by role/lane viability. Integrates into the existing draft input UI as an optional "Suggest Hero" flow before the recommendation engine runs
+**Requirements**: TBD
+**Depends on:** Phase 30 (ML model must be trained and serving predictions), Phase 25 (API-driven draft input for live draft context)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 31 to break down)
+
+### v7.0 Desktop Distribution (Planned)
+
+**Milestone Goal:** Package Prismlab as a one-click Windows installer that non-technical users can install and run locally, with automatic Dota 2 GSI configuration, API key setup, and system tray operation.
+
+### Phase 32: Tauri Desktop App
+
+**Goal:** Package Prismlab as a native Windows desktop application using Tauri v2. The existing React frontend renders in a native webview (no browser tab, no Electron bloat, ~15MB footprint). The Python FastAPI backend runs as a Tauri sidecar process (bundled via PyInstaller into a standalone exe that Tauri spawns and manages). First-run wizard handles Anthropic API key entry, auto-detects Dota 2 install path (Steam registry key → libraryfolders.vdf parsing across all library folders), generates and places `gamestate_integration_prismlab.cfg` into the correct `game\dota\cfg\gamestate_integration\` directory, and prompts user to add `-gamestateintegration` to Dota 2 launch options. Native system tray icon with "Open" / "Quit" via Tauri's tray API. Native OS notifications for item timing alerts (ties into Phase 24 audio prompts). Config stored in platform-appropriate app data directory via Tauri's path API. Produces a single `.msi` or `.exe` installer via Tauri's built-in bundler (WiX-based). Docker Compose deployment remains for dev/server use — Tauri app is a separate build target
+**Requirements**: TBD
+**Depends on:** Phase 27 (game lifecycle must be solid before shipping to external users), Phase 28 (current patch data)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 32 to break down)
+
+**Architecture Notes:**
+- Tauri v2 handles: native window, system tray, notifications, installer bundling (WiX `.msi`), auto-updater, app data paths
+- Python backend: bundled as a PyInstaller sidecar exe, spawned by Tauri's sidecar API, communicates via localhost HTTP (same as current Docker setup)
+- React frontend: builds to static files, loaded by Tauri's webview — existing code unchanged
+- Dota 2 detection: Rust-side reads Windows Registry (`HKLM\SOFTWARE\WOW6432Node\Valve\Steam`), parses `libraryfolders.vdf`, locates `dota 2 beta\game\dota\cfg\gamestate_integration\`
+- GSI cfg: generated and placed automatically, no user file management required
+- Launch options: wizard screen explains adding `-gamestateintegration` to Dota 2 Steam properties (cannot be automated safely)
