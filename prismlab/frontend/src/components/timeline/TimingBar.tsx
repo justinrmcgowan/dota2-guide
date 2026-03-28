@@ -63,7 +63,8 @@ function TimingBar({
   const lateBucketMax =
     lateBuckets.length > 0 ? Math.max(...lateBuckets.map((b) => b.time)) : 0;
   const isWindowPassed =
-    currentGameClock !== null && lateBucketMax > 0 && currentGameClock > lateBucketMax;
+    currentGameClock !== null && lateBucketMax > 0 && currentGameClock > lateBucketMax
+    && !lateRange.includes(">"); // Open-ended ranges ("> 25 min") never "pass"
 
   // Gold away text
   const showGoldText =

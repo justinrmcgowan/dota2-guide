@@ -359,8 +359,8 @@ class DataCache:
         """Filter item catalog to items relevant to this role.
 
         Excludes pure component items (basic stat sticks that only serve
-        as recipe ingredients — Ogre Axe, Platemail, etc.) to prevent
-        Claude from recommending components instead of completed items.
+        as recipe ingredients — Ogre Axe, Platemail, etc.) and items that
+        are auto-granted or no longer purchasable (Courier, TP Scroll).
 
         Partitioned by cost tier:
         - Tier 1 (0-2000g): capped at 50 items (starting + laning)
@@ -371,6 +371,19 @@ class DataCache:
         Applies role budget: max 10000g for cores (Pos 1-3), 6500g for
         supports (Pos 4-5).
         """
+        # Items that should never appear in recommendations
+        EXCLUDED_ITEMS = {
+            "courier",          # Auto-granted, not purchasable
+            "flying_courier",   # Auto-granted, not purchasable
+            "tpscroll",         # Auto-granted via TP slot
+            "cheese",           # Roshan drop only
+            "refresher_shard",  # Roshan drop only
+            "aghanims_shard_roshan",  # Roshan drop only
+            "ultimate_scepter_roshan",  # Roshan drop only
+            "pocket_roshan",    # Roshan drop only
+            "tome_of_aghanim",  # Roshan drop only
+        }
+
         max_cost = 10000 if role <= 3 else 6500
 
         # Build set of internal_names used as components in other items
@@ -385,6 +398,10 @@ class DataCache:
             if (item.is_recipe or item.is_neutral
                     or item.cost is None or item.cost <= 0
                     or item.cost > max_cost):
+                continue
+
+            # Skip auto-granted, Roshan drops, and non-purchasable items
+            if item.internal_name in EXCLUDED_ITEMS:
                 continue
 
             # Exclude pure components: basic items (no sub-components) that
