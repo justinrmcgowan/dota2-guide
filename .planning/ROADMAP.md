@@ -7,7 +7,7 @@
 - [x] **v2.0 Live Game Intelligence** - Phases 10-14 (shipped 2026-03-26)
 - [x] **v3.0 Design Overhaul & Performance** - Phases 15-18 (shipped 2026-03-27)
 - [x] **v4.0 Coaching Intelligence** - Phases 19-23 (shipped 2026-03-28)
-- [ ] **v5.0 Supreme Companion** - Phases 24-29 (in progress)
+- [ ] **v5.0 Supreme Companion** - Phases 24-28 (in progress)
 
 ## Phases
 
@@ -77,7 +77,6 @@
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
 - [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
-- [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
 
 ## Phase Details
 
@@ -221,20 +220,16 @@ Plans:
 
 ### Phase 28: Patch 7.41 Data Refresh
 
-**Goal:** Update hero/item/ability database to Dota 2 patch 7.41 — 9 new items, Cornucopia removed, Refresher Orb rework, Shiva's/Blade Mail/Bloodstone recipe changes, updated costs, neutral T1 available from minute 0
-**Requirements**: TBD
+**Goal:** Update hero/item/ability database to Dota 2 patch 7.41 -- 9 new items, Cornucopia removed, Refresher Orb rework, Shiva's/Blade Mail/Bloodstone recipe changes, updated costs, neutral T1 available from minute 0
+**Requirements**: PATCH-01, PATCH-02, PATCH-03, PATCH-04
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. After re-seed from OpenDota, all 9 new 7.41 items exist in the database with correct costs and recipes
+  2. Cornucopia no longer appears in the item catalog; changed item costs (Shiva's 4500g, Blade Mail 2300g) are correct
+  3. All 22 rules audited -- no stale references to removed items, reasoning strings reflect 7.41 changes
+  4. System prompt contains concise 7.41 meta hints (Refresher Orb abilities-only, Bloodstone rework, Shiva's cost, facets removed) under 200 tokens
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 28 to break down)
-
-### Phase 29: Stream Deck Integration
-
-**Goal:** Elgato Stream Deck plugin (Node.js, SDK v2) that connects to Prismlab's existing WebSocket broadcast as a display consumer, rendering live game state data (gold, KDA, game clock, items, Rosh status, tower counts, alive/dead) to Stream Deck XL buttons with no backend changes required
-**Requirements**: TBD
-**Depends on:** Phase 10 (GSI + WebSocket pipeline must be operational)
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 29 to break down)
+- [ ] 28-01-PLAN.md -- Seed upsert fix, test fixture updates, automated 7.41 data correctness tests
+- [ ] 28-02-PLAN.md -- Rules engine audit against 7.41, system prompt meta hints
