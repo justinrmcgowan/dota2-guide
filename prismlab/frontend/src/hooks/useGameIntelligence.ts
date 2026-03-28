@@ -79,6 +79,7 @@ export function useGameIntelligence(heroes: Hero[]): void {
   const cooldownEndRef = useRef<number>(0);
   const queuedEventRef = useRef<TriggerEvent | null>(null);
   const laneAutoDetectedRef = useRef<boolean>(false);
+  const prevMatchIdRef = useRef<string>("");
   const prevGsiStatusRef = useRef<string>("idle");
 
   /**
@@ -185,6 +186,40 @@ export function useGameIntelligence(heroes: Hero[]): void {
           direTowers: live.dire_tower_count,
         };
         // Still continue processing below (hero detection should work on reconnect)
+      }
+
+      // --- 0. New game detection (match_id change) ---
+      const matchId = live.match_id;
+      if (matchId && prevMatchIdRef.current && matchId !== prevMatchIdRef.current) {
+        const isHeroSelection = live.game_state === "DOTA_GAMERULES_STATE_HERO_SELECTION";
+        if (!isHeroSelection) {
+          console.info(
+            `New match detected (${prevMatchIdRef.current} -> ${matchId}) without hero selection state (state: ${live.game_state})`,
+          );
+        }
+
+        // Full match reset
+        useGameStore.getState().clear();
+        useRecommendationStore.getState().clear();
+        useRefreshStore.getState().resetCooldown();
+
+        // Reset all refs to initial state
+        prevHeroIdRef.current = 0;
+        firedPhasesRef.current = new Set();
+        laneAutoDetectedRef.current = false;
+        cooldownEndRef.current = 0;
+        queuedEventRef.current = null;
+        prevStateRef.current = {
+          deaths: 0,
+          netWorthAtLastRefresh: 0,
+          roshanState: "alive",
+          radiantTowers: 11,
+          direTowers: 11,
+        };
+      }
+      // Always track the latest match ID
+      if (matchId) {
+        prevMatchIdRef.current = matchId;
       }
 
       // --- 1. Hero auto-detection + role inference + playstyle auto-suggest ---
