@@ -17,6 +17,7 @@ export interface GsiLiveState {
   has_aghanims_scepter: boolean;
   game_clock: number;
   game_state: string;
+  match_id: string;
   team_side: string;
   is_alive: boolean;
   timestamp: number;
@@ -28,11 +29,12 @@ export interface GsiLiveState {
 interface GsiStore {
   // Connection state
   wsStatus: "connected" | "disconnected" | "connecting";
-  gsiStatus: "connected" | "idle" | "lost";
+  gsiStatus: "connected" | "idle" | "lost" | "reconnecting";
   lastUpdate: number | null;
 
   // Live game data
   liveState: GsiLiveState | null;
+  matchId: string | null;
 
   // Actions
   setWsStatus: (
@@ -47,13 +49,15 @@ export const useGsiStore = create<GsiStore>()((set, get) => ({
   gsiStatus: "idle",
   lastUpdate: null,
   liveState: null,
+  matchId: null,
 
   setWsStatus: (wsStatus) => {
     const prev = get().gsiStatus;
-    // If WS disconnects and we had GSI data, status goes to "lost"
+    // If WS disconnects and we had GSI data, enter "reconnecting" state.
+    // "lost" is reserved for post-timeout expiry (D-11).
     let gsiStatus = prev;
     if (wsStatus === "disconnected" && prev === "connected") {
-      gsiStatus = "lost";
+      gsiStatus = "reconnecting";
     }
     set({ wsStatus, gsiStatus });
   },
@@ -63,6 +67,7 @@ export const useGsiStore = create<GsiStore>()((set, get) => ({
       liveState: data,
       gsiStatus: "connected",
       lastUpdate: Date.now(),
+      ...(data.match_id ? { matchId: data.match_id } : {}),
     }),
 
   clearLiveState: () =>

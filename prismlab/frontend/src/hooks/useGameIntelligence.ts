@@ -48,6 +48,9 @@ function suggestPlaystyle(heroId: number, role: number): string {
   return PLAYSTYLE_OPTIONS[role]?.[0] ?? "balanced";
 }
 
+/** 10 minutes -- matches Dota 2's reconnect grace period (D-11). */
+const DISCONNECT_TIMEOUT_MS = 10 * 60 * 1000;
+
 /**
  * Consolidated GSI intelligence hook that replaces both useGsiSync and
  * useAutoRefresh. Bridges GSI live state to gameStore (hero/role/playstyle),
@@ -79,7 +82,9 @@ export function useGameIntelligence(heroes: Hero[]): void {
   const cooldownEndRef = useRef<number>(0);
   const queuedEventRef = useRef<TriggerEvent | null>(null);
   const laneAutoDetectedRef = useRef<boolean>(false);
+  const prevMatchIdRef = useRef<string>("");
   const prevGsiStatusRef = useRef<string>("idle");
+  const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Fire a recommendation refresh -- replicates useRecommendation.recommend()
@@ -170,6 +175,47 @@ export function useGameIntelligence(heroes: Hero[]): void {
       const prevStatus = prevGsiStatusRef.current;
       prevGsiStatusRef.current = state.gsiStatus;
 
+      // --- Disconnect timeout management (D-11, D-12, D-13) ---
+      if (state.gsiStatus === "reconnecting" && !disconnectTimerRef.current) {
+        // Start 10-minute countdown
+        disconnectTimerRef.current = setTimeout(() => {
+          // Auto-clear match state (D-12)
+          useGameStore.getState().clear();
+          useRecommendationStore.getState().clear();
+          useRefreshStore.getState().resetCooldown();
+          useGsiStore.getState().clearLiveState(); // Sets gsiStatus to "idle"
+
+          // Reset refs
+          prevHeroIdRef.current = 0;
+          prevMatchIdRef.current = "";
+          firedPhasesRef.current = new Set();
+          laneAutoDetectedRef.current = false;
+          cooldownEndRef.current = 0;
+          queuedEventRef.current = null;
+          prevStateRef.current = {
+            deaths: 0,
+            netWorthAtLastRefresh: 0,
+            roshanState: "alive",
+            radiantTowers: 11,
+            direTowers: 11,
+          };
+          disconnectTimerRef.current = null;
+
+          // Show "Session expired" toast (D-12)
+          useRefreshStore
+            .getState()
+            .showToast(
+              "Session expired -- match state cleared after 10 minutes",
+            );
+        }, DISCONNECT_TIMEOUT_MS);
+      }
+
+      // Cancel timer on reconnect (D-13)
+      if (state.gsiStatus === "connected" && disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current);
+        disconnectTimerRef.current = null;
+      }
+
       // Guard: only process when GSI is connected
       if (state.gsiStatus !== "connected") return;
       const live = state.liveState;
@@ -185,6 +231,40 @@ export function useGameIntelligence(heroes: Hero[]): void {
           direTowers: live.dire_tower_count,
         };
         // Still continue processing below (hero detection should work on reconnect)
+      }
+
+      // --- 0. New game detection (match_id change) ---
+      const matchId = live.match_id;
+      if (matchId && prevMatchIdRef.current && matchId !== prevMatchIdRef.current) {
+        const isHeroSelection = live.game_state === "DOTA_GAMERULES_STATE_HERO_SELECTION";
+        if (!isHeroSelection) {
+          console.info(
+            `New match detected (${prevMatchIdRef.current} -> ${matchId}) without hero selection state (state: ${live.game_state})`,
+          );
+        }
+
+        // Full match reset
+        useGameStore.getState().clear();
+        useRecommendationStore.getState().clear();
+        useRefreshStore.getState().resetCooldown();
+
+        // Reset all refs to initial state
+        prevHeroIdRef.current = 0;
+        firedPhasesRef.current = new Set();
+        laneAutoDetectedRef.current = false;
+        cooldownEndRef.current = 0;
+        queuedEventRef.current = null;
+        prevStateRef.current = {
+          deaths: 0,
+          netWorthAtLastRefresh: 0,
+          roshanState: "alive",
+          radiantTowers: 11,
+          direTowers: 11,
+        };
+      }
+      // Always track the latest match ID
+      if (matchId) {
+        prevMatchIdRef.current = matchId;
       }
 
       // --- 1. Hero auto-detection + role inference + playstyle auto-suggest ---
@@ -324,6 +404,7 @@ export function useGameIntelligence(heroes: Hero[]): void {
     return () => {
       unsubscribe();
       clearInterval(interval);
+      if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
     };
   }, []);
 

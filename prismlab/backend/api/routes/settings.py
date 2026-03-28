@@ -1,12 +1,13 @@
-"""Settings API routes: GSI config file generator.
+"""Settings API routes: GSI config, engine mode, and budget endpoints.
 
-Provides an endpoint to download a Dota 2 GSI configuration file with
-the user's IP address and auth token pre-filled.
+Provides endpoints for GSI configuration file generation, engine mode
+status, and monthly API budget tracking (Phase 26).
 """
 
 from fastapi import APIRouter, Response
 
 from config import settings
+from api.routes.recommend import _cost_tracker
 
 router = APIRouter()
 
@@ -66,3 +67,27 @@ async def get_gsi_config(host: str, port: int = 8421) -> Response:
             "Content-Disposition": 'attachment; filename="gamestate_integration_prismlab.cfg"'
         },
     )
+
+
+@router.get("/settings/engine")
+async def get_engine_settings():
+    """Return current engine mode and budget summary.
+
+    Used by the frontend Settings panel to display mode selector
+    and budget status (Phase 26: D-10, D-11).
+    """
+    return {
+        "mode": settings.recommendation_mode,
+        "budget_monthly": settings.api_budget_monthly,
+        "budget_used": _cost_tracker.get_usage(),
+    }
+
+
+@router.get("/settings/budget")
+async def get_budget_status():
+    """Return current month's API budget usage.
+
+    Detailed budget endpoint: month, cost, requests, budget cap,
+    exceeded flag, warning flag. Used by frontend budget display.
+    """
+    return _cost_tracker.get_usage()

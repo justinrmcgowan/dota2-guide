@@ -81,6 +81,18 @@ export interface RecommendResponse {
   timing_data: ItemTimingData[];
   build_paths: BuildPathResponse[];
   win_condition?: WinConditionResponse | null;
+  engine_mode?: "fast" | "auto" | "deep" | null;
+  budget_used?: number | null;
+  budget_limit?: number | null;
+}
+
+export interface EngineBudget {
+  month: string;
+  cost: number;
+  requests: number;
+  budget: number;
+  exceeded: boolean;
+  warning: boolean;
 }
 
 export interface EnemyContext {
@@ -100,6 +112,7 @@ export interface RecommendRequest {
   lane_opponents: number[];
   allies: number[];
   all_opponents?: number[];  // full 5-hero enemy team for win condition classification
+  mode?: "fast" | "auto" | "deep" | null;  // engine mode override (null = server default)
 
   // Mid-game adaptation fields (all optional for backward compatibility)
   lane_result?: "won" | "even" | "lost" | null;

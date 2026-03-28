@@ -76,10 +76,19 @@
 
 - [ ] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control
 - [x] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID (completed 2026-03-28)
-- [ ] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning
-- [ ] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection
-- [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
+- [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
+- [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
+- [x] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes (completed 2026-03-28)
 - [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
+
+### v6.0 Draft Intelligence (Planned)
+
+- [ ] **Phase 30: ML Win Predictor** - XGBoost/logistic regression model trained on 200k+ recent matches, draft win probability, synergy/counter matrices by MMR bracket
+- [ ] **Phase 31: Hero Selector** - Role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value
+
+### v7.0 Desktop Distribution (Planned)
+
+- [ ] **Phase 32: Tauri Desktop App** - Native Windows app via Tauri (React frontend in native webview, Python backend as sidecar), first-run wizard with API key entry, auto-detect Dota 2 path, GSI cfg placement, system tray, native notifications
 
 ### v6.0 Draft Intelligence (Planned)
 
@@ -204,33 +213,47 @@ Plans:
 
 ### Phase 26: Engine Optimization
 
-**Goal:** Reduce recommendation latency to under 5 seconds via rule-only fast paths, local LLM (Ollama), courier/consumable exclusion from recommendations, and concise reasoning enforcement
-**Requirements**: TBD
+**Goal:** 3-mode recommendation engine (Fast/Auto/Deep) with local LLM via Ollama, API cost tracking with budget cap, and training data pipeline for fine-tuning
+**Requirements**: ENG-01, ENG-02, ENG-03, ENG-04, ENG-05, ENG-06, ENG-07
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 26 to break down)
+- [x] 26-01-PLAN.md -- Backend: OllamaEngine, CostTracker, mode routing in HybridRecommender, config/schema extensions
+- [x] 26-02-PLAN.md -- Frontend: Mode selector in Settings, budget display, mode wiring to recommend requests
+- [x] 26-03-PLAN.md -- Training data generation script for Ollama fine-tuning
 
 ### Phase 27: Game Lifecycle Management
 
 **Goal:** Gracefully handle mid-game abandons, new game detection, full state reset between matches, purchased items clearing, and GSI reconnection without stale data leaking between games
-**Requirements**: TBD
+**Requirements**: LIFE-01, LIFE-02, LIFE-03, LIFE-04, LIFE-05
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. Game state (hero, role, playstyle, allies, opponents, purchased items, dismissed items, lane result) persists across page refreshes via localStorage
+  2. When a new match starts (different GSI match ID), all match state is cleared but settings are preserved
+  3. On GSI disconnect, match state is preserved for 10 minutes with a "Reconnecting..." indicator; auto-clears after timeout
+  4. Backend session sync endpoint accepts and returns session state for multi-device durability
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 27 to break down)
+- [x] 27-01-PLAN.md -- localStorage persistence (Zustand persist), match_id pipeline, new game detection + reset
+- [x] 27-02-PLAN.md -- Disconnect timeout handling, reconnect indicator, backend session sync endpoint
 
 ### Phase 28: Patch 7.41 Data Refresh
 
-**Goal:** Update hero/item/ability database to Dota 2 patch 7.41 — 9 new items, Cornucopia removed, Refresher Orb rework, Shiva's/Blade Mail/Bloodstone recipe changes, updated costs, neutral T1 available from minute 0
-**Requirements**: TBD
+**Goal:** Update hero/item/ability database to Dota 2 patch 7.41 -- 9 new items, Cornucopia removed, Refresher Orb rework, Shiva's/Blade Mail/Bloodstone recipe changes, updated costs, neutral T1 available from minute 0
+**Requirements**: PATCH-01, PATCH-02, PATCH-03, PATCH-04
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. After re-seed from OpenDota, all 9 new 7.41 items exist in the database with correct costs and recipes
+  2. Cornucopia no longer appears in the item catalog; changed item costs (Shiva's 4500g, Blade Mail 2300g) are correct
+  3. All 22 rules audited -- no stale references to removed items, reasoning strings reflect 7.41 changes
+  4. System prompt contains concise 7.41 meta hints (Refresher Orb abilities-only, Bloodstone rework, Shiva's cost, facets removed) under 200 tokens
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 28 to break down)
+- [x] 28-01-PLAN.md -- Seed upsert fix, test fixture updates, automated 7.41 data correctness tests
+- [x] 28-02-PLAN.md -- Rules engine audit against 7.41, system prompt meta hints
 
 ### Phase 29: Stream Deck Integration
 

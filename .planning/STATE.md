@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Planning
-stopped_at: Completed 25-02-PLAN.md
-last_updated: "2026-03-28T17:07:51.062Z"
+status: Ready to execute
+stopped_at: Completed 28-02-PLAN.md
+last_updated: "2026-03-28T18:40:43.391Z"
 progress:
   total_phases: 10
-  completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
+  completed_phases: 9
+  total_plans: 21
+  completed_plans: 21
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 ## Current Position
 
-Phase: 24-28 (not yet planned)
-Plan: Not started
+Phase: 28-patch-data-refresh
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -54,6 +54,13 @@ Plan: Not started
 | Phase 23-win-condition-framing P02 | 6min | 2 tasks | 4 files |
 | Phase 25-api-draft-input P01 | 4min | 2 tasks | 6 files |
 | Phase 25-api-draft-input P02 | 5min | 2 tasks | 6 files |
+| Phase 26-engine-optimization P01 | 11min | 2 tasks | 10 files |
+| Phase 26-engine-optimization P03 | 3min | 1 tasks | 2 files |
+| Phase 26-engine-optimization P02 | 3min | 2 tasks | 3 files |
+| Phase 27-game-lifecycle P01 | 6min | 2 tasks | 6 files |
+| Phase 27-game-lifecycle P02 | 5min | 2 tasks | 6 files |
+| Phase 28-patch-data-refresh P01 | 4min | 2 tasks | 3 files |
+| Phase 28-patch-data-refresh P02 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -93,6 +100,16 @@ Recent decisions affecting current work:
 - [Phase 25-api-draft-input]: Raw httpx POST for Stratz GraphQL -- no gql library needed for simple queries
 - [Phase 25-api-draft-input]: Dual-source live match: Stratz primary with OpenDota fallback, independent error handling per source
 - [Phase 25-api-draft-input]: useLiveDraft is standalone hook at App.tsx level, not nested inside useGameIntelligence -- independent GSI subscriptions for decoupled concerns
+- [Phase 26-engine-optimization]: 3-mode engine routing (fast/auto/deep) with Ollama primary + Claude fallback in Auto mode; budget_ok defaults True when no cost_tracker
+- [Phase 26-engine-optimization]: Training data script uses conservative manual hero role map (~100 heroes) with DB-role fallback; ChatML JSONL output; line-level flush for resume safety
+- [Phase 26-engine-optimization]: DRY mode injection: api.recommend() wrapper auto-reads localStorage, not each callsite
+- [Phase 27-game-lifecycle]: match_id change is primary new-game trigger; hero_selection state is logged but not gated on
+- [Phase 27-game-lifecycle]: Custom storage adapter for Set<string> serialization in recommendationStore persist middleware
+- [Phase 27-game-lifecycle]: gsiStatus 'reconnecting' replaces immediate 'lost' on WS disconnect; 'lost' reserved for post-timeout expiry
+- [Phase 27-game-lifecycle]: In-memory dict session store for V1 single-user; frontend sync wiring deferred
+- [Phase 28-patch-data-refresh]: session.merge() for HeroAbilityData upserts -- matches refresh.py pattern, fixes IntegrityError on container restart
+- [Phase 28-patch-data-refresh]: Bloodstone hint uses descriptive text without percentage to satisfy DATA-04 no-percentages test
+- [Phase 28-patch-data-refresh]: No new rules for 7.41 items -- Claude handles via LLM path until meta settles
 
 ### Pending Todos
 
@@ -105,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:07:51.060Z
-Stopped at: Completed 25-02-PLAN.md
+Last session: 2026-03-28T18:40:43.388Z
+Stopped at: Completed 28-02-PLAN.md
 Resume file: None

@@ -109,6 +109,19 @@ class ItemTimingData(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=func.now())
 
 
+class ApiUsage(Base):
+    """Track Claude API usage per month for budget enforcement (Phase 26)."""
+
+    __tablename__ = "api_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    month: Mapped[str] = mapped_column(String, index=True)  # "2026-03"
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    cost: Mapped[float] = mapped_column(Float, default=0.0)
+    request_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class DataRefreshLog(Base):
     """Tracks data refresh pipeline executions for freshness reporting."""
 

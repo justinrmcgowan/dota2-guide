@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { Hero } from "../types/hero";
 import type { EnemyContext } from "../types/recommendation";
 import { PLAYSTYLE_OPTIONS } from "../utils/constants";
@@ -43,9 +44,12 @@ interface GameStore {
   setEnemyItemsSpotted: (items: string[]) => void;
   setEnemyContext: (ctx: EnemyContext[]) => void;
   clearMidGameState: () => void;
+  clear: () => void;
 }
 
-export const useGameStore = create<GameStore>()((set, get) => ({
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set, get) => ({
   selectedHero: null,
   allies: [null, null, null, null],
   opponents: [null, null, null, null, null],
@@ -147,4 +151,26 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   clearMidGameState: () =>
     set({ laneResult: null, damageProfile: null, enemyItemsSpotted: [], enemyContext: [] }),
-}));
+
+  clear: () =>
+    set({
+      selectedHero: null,
+      allies: [null, null, null, null],
+      opponents: [null, null, null, null, null],
+      role: null,
+      playstyle: null,
+      side: null,
+      lane: null,
+      laneOpponents: [],
+      laneResult: null,
+      damageProfile: null,
+      enemyItemsSpotted: [],
+      enemyContext: [],
+    }),
+    }),
+    {
+      name: "prismlab-game",
+      version: 1,
+    },
+  ),
+);

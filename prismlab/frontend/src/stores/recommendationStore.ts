@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { RecommendResponse } from "../types/recommendation";
 
 interface RecommendationStore {
@@ -22,7 +23,8 @@ interface RecommendationStore {
 }
 
 export const useRecommendationStore = create<RecommendationStore>()(
-  (set, get) => ({
+  persist(
+    (set, get) => ({
     data: null,
     isLoading: false,
     error: null,
@@ -124,5 +126,31 @@ export const useRecommendationStore = create<RecommendationStore>()(
         purchasedItems: new Set<string>(),
         dismissedItems: new Set<string>(),
       }),
-  }),
+    }),
+    {
+      name: "prismlab-recommendations",
+      version: 1,
+      storage: {
+        getItem: (name: string) => {
+          const raw = localStorage.getItem(name);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (parsed?.state?.purchasedItems) {
+            parsed.state.purchasedItems = new Set(parsed.state.purchasedItems);
+          }
+          if (parsed?.state?.dismissedItems) {
+            parsed.state.dismissedItems = new Set(parsed.state.dismissedItems);
+          }
+          return parsed;
+        },
+        setItem: (name: string, value: unknown) => {
+          const serialized = JSON.stringify(value, (_key, val) =>
+            val instanceof Set ? [...val] : val,
+          );
+          localStorage.setItem(name, serialized);
+        },
+        removeItem: (name: string) => localStorage.removeItem(name),
+      },
+    },
+  ),
 );

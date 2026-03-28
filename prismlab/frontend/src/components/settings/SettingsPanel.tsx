@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 import { isValidSteamId } from "../../utils/steamId";
 import { api } from "../../api/client";
+import type { EngineBudget } from "../../types/recommendation";
 
 interface SettingsPanelProps {
   open: boolean;
   onClose: () => void;
 }
+
+type EngineMode = "fast" | "auto" | "deep";
+
+const ENGINE_MODES: { value: EngineMode; label: string; badge?: string; description: string }[] = [
+  { value: "fast", label: "Fast", description: "Rules only. Instant. No AI reasoning." },
+  { value: "auto", label: "Auto", badge: "default", description: "Local AI + Claude fallback. Best balance." },
+  { value: "deep", label: "Deep", description: "Always Claude API. Full reasoning. Highest cost." },
+];
 
 function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [host, setHost] = useState("");
@@ -14,6 +23,10 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     () => localStorage.getItem("prismlab_steam_id") ?? "",
   );
   const [steamIdValid, setSteamIdValid] = useState(true);
+  const [mode, setMode] = useState<EngineMode>(
+    () => (localStorage.getItem("prismlab_engine_mode") as EngineMode) ?? "auto",
+  );
+  const [budget, setBudget] = useState<EngineBudget | null>(null);
 
   // Pre-fill Steam ID from backend .env if localStorage is empty (D-10)
   useEffect(() => {
@@ -29,6 +42,18 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
         .catch(() => {}); // Silent fail -- not critical
     }
   }, []);
+
+  // Fetch budget status when panel opens
+  useEffect(() => {
+    if (open) {
+      api.getEngineBudget().then(setBudget).catch(() => {}); // Silent fail -- not critical
+    }
+  }, [open]);
+
+  const handleModeChange = (value: EngineMode) => {
+    setMode(value);
+    localStorage.setItem("prismlab_engine_mode", value);
+  };
 
   if (!open) return null;
 
@@ -224,6 +249,102 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 from your profile URL
               </p>
             </div>
+          </div>
+
+          {/* Recommendation Engine Section */}
+          <div className="space-y-4 mt-8">
+            <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wider">
+              Recommendation Engine
+            </h3>
+
+            {/* Mode Selector -- 3 radio-style buttons (D-01, D-02) */}
+            <div className="space-y-0">
+              {ENGINE_MODES.map((opt) => {
+                const selected = mode === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleModeChange(opt.value)}
+                    className={`w-full flex items-start gap-3 px-3 py-3 bg-surface-container-lowest border-b border-outline-variant/15 text-left transition-colors hover:bg-surface-container-low ${
+                      selected ? "border-l-2 border-l-primary" : "border-l-2 border-l-transparent"
+                    }`}
+                  >
+                    {/* Radio indicator */}
+                    <span className="mt-0.5 flex-shrink-0">
+                      <span
+                        className={`inline-block w-3.5 h-3.5 rounded-full border-2 ${
+                          selected
+                            ? "border-primary bg-primary"
+                            : "border-on-surface-variant/40 bg-transparent"
+                        }`}
+                      >
+                        {selected && (
+                          <span className="block w-1.5 h-1.5 rounded-full bg-surface mx-auto mt-[3px]" />
+                        )}
+                      </span>
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${selected ? "text-on-surface" : "text-on-surface-variant"}`}>
+                          {opt.label}
+                        </span>
+                        {opt.badge && (
+                          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 bg-primary/15 text-primary rounded">
+                            {opt.badge}
+                          </span>
+                        )}
+                      </span>
+                      <span className="block text-xs text-on-surface-variant/70 mt-0.5">
+                        {opt.description}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* API Budget Display (D-10, D-11) */}
+            {budget && (
+              <div className="space-y-2 mt-4">
+                <h4 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+                  API Budget (Monthly)
+                </h4>
+
+                {/* Progress bar */}
+                <div className="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      budget.exceeded
+                        ? "bg-dire"
+                        : budget.warning
+                          ? "bg-amber-500"
+                          : "bg-primary"
+                    }`}
+                    style={{
+                      width: `${Math.min((budget.cost / budget.budget) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+
+                {/* Usage text */}
+                <p className="text-xs text-on-surface-variant">
+                  ${budget.cost.toFixed(2)} / ${budget.budget.toFixed(2)} used ({budget.requests} requests)
+                </p>
+
+                {/* Warning / exceeded messages */}
+                {budget.exceeded && (
+                  <p className="text-xs text-dire font-medium">
+                    Budget exceeded -- Auto mode uses local AI only
+                  </p>
+                )}
+                {budget.warning && !budget.exceeded && (
+                  <p className="text-xs text-amber-500 font-medium">
+                    Approaching budget limit
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

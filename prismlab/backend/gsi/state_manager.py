@@ -32,6 +32,7 @@ class ParsedGsiState:
     items_neutral: str = ""
     game_clock: int = 0
     game_state: str = ""
+    match_id: str = ""
     team_side: str = ""
     is_alive: bool = True
     roshan_state: str = "alive"
@@ -114,10 +115,12 @@ class GsiStateManager:
         # Extract map info
         game_clock = 0
         game_state = ""
+        match_id = ""
         roshan_state = "alive"
         if payload.map:
             game_clock = int(payload.map.clock_time)
             game_state = payload.map.game_state
+            match_id = payload.map.matchid
             roshan_state = payload.map.roshan_state or "alive"
 
         # Extract buildings / tower counts
@@ -162,6 +165,7 @@ class GsiStateManager:
             items_neutral=items_neutral,
             game_clock=game_clock,
             game_state=game_state,
+            match_id=match_id,
             team_side=team_side,
             is_alive=is_alive,
             roshan_state=roshan_state,

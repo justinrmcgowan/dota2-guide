@@ -427,7 +427,7 @@ async def test_db_setup():
             Item(id=99, name="Soul Ring", internal_name="soul_ring", cost=805),
             Item(id=102, name="Force Staff", internal_name="force_staff", cost=2200),
             Item(id=116, name="Black King Bar", internal_name="bkb", cost=4050),
-            Item(id=119, name="Shiva's Guard", internal_name="shivas_guard", cost=4750),
+            Item(id=119, name="Shiva's Guard", internal_name="shivas_guard", cost=4500),
             Item(id=180, name="Arcane Boots", internal_name="arcane_boots", cost=1300),
             Item(id=225, name="Monkey King Bar", internal_name="monkey_king_bar", cost=4975),
             Item(id=235, name="Assault Cuirass", internal_name="assault", cost=5250),
@@ -463,6 +463,10 @@ async def test_db_setup():
             Item(id=194, name="Linken's Sphere", internal_name="sphere", cost=4600),
             Item(id=250, name="Scythe of Vyse", internal_name="sheepstick", cost=5675),
             Item(id=206, name="Rod of Atos", internal_name="rod_of_atos", cost=2750),
+            # Patch 7.41: new component and updated recipe
+            Item(id=600, name="Splintmail", internal_name="splintmail", cost=950),
+            Item(id=601, name="Blade Mail", internal_name="blade_mail", cost=2300,
+                 components=["splintmail", "broadsword", "robe"]),
         ]
         session.add_all(items)
 

@@ -1,11 +1,18 @@
-"""Hybrid recommendation orchestrator.
+"""Hybrid recommendation orchestrator with 3-mode routing.
 
-Coordinates the rules engine (deterministic, instant) and LLM engine (Claude API,
-structured output) into a unified recommendation pipeline with merge, deduplication,
-fallback, and item ID validation. Includes response caching for cost efficiency.
+Coordinates the rules engine (deterministic, instant), Ollama (local LLM),
+and Claude API (cloud LLM) into a unified recommendation pipeline with
+merge, deduplication, fallback, and item ID validation.
+
+Modes:
+  - Fast: Rules-only, no LLM call (<1s target)
+  - Auto: Ollama primary, Claude fallback on failure/escalation (<5s target)
+  - Deep: Always Claude API with full reasoning (<15s target)
 
 Item validation uses DataCache -- zero DB queries for item lookups on the hot path.
 """
+
+from __future__ import annotations
 
 import hashlib
 import time
@@ -32,8 +39,15 @@ from engine.context_builder import ContextBuilder
 from engine.timing_zones import classify_timing_zones
 from data.cache import DataCache
 from data.matchup_service import get_or_fetch_hero_timings
+from config import settings
 
 logger = logging.getLogger(__name__)
+
+# Lazy imports to avoid circular / load-time issues
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from engine.ollama_engine import OllamaEngine
+    from engine.cost_tracker import CostTracker
 
 
 class ResponseCache:
@@ -75,11 +89,12 @@ class ResponseCache:
 
 
 class HybridRecommender:
-    """Orchestrates rules -> LLM -> merge -> validate pipeline.
+    """Orchestrates rules -> LLM -> merge -> validate pipeline with 3-mode routing.
 
-    Rules fire first (instant, deterministic). Claude API fires second
-    (structured output, 10s timeout). Results are merged with rules taking
-    priority. If LLM fails, falls back to rules-only.
+    Modes:
+      Fast  -- rules-only, no LLM call, <1s
+      Auto  -- Ollama primary, Claude fallback on failure or complexity escalation
+      Deep  -- always Claude API, full reasoning
     """
 
     def __init__(
@@ -89,12 +104,16 @@ class HybridRecommender:
         context_builder: ContextBuilder,
         response_cache: ResponseCache | None = None,
         cache: DataCache | None = None,
+        ollama: OllamaEngine | None = None,
+        cost_tracker: CostTracker | None = None,
     ):
         self.rules = rules
         self.llm = llm
         self.context_builder = context_builder
         self.response_cache = response_cache
         self.cache = cache
+        self.ollama = ollama
+        self.cost_tracker = cost_tracker
 
     # Reason-specific fallback messages for the overall_strategy field
     FALLBACK_STRATEGIES = {
@@ -102,21 +121,24 @@ class HybridRecommender:
         FallbackReason.parse_error: "AI response was malformed -- showing rules-based build.",
         FallbackReason.api_error: "AI service unavailable -- showing rules-based build. Try again shortly.",
         FallbackReason.rate_limited: "AI rate limited -- showing rules-based build. Try again in a moment.",
+        FallbackReason.ollama_error: "Local AI unavailable -- showing rules-based build.",
+        FallbackReason.budget_exceeded: "Monthly API budget reached -- showing rules-based build.",
     }
+
+    # ------------------------------------------------------------------
+    # Main entry point: route by mode
+    # ------------------------------------------------------------------
 
     async def recommend(
         self, request: RecommendRequest, db: AsyncSession
     ) -> RecommendResponse:
-        """Run full hybrid recommendation pipeline.
+        """Run recommendation pipeline, routing to the appropriate mode path.
 
         0. Check response cache (return immediately on hit)
-        1. Rules engine fires instantly (deterministic)
-        2. Context builder assembles Claude prompt
-        3. Claude API generates structured recommendations
-        4. Merge rules + LLM results (rules take priority, deduplicate)
-        5. Validate all item_ids against DB
-        6. Return response with metadata (fallback, fallback_reason, model, latency_ms)
-        7. Cache the response for future identical requests
+        1. Determine mode (request override or settings default)
+        2. Route to _fast_path / _auto_path / _deep_path
+        3. Enrich (timing, build paths, win condition)
+        4. Cache and return
         """
         # Step 0: Check cache
         if self.response_cache:
@@ -125,33 +147,203 @@ class HybridRecommender:
                 logger.info("Returning cached response for request")
                 return cached
 
+        # Step 1: Determine mode
+        mode = request.mode or settings.recommendation_mode
+
+        # Step 2: Route
+        if mode == "fast":
+            response = await self._fast_path(request, db)
+        elif mode == "auto":
+            response = await self._auto_path(request, db)
+        else:
+            response = await self._deep_path(request, db)
+
+        # Step 3: Cache the response
+        if self.response_cache:
+            self.response_cache.set(request, response)
+
+        return response
+
+    # ------------------------------------------------------------------
+    # Fast path: rules-only, no LLM call
+    # ------------------------------------------------------------------
+
+    async def _fast_path(
+        self, request: RecommendRequest, db: AsyncSession
+    ) -> RecommendResponse:
+        """Rules-only recommendations. No LLM call. Target <1s."""
         start = time.monotonic()
 
-        # Step 1: Rules fire instantly (deterministic, no API call)
         rules_items = self.rules.evaluate(request)
-        logger.info("Rules engine produced %d recommendations", len(rules_items))
+        logger.info("Fast path: rules produced %d items", len(rules_items))
 
-        # Step 2: Build Claude prompt context
-        user_message = await self.context_builder.build(request, rules_items, db)
+        phases = self._rules_only(rules_items)
+        phases = self._validate_item_ids(phases)
 
-        # Step 3: Call Claude with timeout + fallback
+        # Enrich with timing, build paths, win condition (same as other paths)
+        timing_data, build_paths, win_condition = await self._enrich_all(
+            request, phases, db
+        )
+        if win_condition:
+            phases = self._adjust_priorities_for_win_condition(phases, win_condition)
+
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+        response = RecommendResponse(
+            phases=phases,
+            overall_strategy="Rules-based build (Fast mode -- no AI reasoning).",
+            neutral_items=[],
+            timing_data=timing_data,
+            build_paths=build_paths,
+            win_condition=win_condition,
+            fallback=False,
+            fallback_reason=None,
+            model=None,
+            latency_ms=elapsed_ms,
+            engine_mode="fast",
+        )
+        self._attach_budget_info(response)
+        return response
+
+    # ------------------------------------------------------------------
+    # Auto path: Ollama primary, Claude fallback on failure/escalation
+    # ------------------------------------------------------------------
+
+    async def _auto_path(
+        self, request: RecommendRequest, db: AsyncSession
+    ) -> RecommendResponse:
+        """Smart routing: Ollama primary, Claude fallback. Target <5s."""
+        start = time.monotonic()
+
+        # Step 1: Rules fire instantly
+        rules_items = self.rules.evaluate(request)
+        logger.info("Auto path: rules produced %d items", len(rules_items))
+
+        # Step 2: Check if we should escalate to Claude
+        should_escalate = self._should_escalate(request, rules_items)
+        # Budget is "ok" when no cost_tracker is configured (no cap) or cap not exceeded
+        budget_ok = self.cost_tracker is None or not self.cost_tracker.budget_exceeded()
+
+        # Step 3: If should escalate AND budget allows, use Claude directly
+        if should_escalate and budget_ok:
+            logger.info("Auto path: escalating to Claude (complex matchup)")
+            return await self._deep_path(request, db, engine_mode_label="auto")
+
+        # Step 4: Use Ollama (if available)
         llm_result: LLMRecommendation | None = None
-        fallback = False
         fallback_reason: FallbackReason | None = None
+        model_used: str | None = None
 
+        if self.ollama:
+            user_message = await self.context_builder.build(request, rules_items, db)
+            llm_result, fallback_reason = await self.ollama.generate(user_message)
+            if llm_result:
+                model_used = f"ollama:{self.ollama.model}"
+
+        # Step 5: If Ollama not available or failed, and budget allows, try Claude
+        if llm_result is None and budget_ok:
+            logger.info("Auto path: Ollama %s, falling back to Claude",
+                        "unavailable" if not self.ollama else "failed")
+            return await self._deep_path(request, db, engine_mode_label="auto")
+
+        # Step 6: If Ollama failed and Claude budget exceeded, use rules-only
+        if llm_result is None:
+            logger.info("Auto path: Ollama failed + budget exceeded, rules-only fallback")
+            fr = fallback_reason or FallbackReason.ollama_error
+            phases = self._rules_only(rules_items)
+            phases = self._validate_item_ids(phases)
+
+            timing_data, build_paths, win_condition = await self._enrich_all(
+                request, phases, db
+            )
+            if win_condition:
+                phases = self._adjust_priorities_for_win_condition(phases, win_condition)
+
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            response = RecommendResponse(
+                phases=phases,
+                overall_strategy=self.FALLBACK_STRATEGIES.get(
+                    fr, "AI unavailable -- showing rules-based build."
+                ),
+                neutral_items=[],
+                timing_data=timing_data,
+                build_paths=build_paths,
+                win_condition=win_condition,
+                fallback=True,
+                fallback_reason=fr.value,
+                model=None,
+                latency_ms=elapsed_ms,
+                engine_mode="auto",
+            )
+            self._attach_budget_info(response)
+            return response
+
+        # Step 7: Ollama succeeded -- merge, validate, enrich
+        phases = self._merge(rules_items, llm_result)
+        overall_strategy = llm_result.overall_strategy
+        neutral_items = llm_result.neutral_items
+        phases = self._validate_item_ids(phases)
+
+        timing_data, build_paths, win_condition = await self._enrich_all(
+            request, phases, db
+        )
+        if win_condition:
+            phases = self._adjust_priorities_for_win_condition(phases, win_condition)
+
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+        response = RecommendResponse(
+            phases=phases,
+            overall_strategy=overall_strategy,
+            neutral_items=neutral_items,
+            timing_data=timing_data,
+            build_paths=build_paths,
+            win_condition=win_condition,
+            fallback=False,
+            fallback_reason=None,
+            model=model_used,
+            latency_ms=elapsed_ms,
+            engine_mode="auto",
+        )
+        self._attach_budget_info(response)
+        return response
+
+    # ------------------------------------------------------------------
+    # Deep path: always Claude API, full reasoning
+    # ------------------------------------------------------------------
+
+    async def _deep_path(
+        self,
+        request: RecommendRequest,
+        db: AsyncSession,
+        engine_mode_label: str = "deep",
+    ) -> RecommendResponse:
+        """Always call Claude API with full reasoning. Target <15s."""
+        start = time.monotonic()
+
+        # Step 1: Rules fire instantly
+        rules_items = self.rules.evaluate(request)
+        logger.info("Deep path: rules produced %d items", len(rules_items))
+
+        # Step 2: Build context + call Claude
+        user_message = await self.context_builder.build(request, rules_items, db)
         llm_result, fallback_reason = await self.llm.generate(user_message)
 
-        if llm_result is None:
-            fallback = True
-            if fallback_reason is None:
-                fallback_reason = FallbackReason.api_error
+        # Step 3: Track cost if available
+        if llm_result and self.cost_tracker and self.llm.last_usage:
+            await self.cost_tracker.record_usage(
+                self.llm.last_usage["input_tokens"],
+                self.llm.last_usage["output_tokens"],
+                db,
+            )
 
-        # Step 4: Merge results
+        # Step 4: Merge or fallback
+        fallback = llm_result is None
         if llm_result and not fallback:
             phases = self._merge(rules_items, llm_result)
             overall_strategy = llm_result.overall_strategy
             neutral_items = llm_result.neutral_items
         else:
+            if fallback_reason is None:
+                fallback_reason = FallbackReason.api_error
             phases = self._rules_only(rules_items)
             overall_strategy = self.FALLBACK_STRATEGIES.get(
                 fallback_reason,
@@ -159,29 +351,12 @@ class HybridRecommender:
             )
             neutral_items = []
 
-        # Step 5: Keep purchased items in response (frontend handles visual state).
-        # purchased_items are still sent to Claude as context so it focuses on
-        # remaining slots, but we don't strip them from the response.
-
-        # Step 6: Validate all item_ids against cache (zero DB queries)
+        # Step 5: Validate and enrich
         phases = self._validate_item_ids(phases)
 
-        # Step 6b: Enrich with timing data (cache-first, on-demand fetch fallback)
-        timing_data: list[ItemTimingResponse] = []
-        if self.cache:
-            timing_data = await self._enrich_timing_data(request.hero_id, phases, db)
-
-        # Step 6c: Enrich with build path data (zero DB queries, uses DataCache)
-        build_paths: list[BuildPathResponse] = []
-        if self.cache:
-            build_paths = self._enrich_build_paths(request, phases)
-
-        # Step 6d: Classify win condition for frontend badge (WCON-01, WCON-02, WCON-04)
-        win_condition: WinConditionResponse | None = None
-        if self.cache:
-            win_condition = self._enrich_win_condition(request)
-
-        # Step 6e: Adjust item priorities based on win condition (WCON-03)
+        timing_data, build_paths, win_condition = await self._enrich_all(
+            request, phases, db
+        )
         if win_condition:
             phases = self._adjust_priorities_for_win_condition(phases, win_condition)
 
@@ -197,13 +372,80 @@ class HybridRecommender:
             fallback_reason=fallback_reason.value if fallback_reason else None,
             model=LLMEngine.MODEL if not fallback else None,
             latency_ms=elapsed_ms,
+            engine_mode=engine_mode_label,
         )
-
-        # Step 7: Cache the response
-        if self.response_cache:
-            self.response_cache.set(request, response)
-
+        self._attach_budget_info(response)
         return response
+
+    # ------------------------------------------------------------------
+    # Escalation logic for Auto mode
+    # ------------------------------------------------------------------
+
+    def _should_escalate(
+        self, request: RecommendRequest, rules_items: list[RuleResult]
+    ) -> bool:
+        """Determine if Auto mode should escalate to Claude for this request.
+
+        Escalate when:
+        - Low rules coverage (< 8 items = complex/unusual matchup)
+        - Mid-game re-evaluation (lane_result set = needs deeper reasoning)
+        - Screenshot enemy context present (nuanced data)
+        - Large enemy team with multiple lane opponents (complex draft)
+        """
+        if len(rules_items) < 8:
+            logger.debug("Escalation: low rules coverage (%d items)", len(rules_items))
+            return True
+        if request.lane_result is not None:
+            logger.debug("Escalation: mid-game re-evaluation (lane_result=%s)", request.lane_result)
+            return True
+        if len(request.enemy_context) > 0:
+            logger.debug("Escalation: enemy context from screenshot (%d heroes)", len(request.enemy_context))
+            return True
+        if len(request.lane_opponents) > 1 and len(request.all_opponents) > 3:
+            logger.debug("Escalation: complex draft (lane=%d, total=%d opponents)",
+                         len(request.lane_opponents), len(request.all_opponents))
+            return True
+        return False
+
+    # ------------------------------------------------------------------
+    # Budget info attachment
+    # ------------------------------------------------------------------
+
+    def _attach_budget_info(self, response: RecommendResponse) -> None:
+        """Attach budget usage info to response if cost tracker is available."""
+        if self.cost_tracker:
+            usage = self.cost_tracker.get_usage()
+            response.budget_used = usage["cost"]
+            response.budget_limit = usage["budget"]
+
+    # ------------------------------------------------------------------
+    # Shared enrichment pipeline
+    # ------------------------------------------------------------------
+
+    async def _enrich_all(
+        self,
+        request: RecommendRequest,
+        phases: list[RecommendPhase],
+        db: AsyncSession,
+    ) -> tuple[list[ItemTimingResponse], list[BuildPathResponse], WinConditionResponse | None]:
+        """Run all post-LLM enrichment steps: timing, build paths, win condition."""
+        timing_data: list[ItemTimingResponse] = []
+        if self.cache:
+            timing_data = await self._enrich_timing_data(request.hero_id, phases, db)
+
+        build_paths: list[BuildPathResponse] = []
+        if self.cache:
+            build_paths = self._enrich_build_paths(request, phases)
+
+        win_condition: WinConditionResponse | None = None
+        if self.cache:
+            win_condition = self._enrich_win_condition(request)
+
+        return timing_data, build_paths, win_condition
+
+    # ------------------------------------------------------------------
+    # Merge, rules-only, filter, validate (unchanged from original)
+    # ------------------------------------------------------------------
 
     def _merge(
         self, rules_items: list[RuleResult], llm_result: LLMRecommendation

@@ -18,6 +18,8 @@ from data.cache import data_cache
 from engine.schemas import RecommendRequest, RecommendResponse
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine
+from engine.ollama_engine import OllamaEngine
+from engine.cost_tracker import CostTracker
 from engine.context_builder import ContextBuilder
 from engine.recommender import HybridRecommender, ResponseCache
 from middleware.rate_limiter import check_rate_limit
@@ -30,11 +32,14 @@ router = APIRouter()
 _opendota = OpenDotaClient(api_key=settings.opendota_api_key)
 _rules = RulesEngine(cache=data_cache)
 _llm = LLMEngine()
+_ollama = OllamaEngine()
+_cost_tracker = CostTracker()
 _context_builder = ContextBuilder(opendota_client=_opendota, cache=data_cache)
 _response_cache = ResponseCache(ttl_seconds=settings.response_cache_ttl_seconds)
 _recommender = HybridRecommender(
     rules=_rules, llm=_llm, context_builder=_context_builder,
     response_cache=_response_cache, cache=data_cache,
+    ollama=_ollama, cost_tracker=_cost_tracker,
 )
 
 

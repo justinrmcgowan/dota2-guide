@@ -148,7 +148,7 @@ async def seed_if_empty():
                         "dispellable": ab_data.get("dispellable"),
                     }
 
-                session.add(HeroAbilityData(
+                session.merge(HeroAbilityData(
                     hero_id=hero_id,
                     abilities_json=hero_ability_dict,
                 ))
