@@ -26,7 +26,34 @@ export const useRecommendationStore = create<RecommendationStore>()(
     selectedItemId: null,
     purchasedItems: new Set<string>(),
 
-    setData: (data) => set({ data, error: null, isLoading: false }),
+    setData: (data) => {
+      // Re-apply purchased state: match old purchased item_ids to new phase keys
+      const oldPurchased = get().purchasedItems;
+      const oldItemIds = new Set<number>();
+      for (const key of oldPurchased) {
+        const parts = key.split("-");
+        const id = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(id)) oldItemIds.add(id);
+      }
+
+      const newPurchased = new Set<string>();
+      if (oldItemIds.size > 0) {
+        for (const phase of data.phases) {
+          for (const item of phase.items) {
+            if (oldItemIds.has(item.item_id)) {
+              newPurchased.add(`${phase.phase}-${item.item_id}`);
+            }
+          }
+        }
+      }
+
+      set({
+        data,
+        error: null,
+        isLoading: false,
+        purchasedItems: newPurchased.size > 0 ? newPurchased : oldPurchased,
+      });
+    },
 
     setLoading: (loading) => set({ isLoading: loading }),
 

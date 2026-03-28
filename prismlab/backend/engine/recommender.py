@@ -159,9 +159,9 @@ class HybridRecommender:
             )
             neutral_items = []
 
-        # Step 5: Filter purchased items (if any)
-        if request.purchased_items:
-            phases = self._filter_purchased(phases, request.purchased_items)
+        # Step 5: Keep purchased items in response (frontend handles visual state).
+        # purchased_items are still sent to Claude as context so it focuses on
+        # remaining slots, but we don't strip them from the response.
 
         # Step 6: Validate all item_ids against cache (zero DB queries)
         phases = self._validate_item_ids(phases)

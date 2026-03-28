@@ -2,7 +2,6 @@ import { useState } from "react";
 import LaneResultSelector from "./LaneResultSelector";
 import DamageProfileInput from "./DamageProfileInput";
 import EnemyItemTracker from "./EnemyItemTracker";
-import ReEvaluateButton from "./ReEvaluateButton";
 import { useScreenshotStore } from "../../stores/screenshotStore";
 
 function GameStatePanel() {
@@ -70,11 +69,6 @@ function GameStatePanel() {
           Parse Screenshot
         </button>
         <EnemyItemTracker />
-
-        {/* Re-Evaluate CTA */}
-        <div className="mt-4">
-          <ReEvaluateButton />
-        </div>
       </div>
     </div>
   );

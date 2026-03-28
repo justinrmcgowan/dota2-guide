@@ -155,8 +155,9 @@ and Abyssal Blade close out — Zeus and CM have no answer to a six-slotted AM."
 BAD: "BKB is good because it gives magic immunity." — no hero, no ability, no numbers.
 BAD: Skipping late_game phase entirely. BAD: Only recommending 4-5 items total.
 
-Keep each reasoning field under 80 words. Be dense and specific, not verbose.
+Keep each reasoning field under 40 words. Be dense and specific — no filler.
 Total items across all phases should be 10-16 for a complete build guide.
+Prioritize COMPLETENESS over VERBOSITY. Cover all phases with concise reasoning.
 
 RESPOND WITH RAW JSON ONLY. No markdown, no code fences, no explanation outside the JSON object.\
 """

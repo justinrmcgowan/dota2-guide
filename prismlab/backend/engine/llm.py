@@ -36,9 +36,9 @@ class LLMEngine:
     """Claude API wrapper with JSON output, timeout, and prompt caching."""
 
     MODEL = "claude-haiku-4-5-20251001"
-    MAX_TOKENS = 8192
+    MAX_TOKENS = 5120
     TEMPERATURE = 0.3
-    TIMEOUT_SECONDS = 45.0
+    TIMEOUT_SECONDS = 30.0
 
     def __init__(self) -> None:
         self.client = AsyncAnthropic(api_key=settings.anthropic_api_key)
