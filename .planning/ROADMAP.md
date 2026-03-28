@@ -80,7 +80,7 @@
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
 - [x] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes (completed 2026-03-28)
 - [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
-- [ ] **Phase 33: Game Analytics & Match Logging** — Log every match, track recommendations vs actual purchases, win/loss, match history dashboard
+- [x] **Phase 33: Game Analytics & Match Logging** — Log every match, track recommendations vs actual purchases, win/loss, match history dashboard (completed 2026-03-28)
 
 ### v6.0 Draft Intelligence (Planned)
 
@@ -262,12 +262,12 @@ Plans:
 **Goal:** Log every match with full data: items purchased, game length, win/loss, hero, role, opponents, recommendations given vs items actually bought, KDA, GPM, XPM. Store in DB for tracking recommendation effectiveness over time. Match history dashboard for reviewing past games and accuracy metrics.
 **Requirements**: ANAL-01, ANAL-02, ANAL-03, ANAL-04, ANAL-05
 **Depends on:** Phase 27
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 33-01-PLAN.md -- Backend: SQLAlchemy models (MatchLog, MatchItem, MatchRecommendation), POST /api/match-log, GET /api/match-history + /api/match-stats
 - [x] 33-02-PLAN.md -- Frontend capture: snapshot stores on game end in useGameIntelligence, POST to backend, TypeScript types
-- [ ] 33-03-PLAN.md -- Frontend UI: Match History page with sortable table, expandable rows, filters, aggregate stats header
+- [x] 33-03-PLAN.md -- Frontend UI: Match History page with sortable table, expandable rows, filters, aggregate stats header
 
 ### v6.0 Draft Intelligence (Planned)
 

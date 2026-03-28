@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
 status: Phase complete — ready for verification
-stopped_at: Completed 33-02-PLAN.md
-last_updated: "2026-03-28T20:01:50.092Z"
+stopped_at: Completed 33-03-PLAN.md
+last_updated: "2026-03-28T20:11:07.058Z"
 progress:
   total_phases: 29
-  completed_phases: 27
+  completed_phases: 28
   total_plans: 69
-  completed_plans: 68
+  completed_plans: 69
 ---
 
 # Project State
@@ -63,6 +63,7 @@ Plan: 2 of 2
 | Phase 28-patch-data-refresh P02 | 4min | 2 tasks | 3 files |
 | Phase 33-game-analytics P01 | 4min | 2 tasks | 3 files |
 | Phase 33-game-analytics P02 | 2min | 2 tasks | 3 files |
+| Phase 33-game-analytics P03 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Recent decisions affecting current work:
 - [Phase 33-game-analytics]: follow_rate computed at ingest time for O(1) reads; None when no recommendations (not 0.0)
 - [Phase 33-game-analytics]: Batch IN-clause subqueries for match-history to avoid N+1 on items/recommendations
 - [Phase 33-game-analytics]: Synchronous getState() snapshot before clear() on match_id change; fire-and-forget POST never blocks new game flow
+- [Phase 33-game-analytics]: useState view routing ('advisor' | 'match-history') instead of React Router for simplicity
+- [Phase 33-game-analytics]: Client-side hero name text filter + server-side result/mode filters for hybrid UX
 
 ### Pending Todos
 
@@ -127,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:01:50.089Z
-Stopped at: Completed 33-02-PLAN.md
+Last session: 2026-03-28T20:11:07.054Z
+Stopped at: Completed 33-03-PLAN.md
 Resume file: None
