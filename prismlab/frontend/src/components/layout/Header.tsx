@@ -17,9 +17,12 @@ function formatRelativeTime(isoString: string): string {
 
 interface HeaderProps {
   onOpenSettings?: () => void;
+  onNavigateMatchHistory?: () => void;
+  showBackToAdvisor?: boolean;
+  onBackToAdvisor?: () => void;
 }
 
-function Header({ onOpenSettings }: HeaderProps) {
+function Header({ onOpenSettings, onNavigateMatchHistory, showBackToAdvisor, onBackToAdvisor }: HeaderProps) {
   const [freshness, setFreshness] = useState<DataFreshness | null>(null);
 
   useEffect(() => {
@@ -62,6 +65,21 @@ function Header({ onOpenSettings }: HeaderProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-3">
+        {showBackToAdvisor && onBackToAdvisor ? (
+          <button
+            onClick={onBackToAdvisor}
+            className="text-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1"
+          >
+            <span>&larr;</span> Advisor
+          </button>
+        ) : onNavigateMatchHistory ? (
+          <button
+            onClick={onNavigateMatchHistory}
+            className="text-sm text-on-surface-variant hover:text-primary transition-colors"
+          >
+            Match History
+          </button>
+        ) : null}
         {freshnessLabel && (
           <span
             className="text-xs text-on-surface-variant"

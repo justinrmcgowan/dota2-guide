@@ -12,6 +12,7 @@ import { useScreenshotStore } from "./stores/screenshotStore";
 import SettingsPanel from "./components/settings/SettingsPanel";
 import AutoRefreshToast from "./components/toast/AutoRefreshToast";
 import ScreenshotParser from "./components/screenshot/ScreenshotParser";
+import MatchHistory from "./pages/MatchHistory";
 
 function App() {
   const { heroes } = useHeroes();
@@ -19,6 +20,7 @@ function App() {
   useLiveDraft(heroes);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [view, setView] = useState<"advisor" | "match-history">("advisor");
 
   // Screenshot paste handler -- opens modal with image and auto-triggers parse
   const openScreenshotModal = useCallback(
@@ -53,11 +55,20 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-surface text-on-surface font-body noise-overlay relative">
-      <Header onOpenSettings={() => setSettingsOpen(true)} />
-      <div className="flex flex-1 overflow-hidden relative z-10">
-        <Sidebar />
-        <MainPanel />
-      </div>
+      <Header
+        onOpenSettings={() => setSettingsOpen(true)}
+        onNavigateMatchHistory={() => setView("match-history")}
+        showBackToAdvisor={view === "match-history"}
+        onBackToAdvisor={() => setView("advisor")}
+      />
+      {view === "advisor" ? (
+        <div className="flex flex-1 overflow-hidden relative z-10">
+          <Sidebar />
+          <MainPanel />
+        </div>
+      ) : (
+        <MatchHistory onBack={() => setView("advisor")} />
+      )}
       <SettingsPanel
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
