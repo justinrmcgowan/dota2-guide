@@ -16,7 +16,7 @@ import ScreenshotParser from "./components/screenshot/ScreenshotParser";
 function App() {
   const { heroes } = useHeroes();
   useGameIntelligence(heroes);
-  const { fetchDraft, isPolling } = useLiveDraft(heroes);
+  useLiveDraft(heroes);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
 
