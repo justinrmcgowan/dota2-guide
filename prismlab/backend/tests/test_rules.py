@@ -297,6 +297,66 @@ class TestRuleCount:
         assert len(engine._rules) >= 22
 
 
+class TestPatch741RuleAccuracy:
+    """Verifies rules reflect 7.41 game data accurately."""
+
+    async def test_shivas_reasoning_mentions_741(self, engine: RulesEngine):
+        """Shiva's Guard reasoning references 7.41 cost (4500g)."""
+        req = _make_request(lane_opponents=[12], role=3)  # PA is physical carry, offlaner
+        results = engine.evaluate(req)
+        shivas = [r for r in results if r.item_name == "Shiva's Guard"]
+        assert len(shivas) >= 1, "Shiva's Guard not recommended vs PA for offlaner"
+        assert "4500" in shivas[0].reasoning or "7.41" in shivas[0].reasoning, (
+            f"Shiva's reasoning does not mention 7.41 cost. Got: {shivas[0].reasoning}"
+        )
+
+    async def test_no_cornucopia_in_rules(self, engine: RulesEngine):
+        """No rule source code references Cornucopia (removed in 7.41)."""
+        import inspect
+        source = inspect.getsource(RulesEngine)
+        assert "cornucopia" not in source.lower(), (
+            "RulesEngine source contains 'cornucopia' -- item was removed in 7.41"
+        )
+
+    async def test_no_refresher_orb_rule(self, engine: RulesEngine):
+        """No rule recommends Refresher Orb (behavior changed in 7.41)."""
+        test_opponents = [22, 33]  # Zeus, Enigma
+        for opp_id in test_opponents:
+            req = _make_request(lane_opponents=[opp_id], role=1)
+            results = engine.evaluate(req)
+            refresher = [r for r in results if "Refresher" in r.item_name]
+            assert len(refresher) == 0, (
+                f"Rule recommends Refresher Orb vs opponent {opp_id}. "
+                f"Refresher behavior changed in 7.41 -- should not be rule-driven."
+            )
+
+
+class TestPatch741PromptHints:
+    """Verifies system prompt contains 7.41 meta hints."""
+
+    def test_system_prompt_has_741_section(self):
+        """System prompt contains Patch 7.41 Notes section."""
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+        assert "Patch 7.41" in SYSTEM_PROMPT
+
+    def test_refresher_orb_hint(self):
+        """System prompt mentions Refresher Orb abilities-only change."""
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+        assert "Refresher Orb" in SYSTEM_PROMPT
+        assert "abilities only" in SYSTEM_PROMPT.lower() or "ABILITIES ONLY" in SYSTEM_PROMPT
+
+    def test_bloodstone_hint(self):
+        """System prompt mentions Bloodstone rework."""
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+        assert "Bloodstone" in SYSTEM_PROMPT
+        assert "spell damage" in SYSTEM_PROMPT.lower()
+
+    def test_facets_removed_hint(self):
+        """System prompt mentions facets removal."""
+        from engine.prompts.system_prompt import SYSTEM_PROMPT
+        assert "Facets removed" in SYSTEM_PROMPT or "facets" in SYSTEM_PROMPT.lower()
+
+
 # ------------------------------------------------------------------
 # Phase 20: Counter-Item Intelligence test scaffolds
 # ------------------------------------------------------------------
