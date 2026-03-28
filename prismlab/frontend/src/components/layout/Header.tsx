@@ -43,30 +43,11 @@ function Header({ onOpenSettings }: HeaderProps) {
   return (
     <header className="h-14 bg-surface-container-low px-4 flex items-center shrink-0">
       <div className="flex items-center gap-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 32 32"
+        <img
+          src="/prismlab-icon.png"
+          alt="Prismlab"
           className="w-7 h-7"
-        >
-          <defs>
-            <linearGradient id="header-prism" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFB4AC" />
-              <stop offset="50%" stopColor="#6aff97" />
-              <stop offset="100%" stopColor="#FFB4AC" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M16 2 L28 26 L4 26 Z"
-            fill="none"
-            stroke="url(#header-prism)"
-            strokeWidth="2"
-          />
-          <path
-            d="M16 8 L22 22 L10 22 Z"
-            fill="url(#header-prism)"
-            opacity="0.3"
-          />
-        </svg>
+        />
         <h1 className="text-secondary font-bold text-xl font-display tracking-tight">
           Prismlab
         </h1>
