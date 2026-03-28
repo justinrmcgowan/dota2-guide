@@ -67,6 +67,8 @@ class GsiHero(BaseModel):
     max_health: int = 0
     mana: int = 0
     max_mana: int = 0
+    aghanims_shard: bool = False
+    aghanims_scepter: bool = False
 
     model_config = ConfigDict(extra="allow")
 

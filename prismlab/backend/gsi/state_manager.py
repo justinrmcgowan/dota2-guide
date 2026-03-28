@@ -19,6 +19,8 @@ class ParsedGsiState:
     hero_name: str = ""
     hero_id: int = 0
     hero_level: int = 0
+    has_aghanims_shard: bool = False
+    has_aghanims_scepter: bool = False
     gold: int = 0
     gpm: int = 0
     net_worth: int = 0
@@ -82,11 +84,15 @@ class GsiStateManager:
         hero_id = 0
         hero_level = 0
         is_alive = True
+        has_aghanims_shard = False
+        has_aghanims_scepter = False
         if payload.hero:
             hero_name = _normalize_hero_name(payload.hero.name)
             hero_id = payload.hero.id
             hero_level = payload.hero.level
             is_alive = payload.hero.alive
+            has_aghanims_shard = payload.hero.aghanims_shard
+            has_aghanims_scepter = payload.hero.aghanims_scepter
 
         # Extract player info
         gold = 0
@@ -143,6 +149,8 @@ class GsiStateManager:
             hero_name=hero_name,
             hero_id=hero_id,
             hero_level=hero_level,
+            has_aghanims_shard=has_aghanims_shard,
+            has_aghanims_scepter=has_aghanims_scepter,
             gold=gold,
             gpm=gpm,
             net_worth=net_worth,

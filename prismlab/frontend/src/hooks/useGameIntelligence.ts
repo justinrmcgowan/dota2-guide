@@ -214,10 +214,16 @@ export function useGameIntelligence(heroes: Hero[]): void {
       const recStore = useRecommendationStore.getState();
       const recommendations = recStore.data;
       if (recommendations) {
+        // Detect consumed items (not in inventory but hero has the buff)
+        const consumedItems = new Set<string>();
+        if (live.has_aghanims_shard) consumedItems.add("aghanims_shard");
+        if (live.has_aghanims_scepter) consumedItems.add("ultimate_scepter");
+
         const matchedKeys = findPurchasedKeys(
           live.items_inventory,
           live.items_backpack,
           recommendations,
+          consumedItems,
         );
 
         const currentPurchased = recStore.purchasedItems;

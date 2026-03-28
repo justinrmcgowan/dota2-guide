@@ -13,6 +13,8 @@ export interface GsiLiveState {
   items_inventory: string[];
   items_backpack: string[];
   items_neutral: string;
+  has_aghanims_shard: boolean;
+  has_aghanims_scepter: boolean;
   game_clock: number;
   game_state: string;
   team_side: string;
