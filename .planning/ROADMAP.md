@@ -76,7 +76,7 @@
 - [x] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID (completed 2026-03-28)
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
-- [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
+- [x] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes (completed 2026-03-28)
 
 ## Phase Details
 
@@ -228,8 +228,8 @@ Plans:
   2. Cornucopia no longer appears in the item catalog; changed item costs (Shiva's 4500g, Blade Mail 2300g) are correct
   3. All 22 rules audited -- no stale references to removed items, reasoning strings reflect 7.41 changes
   4. System prompt contains concise 7.41 meta hints (Refresher Orb abilities-only, Bloodstone rework, Shiva's cost, facets removed) under 200 tokens
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 28-01-PLAN.md -- Seed upsert fix, test fixture updates, automated 7.41 data correctness tests
-- [ ] 28-02-PLAN.md -- Rules engine audit against 7.41, system prompt meta hints
+- [x] 28-01-PLAN.md -- Seed upsert fix, test fixture updates, automated 7.41 data correctness tests
+- [x] 28-02-PLAN.md -- Rules engine audit against 7.41, system prompt meta hints

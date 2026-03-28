@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Phase complete — ready for verification
-stopped_at: Completed 27-02-PLAN.md
-last_updated: "2026-03-28T18:24:06.847Z"
+status: Ready to execute
+stopped_at: Completed 28-02-PLAN.md
+last_updated: "2026-03-28T18:40:43.391Z"
 progress:
   total_phases: 10
-  completed_phases: 8
-  total_plans: 19
-  completed_plans: 19
+  completed_phases: 9
+  total_plans: 21
+  completed_plans: 21
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 ## Current Position
 
-Phase: 27-game-lifecycle
+Phase: 28-patch-data-refresh
 Plan: 2 of 2
 
 ## Performance Metrics
@@ -59,6 +59,8 @@ Plan: 2 of 2
 | Phase 26-engine-optimization P02 | 3min | 2 tasks | 3 files |
 | Phase 27-game-lifecycle P01 | 6min | 2 tasks | 6 files |
 | Phase 27-game-lifecycle P02 | 5min | 2 tasks | 6 files |
+| Phase 28-patch-data-refresh P01 | 4min | 2 tasks | 3 files |
+| Phase 28-patch-data-refresh P02 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -105,6 +107,9 @@ Recent decisions affecting current work:
 - [Phase 27-game-lifecycle]: Custom storage adapter for Set<string> serialization in recommendationStore persist middleware
 - [Phase 27-game-lifecycle]: gsiStatus 'reconnecting' replaces immediate 'lost' on WS disconnect; 'lost' reserved for post-timeout expiry
 - [Phase 27-game-lifecycle]: In-memory dict session store for V1 single-user; frontend sync wiring deferred
+- [Phase 28-patch-data-refresh]: session.merge() for HeroAbilityData upserts -- matches refresh.py pattern, fixes IntegrityError on container restart
+- [Phase 28-patch-data-refresh]: Bloodstone hint uses descriptive text without percentage to satisfy DATA-04 no-percentages test
+- [Phase 28-patch-data-refresh]: No new rules for 7.41 items -- Claude handles via LLM path until meta settles
 
 ### Pending Todos
 
@@ -117,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:24:06.844Z
-Stopped at: Completed 27-02-PLAN.md
+Last session: 2026-03-28T18:40:43.388Z
+Stopped at: Completed 28-02-PLAN.md
 Resume file: None
