@@ -135,3 +135,61 @@ class DataRefreshLog(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class MatchLog(Base):
+    """End-of-game match snapshot for analytics and recommendation tracking."""
+
+    __tablename__ = "match_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    match_id: Mapped[str] = mapped_column(String, index=True)
+    hero_id: Mapped[int] = mapped_column(Integer, ForeignKey("heroes.id"))
+    hero_name: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[int] = mapped_column(Integer, nullable=False)
+    playstyle: Mapped[str | None] = mapped_column(String, nullable=True)
+    side: Mapped[str | None] = mapped_column(String, nullable=True)  # "radiant" / "dire"
+    lane: Mapped[str | None] = mapped_column(String, nullable=True)  # "safe" / "mid" / "off"
+    allies: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    opponents: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    lane_opponents: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    win: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    kills: Mapped[int] = mapped_column(Integer, default=0)
+    deaths: Mapped[int] = mapped_column(Integer, default=0)
+    assists: Mapped[int] = mapped_column(Integer, default=0)
+    gpm: Mapped[int] = mapped_column(Integer, default=0)
+    xpm: Mapped[int] = mapped_column(Integer, default=0)
+    net_worth: Mapped[int] = mapped_column(Integer, default=0)
+    last_hits: Mapped[int] = mapped_column(Integer, default=0)
+    denies: Mapped[int] = mapped_column(Integer, default=0)
+    engine_mode: Mapped[str | None] = mapped_column(String, nullable=True)  # "fast" / "auto" / "deep"
+    was_fallback: Mapped[bool] = mapped_column(Boolean, default=False)
+    overall_strategy: Mapped[str | None] = mapped_column(Text, nullable=True)
+    follow_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    played_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+
+class MatchItem(Base):
+    """Item in a player's inventory at end of match."""
+
+    __tablename__ = "match_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    match_log_id: Mapped[int] = mapped_column(Integer, ForeignKey("match_log.id"), index=True)
+    slot_type: Mapped[str] = mapped_column(String, nullable=False)  # "inventory" / "backpack" / "neutral"
+    item_name: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class MatchRecommendation(Base):
+    """A single item recommendation stored for accuracy tracking."""
+
+    __tablename__ = "match_recommendations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    match_log_id: Mapped[int] = mapped_column(Integer, ForeignKey("match_log.id"), index=True)
+    phase: Mapped[str] = mapped_column(String, nullable=False)  # "starting" / "laning" / "core" / "late_game" / "situational"
+    item_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    item_name: Mapped[str] = mapped_column(String, nullable=False)
+    priority: Mapped[str] = mapped_column(String, nullable=False)  # "core" / "situational" / "luxury"
+    was_purchased: Mapped[bool] = mapped_column(Boolean, default=False)

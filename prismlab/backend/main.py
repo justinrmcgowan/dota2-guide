@@ -17,6 +17,7 @@ from api.routes.recommend import router as recommend_router
 from api.routes.admin import router as admin_router
 from api.routes.settings import router as settings_router
 from api.routes.session import router as session_router
+from api.routes.match_history import router as match_history_router
 from api.routes.screenshot import router as screenshot_router
 from api.routes.live_match import router as live_match_router
 from gsi.receiver import router as gsi_router
@@ -98,6 +99,7 @@ app.include_router(settings_router, prefix="/api")
 app.include_router(screenshot_router, prefix="/api")
 app.include_router(live_match_router, prefix="/api")
 app.include_router(session_router, prefix="/api")
+app.include_router(match_history_router, prefix="/api")
 
 
 @app.websocket("/ws")
