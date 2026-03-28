@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Coaching Intelligence
-status: Milestone complete
-stopped_at: Completed 23-02-PLAN.md
+milestone: v5.0
+milestone_name: Supreme Companion
+status: Planning
+stopped_at: v5.0 phases added (24-28)
 last_updated: "2026-03-27T18:53:39.449Z"
 progress:
   total_phases: 5
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 23 — win-condition-framing
+**Current focus:** v5.0 Supreme Companion — Phases 24-28
 
 ## Current Position
 
-Phase: 23
+Phase: 24-28 (not yet planned)
 Plan: Not started
 
 ## Performance Metrics

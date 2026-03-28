@@ -6,7 +6,8 @@
 - [x] **v1.1 Allied Synergy & Neutral Items** - Phases 7-9 (shipped 2026-03-23)
 - [x] **v2.0 Live Game Intelligence** - Phases 10-14 (shipped 2026-03-26)
 - [x] **v3.0 Design Overhaul & Performance** - Phases 15-18 (shipped 2026-03-27)
-- [ ] **v4.0 Coaching Intelligence** - Phases 19-23 (in progress)
+- [x] **v4.0 Coaching Intelligence** - Phases 19-23 (shipped 2026-03-28)
+- [ ] **v5.0 Supreme Companion** - Phases 24-28 (in progress)
 
 ## Phases
 
@@ -56,15 +57,26 @@
 
 </details>
 
-### v4.0 Coaching Intelligence (In Progress)
-
-**Milestone Goal:** Transform Prismlab from an item list generator into a strategic coach -- with data-backed timing windows, ability-aware counter-itemization, build path ordering, and win condition framing.
+<details>
+<summary>v4.0 Coaching Intelligence (Phases 19-23) - SHIPPED 2026-03-28</summary>
 
 - [x] **Phase 19: Data Foundation & Prompt Architecture** - Ability/timing data pipeline, DataCache extensions, system-prompt-vs-user-message data split (completed 2026-03-27)
 - [x] **Phase 20: Counter-Item Intelligence** - Ability-driven counter rules, counter_target tagging, threat context for Claude (completed 2026-03-27)
 - [x] **Phase 21: Timing Benchmarks** - Timing windows in UI, urgency indicators, Claude timing reasoning, GSI live comparison (completed 2026-03-27)
 - [x] **Phase 22: Build Path Intelligence** - Component ordering, adaptive build paths, GSI gold tracking (completed 2026-03-27)
 - [x] **Phase 23: Win Condition Framing** - Draft classification, strategy anchoring, enemy win condition assessment (completed 2026-03-27)
+
+</details>
+
+### v5.0 Supreme Companion (In Progress)
+
+**Milestone Goal:** Transform Prismlab into the definitive Dota 2 companion -- with audio coaching, auto-populated drafts from live API data, sub-5s recommendation latency, graceful game lifecycle handling, and patch 7.41 data freshness.
+
+- [ ] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control
+- [ ] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID
+- [ ] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning
+- [ ] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection
+- [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
 
 ## Phase Details
 
@@ -156,3 +168,53 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 | 21. Timing Benchmarks | v4.0 | 2/2 | Complete    | 2026-03-27 |
 | 22. Build Path Intelligence | v4.0 | 2/2 | Complete    | 2026-03-27 |
 | 23. Win Condition Framing | v4.0 | 2/2 | Complete    | 2026-03-27 |
+
+### Phase 24: Audio Prompts & Volume Control
+
+**Goal:** TTS or audio cue system that announces item timing alerts, purchase reminders, and coaching callouts with configurable volume control
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 24 to break down)
+
+### Phase 25: API-Driven Draft Input
+
+**Goal:** Auto-populate allies and opponents from OpenDota/Stratz live match API using Steam ID, replacing manual hero selection during active games
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 25 to break down)
+
+### Phase 26: Engine Optimization
+
+**Goal:** Reduce recommendation latency to under 5 seconds via rule-only fast paths, local LLM (Ollama), courier/consumable exclusion from recommendations, and concise reasoning enforcement
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 26 to break down)
+
+### Phase 27: Game Lifecycle Management
+
+**Goal:** Gracefully handle mid-game abandons, new game detection, full state reset between matches, purchased items clearing, and GSI reconnection without stale data leaking between games
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 27 to break down)
+
+### Phase 28: Patch 7.41 Data Refresh
+
+**Goal:** Update hero/item/ability database to Dota 2 patch 7.41 — 9 new items, Cornucopia removed, Refresher Orb rework, Shiva's/Blade Mail/Bloodstone recipe changes, updated costs, neutral T1 available from minute 0
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 28 to break down)

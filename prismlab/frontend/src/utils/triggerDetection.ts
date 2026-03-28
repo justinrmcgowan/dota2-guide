@@ -48,6 +48,9 @@ const PHASE_THRESHOLDS = [
   { seconds: 600, message: "Lane phase ended (10:00)" },
 ] as const;
 
+/** Deaths required before triggering a re-evaluation (reduces API cost). */
+const DEATH_TRIGGER_INTERVAL = 3;
+
 /** Minimum net worth delta to trigger a gold swing event. */
 const GOLD_SWING_THRESHOLD = 2000;
 
@@ -72,9 +75,12 @@ export function detectTriggers(
     }
   }
 
-  // 2. Death
-  if (current.deaths > prev.deaths) {
-    return { type: "death", message: "Death -- reassessing priorities" };
+  // 2. Death (every N deaths to control API cost)
+  if (
+    current.deaths > prev.deaths &&
+    current.deaths % DEATH_TRIGGER_INTERVAL === 0
+  ) {
+    return { type: "death", message: `${current.deaths} deaths -- reassessing priorities` };
   }
 
   // 3. Roshan kill
