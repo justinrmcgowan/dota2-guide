@@ -7,7 +7,7 @@
 - [x] **v2.0 Live Game Intelligence** - Phases 10-14 (shipped 2026-03-26)
 - [x] **v3.0 Design Overhaul & Performance** - Phases 15-18 (shipped 2026-03-27)
 - [x] **v4.0 Coaching Intelligence** - Phases 19-23 (shipped 2026-03-28)
-- [ ] **v5.0 Supreme Companion** - Phases 24-28 (in progress)
+- [ ] **v5.0 Supreme Companion** - Phases 24-29 (in progress)
 
 ## Phases
 
@@ -77,6 +77,7 @@
 - [ ] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning
 - [ ] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection
 - [ ] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes
+- [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
 
 ## Phase Details
 
@@ -219,3 +220,13 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 28 to break down)
+
+### Phase 29: Stream Deck Integration
+
+**Goal:** Elgato Stream Deck plugin (Node.js, SDK v2) that connects to Prismlab's existing WebSocket broadcast as a display consumer, rendering live game state data (gold, KDA, game clock, items, Rosh status, tower counts, alive/dead) to Stream Deck XL buttons with no backend changes required
+**Requirements**: TBD
+**Depends on:** Phase 10 (GSI + WebSocket pipeline must be operational)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 29 to break down)
