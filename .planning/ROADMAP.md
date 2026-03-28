@@ -184,10 +184,10 @@ Plans:
 **Goal:** Auto-populate allies and opponents from OpenDota/Stratz live match API using Steam ID, replacing manual hero selection during active games
 **Requirements**: DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04, DRAFT-05
 **Depends on:** Phase 23
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 25-01-PLAN.md -- Backend: Stratz GraphQL client, OpenDota live extension, /api/live-match endpoint, settings defaults
+- [x] 25-01-PLAN.md -- Backend: Stratz GraphQL client, OpenDota live extension, /api/live-match endpoint, settings defaults
 - [ ] 25-02-PLAN.md -- Frontend: Steam ID settings, live draft polling hook, auto-draft trigger, API client extension
 
 ### Phase 26: Engine Optimization

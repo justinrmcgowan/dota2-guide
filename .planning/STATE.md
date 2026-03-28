@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
 status: Planning
-stopped_at: Phase 28 context gathered
-last_updated: "2026-03-28T16:17:02.654Z"
+stopped_at: Completed 25-01-PLAN.md
+last_updated: "2026-03-28T16:58:36.622Z"
 progress:
   total_phases: 10
   completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
 ---
 
 # Project State
@@ -52,6 +52,7 @@ Plan: Not started
 | Phase 22 P02 | 5 | 2 tasks | 4 files |
 | Phase 23-win-condition-framing P01 | 4 | 2 tasks | 5 files |
 | Phase 23-win-condition-framing P02 | 6min | 2 tasks | 4 files |
+| Phase 25-api-draft-input P01 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 23-win-condition-framing]: WinConditionBadge uses triangle glyphs (HTML entities) for allied/enemy directionality -- zero-dependency, no emojis
 - [Phase 23-win-condition-framing]: Confidence expressed via opacity-100/75/50 only -- show-dont-tell per DESIGN.md, no text labels
 - [Phase 23-win-condition-framing]: all_opponents uses game.opponents (full 5 filtered for nulls); lane_opponents uses game.laneOpponents -- distinct concerns maintained
+- [Phase 25-api-draft-input]: Raw httpx POST for Stratz GraphQL -- no gql library needed for simple queries
+- [Phase 25-api-draft-input]: Dual-source live match: Stratz primary with OpenDota fallback, independent error handling per source
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T16:17:02.651Z
-Stopped at: Phase 28 context gathered
-Resume file: .planning/phases/28-patch-data-refresh/28-CONTEXT.md
+Last session: 2026-03-28T16:58:36.619Z
+Stopped at: Completed 25-01-PLAN.md
+Resume file: None
