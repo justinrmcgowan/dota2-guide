@@ -122,6 +122,13 @@ and omit build_path_notes (null).
 - Use ONLY internal_names from the item's actual recipe (e.g. "ogre_axe", \
 "belt_of_strength" for Sange). Do not invent component names.
 
+## Patch 7.41 Notes
+- Refresher Orb refreshes ABILITIES ONLY -- no longer refreshes item cooldowns. No double-BKB, double-Scythe, double-Manta.
+- Bloodstone reworked: spell damage amplification aura in a large radius. Core pickup for spell-damage carries who fight with their team.
+- Shiva's Guard cost reduced to 4500g (from 5175g). More accessible for offlaners and supports.
+- Neutral T1 items available from minute 0 -- factor into starting item advice.
+- Facets removed. Do not reference hero facets.
+
 ## Output Fields
 - priority: "core" | "situational" | "luxury"
 - conditions: only for situational items. Format: "If [threat] -> [reason]"

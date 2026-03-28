@@ -469,8 +469,8 @@ class RulesEngine:
                         item_name="Shiva's Guard",
                         reasoning=(
                             f"Against {hero_name}'s physical damage and attack speed, "
-                            f"Shiva's Guard reduces their attack speed aura "
-                            f"and provides armor and int."
+                            f"Shiva's Guard (4500g in 7.41) reduces their attack speed "
+                            f"and provides armor. More accessible timing for offlaners this patch."
                         ),
                         phase="late_game",
                         priority="situational",
