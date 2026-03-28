@@ -17,6 +17,7 @@ from api.routes.recommend import router as recommend_router
 from api.routes.admin import router as admin_router
 from api.routes.settings import router as settings_router
 from api.routes.screenshot import router as screenshot_router
+from api.routes.live_match import router as live_match_router
 from gsi.receiver import router as gsi_router
 from gsi.ws_manager import ws_manager
 from gsi.state_manager import gsi_state_manager
@@ -94,6 +95,7 @@ app.include_router(admin_router)
 app.include_router(gsi_router)  # /gsi at root, no prefix
 app.include_router(settings_router, prefix="/api")
 app.include_router(screenshot_router, prefix="/api")
+app.include_router(live_match_router, prefix="/api")
 
 
 @app.websocket("/ws")

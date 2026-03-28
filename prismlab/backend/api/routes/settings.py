@@ -36,6 +36,17 @@ GSI_CONFIG_TEMPLATE = '''"gamestate_integration_prismlab"
 '''
 
 
+@router.get("/settings/defaults")
+async def get_settings_defaults():
+    """Return default settings for the frontend.
+
+    The frontend fetches this on first load to pre-fill the Steam ID
+    input if localStorage is empty. Per D-10, the STEAM_ID env var
+    provides a default for single-user deployments.
+    """
+    return {"steam_id": settings.steam_id}
+
+
 @router.get("/gsi-config")
 async def get_gsi_config(host: str, port: int = 8421) -> Response:
     """Generate and return a Dota 2 GSI config file for download.
