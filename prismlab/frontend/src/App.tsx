@@ -4,6 +4,7 @@ import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGameIntelligence } from "./hooks/useGameIntelligence";
+import { useLiveDraft } from "./hooks/useLiveDraft";
 import { useHeroes } from "./hooks/useHeroes";
 import { useScreenshotPaste } from "./hooks/useScreenshotPaste";
 import { useGsiStore, type GsiLiveState } from "./stores/gsiStore";
@@ -15,6 +16,7 @@ import ScreenshotParser from "./components/screenshot/ScreenshotParser";
 function App() {
   const { heroes } = useHeroes();
   useGameIntelligence(heroes);
+  const { fetchDraft, isPolling } = useLiveDraft(heroes);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
 
