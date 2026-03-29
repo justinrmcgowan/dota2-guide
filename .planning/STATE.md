@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Draft Intelligence
-status: verifying
-stopped_at: Completed 30-ml-win-predictor 30-03-PLAN.md
-last_updated: "2026-03-29T19:26:09.649Z"
+status: executing
+stopped_at: Completed 31-hero-selector 31-02-PLAN.md
+last_updated: "2026-03-29T20:59:27.072Z"
 last_activity: 2026-03-29
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 30 — ml-win-predictor
+**Current focus:** Phase 31 — hero-selector
 
 ## Current Position
 
-Phase: 30
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 31 (hero-selector) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 30-ml-win-predictor P01 | 12 | 3 tasks | 8 files |
 | Phase 30-ml-win-predictor P02 | 4 | 2 tasks | 5 files |
 | Phase 30-ml-win-predictor P03 | 3 | 1 tasks | 3 files |
+| Phase 31-hero-selector P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 30-ml-win-predictor]: bracket_2 (Archon-Legend) default for win probability when request has no MMR field
 - [Phase 30-ml-win-predictor]: WinPredictor is stateless; DataCache holds xgb.Booster instances loaded at startup
 - [Phase 30-ml-win-predictor]: winProbability != null guard used (not falsy) so 0% probability renders correctly; text-secondary/80 matches confidence-opacity visual pattern
+- [Phase 31-hero-selector]: snake_case field names in TypeScript interfaces match backend JSON keys exactly — no camelCase conversion middleware
+- [Phase 31-hero-selector]: No engine mode injection for suggestHero (unlike recommend); suggest-hero has no engine mode concept
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:59:57.111Z
-Stopped at: Completed 30-ml-win-predictor 30-03-PLAN.md
+Last session: 2026-03-29T20:59:27.069Z
+Stopped at: Completed 31-hero-selector 31-02-PLAN.md
 Resume file: None
