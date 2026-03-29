@@ -11,6 +11,7 @@ interface HeroPickerProps {
   excludedHeroIds?: Set<number>;
   placeholder?: string;
   compact?: boolean;
+  onFocus?: () => void;
 }
 
 function HeroPicker({
@@ -20,6 +21,7 @@ function HeroPicker({
   excludedHeroIds = new Set(),
   placeholder = "Search heroes...",
   compact = false,
+  onFocus,
 }: HeroPickerProps) {
   const { heroes, loading, error } = useHeroes();
 
@@ -148,7 +150,7 @@ function HeroPicker({
           setQuery(e.target.value);
           setIsOpen(true);
         }}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => { onFocus?.(); setIsOpen(true); }}
         placeholder={placeholder}
         autoFocus={compact}
         className={`w-full bg-surface-container-lowest border-b border-outline-variant/15 text-on-surface placeholder-on-surface-variant/40 px-3 py-2 ${inputTextSize} focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent`}

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import HeroPicker from "../draft/HeroPicker";
 import AllyPicker from "../draft/AllyPicker";
 import OpponentPicker from "../draft/OpponentPicker";
@@ -10,6 +10,7 @@ import LaneOpponentPicker from "../draft/LaneOpponentPicker";
 import GetBuildButton from "../draft/GetBuildButton";
 import GameStatePanel from "../game/GameStatePanel";
 import LiveStatsBar from "../game/LiveStatsBar";
+import HeroSuggestPanel from "../draft/HeroSuggestPanel";
 import { useGameStore } from "../../stores/gameStore";
 import { useRecommendationStore } from "../../stores/recommendationStore";
 
@@ -22,6 +23,8 @@ function Sidebar() {
   const role = useGameStore((s) => s.role);
 
   const hasData = useRecommendationStore((s) => s.data !== null);
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const excludedIds = useMemo(() => {
     const ids = new Set<number>();
@@ -48,7 +51,36 @@ function Sidebar() {
           onClear={clearHero}
           excludedHeroIds={excludedIds}
           placeholder="Search heroes..."
+          onFocus={() => setShowSuggestions(false)}
         />
+
+        {/* Suggest Hero — appears when no hero selected and role is set */}
+        {!selectedHero && role !== null && (
+          <div className="mt-2">
+            <button
+              onClick={() => setShowSuggestions((v) => !v)}
+              className="w-full text-xs text-primary/80 hover:text-primary border border-primary/20 hover:border-primary/40 py-1.5 px-3 transition-colors bg-surface-container-lowest"
+            >
+              {showSuggestions ? "Hide Suggestions" : "Suggest Hero"}
+            </button>
+            <div
+              className={`transition-all duration-200 ease-out overflow-hidden ${
+                showSuggestions ? "max-h-96 opacity-100 mt-1" : "max-h-0 opacity-0"
+              }`}
+            >
+              <HeroSuggestPanel
+                role={role}
+                allyIds={allies.filter(Boolean).map((h) => h!.id)}
+                enemyIds={opponents.filter(Boolean).map((h) => h!.id)}
+                excludedHeroIds={excludedIds}
+                onSelect={(hero) => {
+                  selectHero(hero);
+                  setShowSuggestions(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Allies */}
         <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-2 mt-5">
