@@ -38,6 +38,7 @@ class ParsedGsiState:
     roshan_state: str = "alive"
     radiant_tower_count: int = 11
     dire_tower_count: int = 11
+    win_team: str = ""
     timestamp: float = 0.0
 
 
@@ -117,11 +118,14 @@ class GsiStateManager:
         game_state = ""
         match_id = ""
         roshan_state = "alive"
+        win_team = ""
         if payload.map:
             game_clock = int(payload.map.clock_time)
             game_state = payload.map.game_state
             match_id = payload.map.matchid
             roshan_state = payload.map.roshan_state or "alive"
+            if payload.map.win_team:
+                win_team = payload.map.win_team
 
         # Extract buildings / tower counts
         radiant_tower_count = 11
@@ -171,6 +175,7 @@ class GsiStateManager:
             roshan_state=roshan_state,
             radiant_tower_count=radiant_tower_count,
             dire_tower_count=dire_tower_count,
+            win_team=win_team,
             timestamp=time.time(),
         )
         self._last_update = time.time()

@@ -73,6 +73,7 @@ describe("GsiStatusIndicator", () => {
         roshan_state: "alive",
         radiant_tower_count: 11,
         dire_tower_count: 11,
+    win_team: "",
         has_aghanims_shard: false,
         has_aghanims_scepter: false,
         match_id: "test123",

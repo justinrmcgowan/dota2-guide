@@ -24,6 +24,7 @@ export interface GsiLiveState {
   roshan_state: string;
   radiant_tower_count: number;
   dire_tower_count: number;
+  win_team: string;
 }
 
 interface GsiStore {

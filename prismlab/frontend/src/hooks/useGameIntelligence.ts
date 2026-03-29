@@ -291,9 +291,13 @@ export function useGameIntelligence(heroes: Hero[]): void {
             }
           }
 
-          // GSI does not provide a direct win/loss field.
-          // Default to false -- imperfect but better than not logging.
-          const win = false;
+          // Determine win/loss from GSI win_team + team_side.
+          // win_team is set during DOTA_GAMERULES_STATE_POST_GAME ("radiant"/"dire").
+          // Fall back to false if GSI didn't capture the post-game state.
+          let win = false;
+          if (gsiSnap.win_team && gameSnap.side) {
+            win = gsiSnap.win_team.toLowerCase() === gameSnap.side.toLowerCase();
+          }
 
           const payload: MatchLogPayload = {
             match_id: prevMatchIdRef.current,

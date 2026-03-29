@@ -9,6 +9,7 @@ function makeCurrentState(overrides: Partial<CurrentState> = {}): CurrentState {
     roshan_state: "alive",
     radiant_tower_count: 11,
     dire_tower_count: 11,
+    win_team: "",
     game_clock: 0,
     ...overrides,
   };

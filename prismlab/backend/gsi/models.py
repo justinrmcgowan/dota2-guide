@@ -31,6 +31,7 @@ class GsiMap(BaseModel):
     paused: bool = False
     roshan_state: str = "alive"
     roshan_state_end_seconds: float = 0
+    win_team: str = ""
 
     model_config = ConfigDict(extra="allow")
 
