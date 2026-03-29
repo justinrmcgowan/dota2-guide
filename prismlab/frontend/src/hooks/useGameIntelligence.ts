@@ -138,7 +138,9 @@ export function useGameIntelligence(heroes: Hero[]): void {
       playstyle: game.playstyle ?? PLAYSTYLE_OPTIONS[game.role]?.[0] ?? "Farm-first",
       side: game.side ?? "radiant",
       lane: game.lane ?? "safe",
-      lane_opponents: game.laneOpponents.map((h) => h.id),
+      lane_opponents: game.laneOpponents.length > 0
+        ? game.laneOpponents.map((h) => h.id)
+        : game.opponents.filter(Boolean).map((h) => h!.id).slice(0, 2),
       allies: game.allies.filter(Boolean).map((h) => h!.id),
       lane_result: game.laneResult,
       damage_profile: game.damageProfile,

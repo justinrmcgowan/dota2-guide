@@ -37,7 +37,10 @@ export function useRecommendation() {
       playstyle,
       side: game.side ?? "radiant",
       lane: game.lane ?? "safe",
-      lane_opponents: game.laneOpponents.map((h) => h.id),
+      // If lane opponents not set, use first 2 from opponents list as fallback
+      lane_opponents: game.laneOpponents.length > 0
+        ? game.laneOpponents.map((h) => h.id)
+        : game.opponents.filter(Boolean).map((h) => h!.id).slice(0, 2),
       allies: game.allies.filter(Boolean).map((h) => h!.id),
       all_opponents: game.opponents.filter(Boolean).map((h) => h!.id),
 
