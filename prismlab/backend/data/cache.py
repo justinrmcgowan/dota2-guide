@@ -11,7 +11,9 @@ used throughout the application.
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -127,6 +129,10 @@ class DataCache:
         self._hero_abilities: dict[int, list[AbilityCached]] = {}
         self._timing_benchmarks: dict[int, dict[str, list[TimingBucket]]] = {}
         self._initialized: bool = False
+        # ML win predictor (loaded separately after DB cache)
+        self._win_models: dict[int, object] = {}   # bracket_num -> xgb.Booster
+        self._matrices: dict[int, dict] = {}       # bracket_num -> {synergy, counter, hero_id_to_index, n_heroes}
+        self._win_predictor_ready: bool = False
 
     @property
     def initialized(self) -> bool:
@@ -429,6 +435,53 @@ class DataCache:
         )
 
         return cheap + mid + expensive
+
+    def load_win_predictor(self, models_dir: str = "models") -> None:
+        """Load XGBoost Booster models and synergy/counter matrices from disk.
+
+        Called once at startup after data_cache.load(). Safe to call when model
+        files are absent -- sets _win_predictor_ready=False and app continues.
+
+        Uses xgb.Booster API (not XGBClassifier) for inference-only loading:
+        booster.predict(DMatrix) returns probabilities directly without sklearn wrapper.
+        """
+        try:
+            import xgboost as xgb
+        except ImportError:
+            logger.warning("xgboost not installed -- WinPredictor disabled")
+            return
+
+        bracket_names = {1: "bracket_1", 2: "bracket_2", 3: "bracket_3", 4: "bracket_4"}
+        new_models: dict[int, object] = {}
+
+        for num, name in bracket_names.items():
+            path = os.path.join(models_dir, f"win_predictor_{name}.ubj")
+            if os.path.exists(path):
+                booster = xgb.Booster()
+                booster.load_model(path)
+                new_models[num] = booster
+            else:
+                logger.warning("WinPredictor: model file not found: %s", path)
+
+        matrices_path = os.path.join(models_dir, "matrices.json")
+        new_matrices: dict[int, dict] = {}
+        if os.path.exists(matrices_path):
+            with open(matrices_path) as f:
+                raw = json.load(f)
+            for num, name in bracket_names.items():
+                if name in raw:
+                    new_matrices[num] = raw[name]
+        else:
+            logger.warning("WinPredictor: matrices.json not found at %s", matrices_path)
+
+        self._win_models = new_models
+        self._matrices = new_matrices
+        self._win_predictor_ready = len(new_models) > 0
+        logger.info(
+            "WinPredictor loaded: %d bracket models, matrices: %s",
+            len(new_models),
+            self._win_predictor_ready,
+        )
 
     def get_neutral_items_by_tier(self) -> dict[int, list[dict]]:
         """Get all neutral items grouped by tier number.
