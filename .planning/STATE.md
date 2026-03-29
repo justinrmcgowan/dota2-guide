@@ -4,7 +4,7 @@ milestone: v6.0
 milestone_name: Draft Intelligence
 status: verifying
 stopped_at: Completed 31-03-PLAN.md — Phase 31 hero-selector complete
-last_updated: "2026-03-29T21:13:07.821Z"
+last_updated: "2026-03-29T21:18:26.718Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 2
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Phase: 31 (hero-selector) — EXECUTING
-Plan: 3 of 3
+Phase: 31
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
