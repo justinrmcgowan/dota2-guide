@@ -9,7 +9,7 @@
 - [x] **PRED-02**: Win predictions are trained on 200k+ recent matches from OpenDota bulk data, filtered to current patch
 - [x] **PRED-03**: Precomputed synergy matrix scores hero pairs by observed win rate delta vs independent pick rates, segmented by MMR bracket
 - [x] **PRED-04**: Precomputed counter matrix scores hero matchups by observed win rate when opposing, segmented by MMR bracket
-- [ ] **PRED-05**: Win probability displays alongside Claude's qualitative win condition assessment so users see both statistical and reasoning-based signals
+- [x] **PRED-05**: Win probability displays alongside Claude's qualitative win condition assessment so users see both statistical and reasoning-based signals
 
 ## Hero Selection
 
@@ -38,7 +38,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRED-02 | Phase 30 | Complete |
 | PRED-03 | Phase 30 | Complete |
 | PRED-04 | Phase 30 | Complete |
-| PRED-05 | Phase 30 | Pending |
+| PRED-05 | Phase 30 | Complete |
 | HERO-01 | Phase 31 | Pending |
 | HERO-02 | Phase 31 | Pending |
 | HERO-03 | Phase 31 | Pending |
