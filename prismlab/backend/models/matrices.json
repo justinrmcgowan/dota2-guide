@@ -1,0 +1,28 @@
+{
+  "_placeholder": true,
+  "_note": "Run python scripts/train_win_predictor.py from prismlab/backend/ to generate real model artifacts. This placeholder exists so the file path is committed to the repo. The runtime integration (Plan 02) handles missing or empty models gracefully.",
+  "bracket_1": {
+    "synergy": [],
+    "counter": [],
+    "hero_id_to_index": {},
+    "n_heroes": 0
+  },
+  "bracket_2": {
+    "synergy": [],
+    "counter": [],
+    "hero_id_to_index": {},
+    "n_heroes": 0
+  },
+  "bracket_3": {
+    "synergy": [],
+    "counter": [],
+    "hero_id_to_index": {},
+    "n_heroes": 0
+  },
+  "bracket_4": {
+    "synergy": [],
+    "counter": [],
+    "hero_id_to_index": {},
+    "n_heroes": 0
+  }
+}
