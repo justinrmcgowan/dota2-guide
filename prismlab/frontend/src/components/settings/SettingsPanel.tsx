@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { isValidSteamId } from "../../utils/steamId";
 import { api } from "../../api/client";
 import type { EngineBudget } from "../../types/recommendation";
+import { useAudioStore } from "../../stores/audioStore";
 
 interface SettingsPanelProps {
   open: boolean;
@@ -27,6 +28,8 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     () => (localStorage.getItem("prismlab_engine_mode") as EngineMode) ?? "auto",
   );
   const [budget, setBudget] = useState<EngineBudget | null>(null);
+
+  const { enabled: audioEnabled, volume: audioVolume, setEnabled: setAudioEnabled, setVolume: setAudioVolume } = useAudioStore();
 
   // Pre-fill Steam ID from backend .env if localStorage is empty (D-10)
   useEffect(() => {
@@ -343,6 +346,61 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                     Approaching budget limit
                   </p>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Audio Coaching Section */}
+          <div className="space-y-4 mt-8">
+            <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wider">
+              Audio Coaching
+            </h3>
+
+            {/* Enable toggle — matches Engine Mode row pattern */}
+            <button
+              type="button"
+              onClick={() => setAudioEnabled(!audioEnabled)}
+              className={`w-full flex items-center justify-between px-3 py-3 bg-surface-container-lowest border-b border-outline-variant/15 text-left transition-colors hover:bg-surface-container-low ${
+                audioEnabled ? "border-l-2 border-l-primary" : "border-l-2 border-l-transparent"
+              }`}
+              data-testid="audio-toggle"
+            >
+              <span className="text-sm text-on-surface">Speak item alerts</span>
+              {/* Toggle pill — square corners per --radius-*: 0px design token */}
+              <span
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center transition-colors ${
+                  audioEnabled ? "bg-primary" : "bg-on-surface-variant/30"
+                }`}
+                aria-hidden="true"
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 bg-surface transform transition-transform ${
+                    audioEnabled ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+
+            {/* Volume slider — only shown when audio is enabled */}
+            {audioEnabled && (
+              <div className="px-3 py-3 bg-surface-container-lowest border-b border-outline-variant/15">
+                <label
+                  htmlFor="audio-volume-slider"
+                  className="block text-sm text-on-surface-variant mb-2"
+                >
+                  Volume — {Math.round(audioVolume * 100)}%
+                </label>
+                <input
+                  id="audio-volume-slider"
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={audioVolume}
+                  onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+                  className="w-full accent-secondary"
+                  data-testid="audio-volume-slider"
+                />
               </div>
             )}
           </div>
