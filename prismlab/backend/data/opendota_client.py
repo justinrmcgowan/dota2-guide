@@ -159,3 +159,21 @@ class OpenDotaClient:
             )
             response.raise_for_status()
             return response.json()
+
+    async def fetch_explorer_sql(self, sql: str) -> list[dict]:
+        """Run a SQL query against OpenDota's Explorer endpoint.
+
+        Returns list of row dicts. Caller handles pagination via LIMIT/OFFSET in sql.
+        Rate limits: 60 req/min, 50k/month (free tier).
+
+        Note: Explorer is a separate endpoint from the REST API — does not use BASE_URL.
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://api.opendota.com/api/explorer",
+                params={**self.params, "sql": sql},
+                timeout=60.0,  # Explorer can be slow for large result sets
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data.get("rows", [])
