@@ -1,4 +1,4 @@
-import type { Hero } from "../types/hero";
+import type { Hero, SuggestHeroRequest, HeroSuggestion, SuggestHeroResponse } from "../types/hero";
 import type { LiveMatchResponse } from "../types/livematch";
 import type {
   MatchLogPayload,
@@ -68,6 +68,8 @@ export const api = {
     const enriched: RecommendRequest = { ...req, mode: req.mode ?? mode ?? undefined };
     return postJson<RecommendRequest, RecommendResponse>("/recommend", enriched);
   },
+  suggestHero: (req: SuggestHeroRequest) =>
+    postJson<SuggestHeroRequest, SuggestHeroResponse>("/suggest-hero", req),
   getDataFreshness: () => fetchJson<DataFreshness>("/data-freshness"),
   parseScreenshot: (req: ScreenshotParseRequest) =>
     postJson<ScreenshotParseRequest, ScreenshotParseResponse>(
