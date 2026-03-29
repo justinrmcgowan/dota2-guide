@@ -33,6 +33,7 @@ from engine.schemas import (
     LLMRecommendation,
 )
 from engine.win_condition import classify_draft
+from engine.win_predictor import WinPredictor
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine, FallbackReason
 from engine.context_builder import ContextBuilder
@@ -181,7 +182,7 @@ class HybridRecommender:
         phases = self._validate_item_ids(phases)
 
         # Enrich with timing, build paths, win condition (same as other paths)
-        timing_data, build_paths, win_condition = await self._enrich_all(
+        timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
         )
         if win_condition:
@@ -195,6 +196,7 @@ class HybridRecommender:
             timing_data=timing_data,
             build_paths=build_paths,
             win_condition=win_condition,
+            win_probability=win_probability,
             fallback=False,
             fallback_reason=None,
             model=None,
@@ -252,7 +254,7 @@ class HybridRecommender:
             phases = self._rules_only(rules_items)
             phases = self._validate_item_ids(phases)
 
-            timing_data, build_paths, win_condition = await self._enrich_all(
+            timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
                 request, phases, db
             )
             if win_condition:
@@ -268,6 +270,7 @@ class HybridRecommender:
                 timing_data=timing_data,
                 build_paths=build_paths,
                 win_condition=win_condition,
+                win_probability=win_probability,
                 fallback=True,
                 fallback_reason=fr.value,
                 model=None,
@@ -283,7 +286,7 @@ class HybridRecommender:
         neutral_items = llm_result.neutral_items
         phases = self._validate_item_ids(phases)
 
-        timing_data, build_paths, win_condition = await self._enrich_all(
+        timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
         )
         if win_condition:
@@ -297,6 +300,7 @@ class HybridRecommender:
             timing_data=timing_data,
             build_paths=build_paths,
             win_condition=win_condition,
+            win_probability=win_probability,
             fallback=False,
             fallback_reason=None,
             model=model_used,
@@ -354,7 +358,7 @@ class HybridRecommender:
         # Step 5: Validate and enrich
         phases = self._validate_item_ids(phases)
 
-        timing_data, build_paths, win_condition = await self._enrich_all(
+        timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
         )
         if win_condition:
@@ -368,6 +372,7 @@ class HybridRecommender:
             timing_data=timing_data,
             build_paths=build_paths,
             win_condition=win_condition,
+            win_probability=win_probability,
             fallback=fallback,
             fallback_reason=fallback_reason.value if fallback_reason else None,
             model=LLMEngine.MODEL if not fallback else None,
@@ -427,8 +432,8 @@ class HybridRecommender:
         request: RecommendRequest,
         phases: list[RecommendPhase],
         db: AsyncSession,
-    ) -> tuple[list[ItemTimingResponse], list[BuildPathResponse], WinConditionResponse | None]:
-        """Run all post-LLM enrichment steps: timing, build paths, win condition."""
+    ) -> tuple[list[ItemTimingResponse], list[BuildPathResponse], WinConditionResponse | None, float | None]:
+        """Run all post-LLM enrichment steps: timing, build paths, win condition, win probability."""
         timing_data: list[ItemTimingResponse] = []
         if self.cache:
             timing_data = await self._enrich_timing_data(request.hero_id, phases, db)
@@ -441,7 +446,11 @@ class HybridRecommender:
         if self.cache:
             win_condition = self._enrich_win_condition(request)
 
-        return timing_data, build_paths, win_condition
+        win_probability: float | None = None
+        if self.cache:
+            win_probability = self._enrich_win_probability(request)
+
+        return timing_data, build_paths, win_condition, win_probability
 
     # ------------------------------------------------------------------
     # Merge, rules-only, filter, validate (unchanged from original)
@@ -720,6 +729,27 @@ class HybridRecommender:
             allied_confidence=allied_result.confidence if allied_result else "low",
             enemy_archetype=enemy_result.archetype if enemy_result else None,
             enemy_confidence=enemy_result.confidence if enemy_result else None,
+        )
+
+    def _enrich_win_probability(self, request: RecommendRequest) -> float | None:
+        """Compute statistical win probability from draft composition.
+
+        Post-LLM enrichment -- NOT sent to Claude. Uses DataCache-held XGBoost models.
+        Defaults to bracket_2 (Archon-Legend) when no MMR info in request.
+        Returns None when fewer than 10 total heroes or models unavailable.
+        """
+        allied = [request.hero_id] + list(request.allies)
+        enemies = list(request.all_opponents)
+        is_radiant = request.side == "radiant"
+        bracket = 2  # Default: Archon-Legend (most representative bracket)
+
+        predictor = WinPredictor()
+        return predictor.predict(
+            allied_hero_ids=allied,
+            enemy_hero_ids=enemies,
+            is_radiant=is_radiant,
+            bracket=bracket,
+            cache=self.cache,
         )
 
     def _adjust_priorities_for_win_condition(

@@ -42,6 +42,9 @@ async def lifespan(app: FastAPI):
         len(data_cache._heroes), len(data_cache._items),
     )
 
+    # Load ML win predictor models and matrices (synchronous file I/O)
+    data_cache.load_win_predictor(models_dir="models")
+
     # Start data refresh scheduler — every 6h to catch patches same day
     scheduler = AsyncIOScheduler()
     scheduler.add_job(

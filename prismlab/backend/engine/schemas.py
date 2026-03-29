@@ -221,6 +221,7 @@ class RecommendResponse(BaseModel):
     timing_data: list[ItemTimingResponse] = Field(default_factory=list)
     build_paths: list[BuildPathResponse] = Field(default_factory=list)
     win_condition: WinConditionResponse | None = None
+    win_probability: float | None = None  # 0.0-1.0, allied win probability; None if unavailable
     fallback: bool = False
     fallback_reason: str | None = None  # "timeout" | "parse_error" | "api_error" | "rate_limited"
     model: str | None = None
