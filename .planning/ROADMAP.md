@@ -92,26 +92,37 @@
 
 - [ ] **Phase 32: Tauri Desktop App** - Native Windows app via Tauri (React frontend in native webview, Python backend as sidecar), first-run wizard with API key entry, auto-detect Dota 2 path, GSI cfg placement, system tray, native notifications
 
+## Phase Details
+
 ### v6.0 Draft Intelligence (Planned)
 
 **Milestone Goal:** Add statistical ML-driven draft analysis — win probability prediction from hero compositions and intelligent hero suggestions filtered by role, lane, and team context. Combines data-driven predictions with Prismlab's existing Claude reasoning for high-confidence draft decisions.
 
 ### Phase 30: ML Win Predictor
-
-**Goal:** Train a logistic regression / XGBoost model on 200k+ recent matches (mined from OpenDota bulk data) to predict draft win probability from hero compositions, with precomputed synergy and counter matrices by MMR bracket. Expose win probability alongside Claude's qualitative win condition assessment so users see both statistical and reasoning-based signals. Inspired by andreiapostoae/dota2-predictor, modernized for current patch and integrated into Prismlab's existing data pipeline
-**Requirements**: TBD
-**Depends on:** Phase 28 (current patch data must be in place), Phase 23 (win condition framing for comparison)
-**Plans:** 0 plans
+**Goal**: Users can see a statistical win probability for their draft alongside Claude's qualitative win condition assessment
+**Depends on**: Phase 28 (current patch data), Phase 23 (win condition framing for comparison)
+**Requirements**: PRED-01, PRED-02, PRED-03, PRED-04, PRED-05
+**Success Criteria** (what must be TRUE):
+  1. User sees a win probability percentage for the allied team whenever a 10-hero draft is present
+  2. Win probability changes meaningfully as different hero compositions are entered
+  3. Precomputed synergy and counter matrices are available to the prediction engine, segmented by MMR bracket
+  4. Win probability appears in the recommendation view alongside Claude's win condition framing so users can compare statistical and reasoning-based signals
+  5. The model is trained on 200k+ recent OpenDota matches filtered to current patch
+**Plans**: TBD
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 30 to break down)
 
 ### Phase 31: Hero Selector
-
-**Goal:** Given a partial draft (0-9 heroes picked), user's intended role (Pos 1-5), and lane assignment, suggest the top N hero picks ranked by predicted win rate, synergy with allies, and counter-value against enemies. Uses Phase 30's ML model to score all unpicked heroes and filters by role/lane viability. Integrates into the existing draft input UI as an optional "Suggest Hero" flow before the recommendation engine runs
-**Requirements**: TBD
-**Depends on:** Phase 30 (ML model must be trained and serving predictions), Phase 25 (API-driven draft input for live draft context)
-**Plans:** 0 plans
+**Goal**: Users can get ranked hero suggestions for their role and lane that account for current ally synergies and enemy counter-value before locking in their hero
+**Depends on**: Phase 30 (ML model must be trained and serving predictions), Phase 25 (API-driven draft input for live draft context)
+**Requirements**: HERO-01, HERO-02, HERO-03, HERO-04
+**Success Criteria** (what must be TRUE):
+  1. User can invoke a "Suggest Hero" flow from the draft input panel before entering a hero and receive a ranked list of candidates
+  2. Suggestions are filtered to heroes viable for the user's selected position and lane
+  3. Suggestions rank higher for heroes with strong synergy with already-picked allies and counter-value against already-picked enemies
+  4. User can select a suggested hero directly from the list and the draft input updates, proceeding to the recommendation flow
+**Plans**: TBD
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 31 to break down)
@@ -137,3 +148,11 @@ Plans:
 - Dota 2 detection: Rust-side reads Windows Registry (`HKLM\SOFTWARE\WOW6432Node\Valve\Steam`), parses `libraryfolders.vdf`, locates `dota 2 beta\game\dota\cfg\gamestate_integration\`
 - GSI cfg: generated and placed automatically, no user file management required
 - Launch options: wizard screen explains adding `-gamestateintegration` to Dota 2 Steam properties (cannot be automated safely)
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 30. ML Win Predictor | 0/TBD | Not started | - |
+| 31. Hero Selector | 0/TBD | Not started | - |
+| 32. Tauri Desktop App | 0/TBD | Not started | - |

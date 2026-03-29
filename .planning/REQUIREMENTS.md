@@ -34,6 +34,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| PRED-01 | Phase 30 | Pending |
+| PRED-02 | Phase 30 | Pending |
+| PRED-03 | Phase 30 | Pending |
+| PRED-04 | Phase 30 | Pending |
+| PRED-05 | Phase 30 | Pending |
+| HERO-01 | Phase 31 | Pending |
+| HERO-02 | Phase 31 | Pending |
+| HERO-03 | Phase 31 | Pending |
+| HERO-04 | Phase 31 | Pending |
 
 ---
 *Requirements defined: 2026-03-29*
