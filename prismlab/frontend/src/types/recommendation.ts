@@ -84,6 +84,7 @@ export interface RecommendResponse {
   engine_mode?: "fast" | "auto" | "deep" | null;
   budget_used?: number | null;
   budget_limit?: number | null;
+  win_probability?: number | null;  // 0.0-1.0, allied win probability; null/undefined if model unavailable
 }
 
 export interface EngineBudget {

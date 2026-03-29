@@ -2,6 +2,7 @@ import type { WinConditionResponse } from "../../types/recommendation";
 
 interface WinConditionBadgeProps {
   winCondition: WinConditionResponse;
+  winProbability?: number | null;
 }
 
 const CONFIDENCE_OPACITY: Record<string, string> = {
@@ -15,7 +16,7 @@ function formatArchetype(archetype: string): string {
   return archetype.charAt(0).toUpperCase() + archetype.slice(1);
 }
 
-function WinConditionBadge({ winCondition }: WinConditionBadgeProps) {
+function WinConditionBadge({ winCondition, winProbability }: WinConditionBadgeProps) {
   const alliedOpacity = CONFIDENCE_OPACITY[winCondition.allied_confidence] ?? "opacity-75";
   const enemyOpacity = winCondition.enemy_confidence
     ? (CONFIDENCE_OPACITY[winCondition.enemy_confidence] ?? "opacity-75")
@@ -30,6 +31,9 @@ function WinConditionBadge({ winCondition }: WinConditionBadgeProps) {
       >
         <span className="text-secondary">&#9650;</span>
         {formatArchetype(winCondition.allied_archetype)}
+        {winProbability != null && (
+          <span className="ml-1 text-secondary/80">{Math.round(winProbability * 100)}%</span>
+        )}
       </span>
 
       {/* Enemy archetype pill (only when classified) */}

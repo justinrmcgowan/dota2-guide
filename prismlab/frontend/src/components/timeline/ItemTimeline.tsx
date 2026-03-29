@@ -50,7 +50,7 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
             Strategy
           </span>
           {data.win_condition && (
-            <WinConditionBadge winCondition={data.win_condition} />
+            <WinConditionBadge winCondition={data.win_condition} winProbability={data.win_probability} />
           )}
           <p className="text-on-surface-variant text-sm italic mt-1">
             {data.overall_strategy}
@@ -64,7 +64,7 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
           <span className="text-secondary text-xs font-semibold uppercase tracking-wide font-display">
             Strategy
           </span>
-          <WinConditionBadge winCondition={data.win_condition} />
+          <WinConditionBadge winCondition={data.win_condition} winProbability={data.win_probability} />
         </div>
       )}
 
