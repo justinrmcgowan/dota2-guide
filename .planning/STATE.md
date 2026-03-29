@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Draft Intelligence
 status: executing
-stopped_at: Completed 30-ml-win-predictor 30-01-PLAN.md
-last_updated: "2026-03-29T18:48:41.763Z"
+stopped_at: Completed 30-ml-win-predictor 30-02-PLAN.md
+last_updated: "2026-03-29T18:56:02.390Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 30 (ml-win-predictor) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-29
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 29-stream-deck P02 | 5min | 2 tasks | 8 files |
 | Phase 33-game-analytics P01-P03 | ~10min | 6 tasks | - |
 | Phase 30-ml-win-predictor P01 | 12 | 3 tasks | 8 files |
+| Phase 30-ml-win-predictor P02 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [Phase 30-ml-win-predictor]: Placeholder .ubj and matrices.json committed to repo — real artifacts require running train_win_predictor.py from prismlab/backend/ on patch day
 - [Phase 30-ml-win-predictor]: hero_id_to_index embedded in matrices.json at training time for training/inference parity in Plan 02
 - [Phase 30-ml-win-predictor]: get_booster().save_model() used for XGBoost .ubj artifacts (not joblib) — version-stable across XGBoost upgrades
+- [Phase 30-ml-win-predictor]: bracket_2 (Archon-Legend) default for win probability when request has no MMR field
+- [Phase 30-ml-win-predictor]: WinPredictor is stateless; DataCache holds xgb.Booster instances loaded at startup
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:48:41.761Z
-Stopped at: Completed 30-ml-win-predictor 30-01-PLAN.md
+Last session: 2026-03-29T18:56:02.388Z
+Stopped at: Completed 30-ml-win-predictor 30-02-PLAN.md
 Resume file: None

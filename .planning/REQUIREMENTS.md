@@ -5,7 +5,7 @@
 
 ## ML Win Prediction
 
-- [ ] **PRED-01**: Given a full 10-hero draft, the system predicts win probability as a percentage for the allied team
+- [x] **PRED-01**: Given a full 10-hero draft, the system predicts win probability as a percentage for the allied team
 - [x] **PRED-02**: Win predictions are trained on 200k+ recent matches from OpenDota bulk data, filtered to current patch
 - [x] **PRED-03**: Precomputed synergy matrix scores hero pairs by observed win rate delta vs independent pick rates, segmented by MMR bracket
 - [x] **PRED-04**: Precomputed counter matrix scores hero matchups by observed win rate when opposing, segmented by MMR bracket
@@ -34,7 +34,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PRED-01 | Phase 30 | Pending |
+| PRED-01 | Phase 30 | Complete |
 | PRED-02 | Phase 30 | Complete |
 | PRED-03 | Phase 30 | Complete |
 | PRED-04 | Phase 30 | Complete |

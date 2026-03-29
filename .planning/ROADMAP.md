@@ -112,7 +112,7 @@
 
 Plans:
 - [x] 30-01-PLAN.md — Training pipeline: OpenDota data download, XGBoost training, synergy/counter matrices (PRED-02, PRED-03, PRED-04)
-- [ ] 30-02-PLAN.md — Runtime integration: WinPredictor class, DataCache extension, RecommendResponse field, recommender enrichment (PRED-01)
+- [x] 30-02-PLAN.md — Runtime integration: WinPredictor class, DataCache extension, RecommendResponse field, recommender enrichment (PRED-01)
 - [ ] 30-03-PLAN.md — UI display: WinConditionBadge updated to show "Teamfight 54%" (PRED-05)
 
 ### Phase 31: Hero Selector
@@ -138,7 +138,7 @@ Plans:
 **Goal:** Package Prismlab as a native Windows desktop application using Tauri v2. The existing React frontend renders in a native webview (no browser tab, no Electron bloat, ~15MB footprint). The Python FastAPI backend runs as a Tauri sidecar process (bundled via PyInstaller into a standalone exe that Tauri spawns and manages). First-run wizard handles Anthropic API key entry, auto-detects Dota 2 install path (Steam registry key → libraryfolders.vdf parsing across all library folders), generates and places `gamestate_integration_prismlab.cfg` into the correct `game\dota\cfg\gamestate_integration\` directory, and prompts user to add `-gamestateintegration` to Dota 2 launch options. Native system tray icon with "Open" / "Quit" via Tauri's tray API. Native OS notifications for item timing alerts (ties into Phase 24 audio prompts). Config stored in platform-appropriate app data directory via Tauri's path API. Produces a single `.msi` or `.exe` installer via Tauri's built-in bundler (WiX-based). Docker Compose deployment remains for dev/server use — Tauri app is a separate build target
 **Requirements**: TBD
 **Depends on:** Phase 27 (game lifecycle must be solid before shipping to external users), Phase 28 (current patch data)
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 32 to break down)
@@ -155,6 +155,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 30. ML Win Predictor | 1/3 | In Progress|  |
+| 30. ML Win Predictor | 2/3 | In Progress|  |
 | 31. Hero Selector | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
