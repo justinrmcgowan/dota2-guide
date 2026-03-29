@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "com.prismlab.dota2",
+  "Name": "Prismlab Dota 2",
+  "Author": "Prismlab",
+  "Version": "1.0.0.0",
+  "Description": "Live Dota 2 game state on your Stream Deck via Prismlab",
+  "Category": "Prismlab Dota 2",
+  "CategoryIcon": "imgs/plugin",
+  "Icon": "imgs/plugin",
+  "SDKVersion": 2,
+  "CodePath": "bin/plugin.js",
+  "Nodejs": { "version": "20", "debugPort": 9999 },
+  "Software": { "MinimumVersion": "6.9" },
+  "OS": [{ "Platform": "windows", "MinimumVersion": "10" }],
+  "PropertyInspectorPath": "ui/pi.html",
+  "Actions": [
+    {
+      "UUID": "com.prismlab.dota2.gold",
+      "Name": "Gold & GPM",
+      "Icon": "imgs/actions/gold/key",
+      "Tooltip": "Shows current gold and GPM",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [{ "Image": "imgs/actions/gold/key" }]
+    },
+    {
+      "UUID": "com.prismlab.dota2.kda",
+      "Name": "KDA",
+      "Icon": "imgs/actions/kda/key",
+      "Tooltip": "Shows kills / deaths / assists",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [{ "Image": "imgs/actions/kda/key" }]
+    },
+    {
+      "UUID": "com.prismlab.dota2.clock",
+      "Name": "Game Clock",
+      "Icon": "imgs/actions/clock/key",
+      "Tooltip": "Shows current game time",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [{ "Image": "imgs/actions/clock/key" }]
+    },
+    {
+      "UUID": "com.prismlab.dota2.items",
+      "Name": "Items",
+      "Icon": "imgs/actions/items/key",
+      "Tooltip": "Shows inventory item names",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [{ "Image": "imgs/actions/items/key" }]
+    },
+    {
+      "UUID": "com.prismlab.dota2.rosh",
+      "Name": "Roshan Status",
+      "Icon": "imgs/actions/rosh/key",
+      "Tooltip": "Shows Roshan alive / respawning status",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [{ "Image": "imgs/actions/rosh/key" }]
+    },
+    {
+      "UUID": "com.prismlab.dota2.towers",
+      "Name": "Tower Count",
+      "Icon": "imgs/actions/towers/key",
+      "Tooltip": "Shows Radiant and Dire tower counts",
+      "Controllers": ["Keypad"],
+      "DisableAutomaticStates": true,
+      "States": [{ "Image": "imgs/actions/towers/key" }]
+    }
+  ]
+}
