@@ -86,7 +86,7 @@
 ### v6.0 Draft Intelligence (Planned)
 
 - [x] **Phase 30: ML Win Predictor** - XGBoost/logistic regression model trained on 200k+ recent matches, draft win probability, synergy/counter matrices by MMR bracket (completed 2026-03-29)
-- [ ] **Phase 31: Hero Selector** - Role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value
+- [x] **Phase 31: Hero Selector** - Role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value (completed 2026-03-29)
 
 ### v7.0 Desktop Distribution (Planned)
 
@@ -129,7 +129,7 @@ Plans:
 Plans:
 - [x] 31-01-PLAN.md — Backend scoring engine: SuggestHero schemas + HeroSelector class with HERO_ROLE_VIABLE filter and matrix scoring (HERO-01, HERO-02, HERO-03)
 - [x] 31-02-PLAN.md — Frontend contracts: TypeScript types + api.suggestHero() client method (HERO-04)
-- [ ] 31-03-PLAN.md — Integration: POST /api/suggest-hero route, HeroSuggestPanel component, Sidebar wiring (HERO-01, HERO-02, HERO-03, HERO-04)
+- [x] 31-03-PLAN.md — Integration: POST /api/suggest-hero route, HeroSuggestPanel component, Sidebar wiring (HERO-01, HERO-02, HERO-03, HERO-04)
 
 ### v7.0 Desktop Distribution (Planned)
 
@@ -140,7 +140,7 @@ Plans:
 **Goal:** Package Prismlab as a native Windows desktop application using Tauri v2. The existing React frontend renders in a native webview (no browser tab, no Electron bloat, ~15MB footprint). The Python FastAPI backend runs as a Tauri sidecar process (bundled via PyInstaller into a standalone exe that Tauri spawns and manages). First-run wizard handles Anthropic API key entry, auto-detects Dota 2 install path (Steam registry key → libraryfolders.vdf parsing across all library folders), generates and places `gamestate_integration_prismlab.cfg` into the correct `game\dota\cfg\gamestate_integration\` directory, and prompts user to add `-gamestateintegration` to Dota 2 launch options. Native system tray icon with "Open" / "Quit" via Tauri's tray API. Native OS notifications for item timing alerts (ties into Phase 24 audio prompts). Config stored in platform-appropriate app data directory via Tauri's path API. Produces a single `.msi` or `.exe` installer via Tauri's built-in bundler (WiX-based). Docker Compose deployment remains for dev/server use — Tauri app is a separate build target
 **Requirements**: TBD
 **Depends on:** Phase 27 (game lifecycle must be solid before shipping to external users), Phase 28 (current patch data)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 32 to break down)
@@ -158,5 +158,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 30. ML Win Predictor | 3/3 | Complete    | 2026-03-29 |
-| 31. Hero Selector | 2/3 | In Progress|  |
+| 31. Hero Selector | 3/3 | Complete   | 2026-03-29 |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |

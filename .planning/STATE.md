@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Draft Intelligence
 status: executing
-stopped_at: Completed 31-hero-selector 31-01-PLAN.md
-last_updated: "2026-03-29T21:04:07.048Z"
+stopped_at: "Checkpoint: 31-03 Task 3 human-verify"
+last_updated: "2026-03-29T21:10:28.848Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -73,6 +73,7 @@ Recent decisions affecting current work:
 - [Phase 31-hero-selector]: snake_case field names in TypeScript interfaces match backend JSON keys exactly — no camelCase conversion middleware
 - [Phase 31-hero-selector]: No engine mode injection for suggestHero (unlike recommend); suggest-hero has no engine mode concept
 - [Phase 31-hero-selector]: HERO_ROLE_VIABLE transcribed from heroPlaystyles.ts as static Python mirror; synergy*0.4+counter*0.4 composite with counter[c][e]-0.5 centering
+- [Phase 31-hero-selector]: onFocus prop added to HeroPicker to close HeroSuggestPanel before dropdown opens — prevents dual-open state
 
 ### Pending Todos
 
@@ -85,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T21:04:07.046Z
-Stopped at: Completed 31-hero-selector 31-01-PLAN.md
+Last session: 2026-03-29T21:10:17.716Z
+Stopped at: Checkpoint: 31-03 Task 3 human-verify
 Resume file: None
