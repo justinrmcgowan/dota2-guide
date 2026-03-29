@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Ready to plan
-stopped_at: Completed 24-02-PLAN.md
-last_updated: "2026-03-29T11:00:11.319Z"
+status: Ready to execute
+stopped_at: Completed 29-01-PLAN.md
+last_updated: "2026-03-29T11:27:20.150Z"
 progress:
-  total_phases: 29
+  total_phases: 30
   completed_phases: 29
-  total_plans: 71
-  completed_plans: 71
+  total_plans: 73
+  completed_plans: 72
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 24 — audio-prompts
+**Current focus:** Phase 29 — stream-deck-integration
 
 ## Current Position
 
-Phase: 25
-Plan: Not started
+Phase: 29 (stream-deck-integration) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Plan: Not started
 | Phase 33-game-analytics P03 | 4min | 2 tasks | 5 files |
 | Phase 24-audio-prompts P01 | 2min | 2 tasks | 3 files |
 | Phase 24-audio-prompts P02 | 3 | 2 tasks | 2 files |
+| Phase 29-stream-deck-integration P01 | 5min | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,9 @@ Recent decisions affecting current work:
 - [Phase 24-audio-prompts]: speak() does not set utterance.voice — avoids getVoices() async race condition on Chrome
 - [Phase 24-audio-prompts]: Volume slider hidden when audio disabled — clean SettingsPanel UI with no redundant controls
 - [Phase 24-audio-prompts]: useAudioStore.getState() inside subscribe callbacks avoids stale closure issue; prevDataRef plain object inside useEffect closure for double-fire guard
+- [Phase 29-stream-deck-integration]: ws package for BackendConnection (not reconnecting-websocket) — lighter, manual exponential backoff mirrors useWebSocket.ts pattern
+- [Phase 29-stream-deck-integration]: Module-level BackendConnection singleton shared across all 6 action types — avoids 6 separate WebSocket connections
+- [Phase 29-stream-deck-integration]: Stub action files allow TypeScript compilation in Plan 01; Plan 02 replaces with full SingletonAction implementations
 
 ### Pending Todos
 
@@ -136,6 +140,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T10:55:47.109Z
-Stopped at: Completed 24-02-PLAN.md
+Last session: 2026-03-29T11:27:20.146Z
+Stopped at: Completed 29-01-PLAN.md
 Resume file: None
