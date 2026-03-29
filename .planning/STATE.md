@@ -4,7 +4,7 @@ milestone: v6.0
 milestone_name: Draft Intelligence
 status: verifying
 stopped_at: Completed 30-ml-win-predictor 30-03-PLAN.md
-last_updated: "2026-03-29T18:59:57.113Z"
+last_updated: "2026-03-29T19:26:09.649Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 1
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Phase: 30 (ml-win-predictor) — EXECUTING
-Plan: 3 of 3
+Phase: 30
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 

@@ -155,6 +155,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 30. ML Win Predictor | 3/3 | Complete   | 2026-03-29 |
+| 30. ML Win Predictor | 3/3 | Complete    | 2026-03-29 |
 | 31. Hero Selector | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
