@@ -13,6 +13,7 @@ import LiveStatsBar from "../game/LiveStatsBar";
 import HeroSuggestPanel from "../draft/HeroSuggestPanel";
 import { useGameStore } from "../../stores/gameStore";
 import { useRecommendationStore } from "../../stores/recommendationStore";
+import { useRefreshStore } from "../../stores/refreshStore";
 
 function Sidebar() {
   const selectedHero = useGameStore((s) => s.selectedHero);
@@ -137,9 +138,21 @@ function Sidebar() {
         {hasData && <GameStatePanel />}
       </div>
 
-      {/* CTA Button -- pinned at bottom */}
-      <div className="p-4 bg-surface-container-low">
+      {/* CTA Buttons -- pinned at bottom */}
+      <div className="p-4 bg-surface-container-low space-y-2">
         <GetBuildButton />
+        {(selectedHero || hasData) && (
+          <button
+            onClick={() => {
+              useGameStore.getState().clear();
+              useRecommendationStore.getState().clear();
+              useRefreshStore.getState().resetCooldown();
+            }}
+            className="w-full py-2 text-sm text-on-surface/50 hover:text-on-surface/80 transition-colors"
+          >
+            New Game
+          </button>
+        )}
       </div>
     </aside>
   );

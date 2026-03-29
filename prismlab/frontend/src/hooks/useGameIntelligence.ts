@@ -89,6 +89,8 @@ export function useGameIntelligence(heroes: Hero[]): void {
   const laneAutoDetectedRef = useRef<boolean>(false);
   const prevMatchIdRef = useRef<string>("");
   const prevGsiStatusRef = useRef<string>("idle");
+  const prevGameStateRef = useRef<string>("");
+  const capturedWinTeamRef = useRef<string>("");
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
@@ -240,6 +242,15 @@ export function useGameIntelligence(heroes: Hero[]): void {
         // Still continue processing below (hero detection should work on reconnect)
       }
 
+      // --- Capture win_team during post-game state ---
+      // GSI sends win_team ("radiant"/"dire") when game_state transitions to post-game.
+      // We store it in a ref because by the time match_id changes (new game), the
+      // live GSI state has already switched to the new game and win_team is gone.
+      if (live.win_team && live.game_state !== prevGameStateRef.current) {
+        capturedWinTeamRef.current = live.win_team;
+      }
+      prevGameStateRef.current = live.game_state;
+
       // --- 0. New game detection (match_id change) ---
       const matchId = live.match_id;
       if (matchId && prevMatchIdRef.current && matchId !== prevMatchIdRef.current) {
@@ -291,12 +302,13 @@ export function useGameIntelligence(heroes: Hero[]): void {
             }
           }
 
-          // Determine win/loss from GSI win_team + team_side.
-          // win_team is set during DOTA_GAMERULES_STATE_POST_GAME ("radiant"/"dire").
-          // Fall back to false if GSI didn't capture the post-game state.
+          // Determine win/loss from captured win_team ref + team_side.
+          // win_team was captured in capturedWinTeamRef when game_state transitioned
+          // to post-game. By the time match_id changes, the live GSI state is from
+          // the new game, so we use the ref instead.
           let win = false;
-          if (gsiSnap.win_team && gameSnap.side) {
-            win = gsiSnap.win_team.toLowerCase() === gameSnap.side.toLowerCase();
+          if (capturedWinTeamRef.current && gameSnap.side) {
+            win = capturedWinTeamRef.current.toLowerCase() === gameSnap.side.toLowerCase();
           }
 
           const payload: MatchLogPayload = {
@@ -340,6 +352,8 @@ export function useGameIntelligence(heroes: Hero[]): void {
 
         // Reset all refs to initial state
         prevHeroIdRef.current = 0;
+        capturedWinTeamRef.current = "";
+        prevGameStateRef.current = "";
         firedPhasesRef.current = new Set();
         laneAutoDetectedRef.current = false;
         cooldownEndRef.current = 0;
