@@ -13,9 +13,9 @@
 
 ## Hero Selection
 
-- [ ] **HERO-01**: Given a partial draft (0-9 heroes), user's role (Pos 1-5), and lane, the system suggests top N hero picks ranked by predicted win rate
-- [ ] **HERO-02**: Hero suggestions factor in synergy with already-picked allies and counter-value against already-picked enemies
-- [ ] **HERO-03**: Suggestions are filtered by role/lane viability (heroes that can play the selected position)
+- [x] **HERO-01**: Given a partial draft (0-9 heroes), user's role (Pos 1-5), and lane, the system suggests top N hero picks ranked by predicted win rate
+- [x] **HERO-02**: Hero suggestions factor in synergy with already-picked allies and counter-value against already-picked enemies
+- [x] **HERO-03**: Suggestions are filtered by role/lane viability (heroes that can play the selected position)
 - [x] **HERO-04**: Hero suggestion UI integrates into the existing draft input flow as an optional "Suggest Hero" step before recommendations
 
 ## Future Requirements
@@ -39,9 +39,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRED-03 | Phase 30 | Complete |
 | PRED-04 | Phase 30 | Complete |
 | PRED-05 | Phase 30 | Complete |
-| HERO-01 | Phase 31 | Pending |
-| HERO-02 | Phase 31 | Pending |
-| HERO-03 | Phase 31 | Pending |
+| HERO-01 | Phase 31 | Complete |
+| HERO-02 | Phase 31 | Complete |
+| HERO-03 | Phase 31 | Complete |
 | HERO-04 | Phase 31 | Complete |
 
 ---

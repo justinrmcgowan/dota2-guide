@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Draft Intelligence
 status: executing
-stopped_at: Completed 31-hero-selector 31-02-PLAN.md
-last_updated: "2026-03-29T20:59:27.072Z"
+stopped_at: Completed 31-hero-selector 31-01-PLAN.md
+last_updated: "2026-03-29T21:04:07.048Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 31 (hero-selector) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-29
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 30-ml-win-predictor P02 | 4 | 2 tasks | 5 files |
 | Phase 30-ml-win-predictor P03 | 3 | 1 tasks | 3 files |
 | Phase 31-hero-selector P02 | 3 | 2 tasks | 2 files |
+| Phase 31-hero-selector P01 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,7 @@ Recent decisions affecting current work:
 - [Phase 30-ml-win-predictor]: winProbability != null guard used (not falsy) so 0% probability renders correctly; text-secondary/80 matches confidence-opacity visual pattern
 - [Phase 31-hero-selector]: snake_case field names in TypeScript interfaces match backend JSON keys exactly — no camelCase conversion middleware
 - [Phase 31-hero-selector]: No engine mode injection for suggestHero (unlike recommend); suggest-hero has no engine mode concept
+- [Phase 31-hero-selector]: HERO_ROLE_VIABLE transcribed from heroPlaystyles.ts as static Python mirror; synergy*0.4+counter*0.4 composite with counter[c][e]-0.5 centering
 
 ### Pending Todos
 
@@ -83,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:59:27.069Z
-Stopped at: Completed 31-hero-selector 31-02-PLAN.md
+Last session: 2026-03-29T21:04:07.046Z
+Stopped at: Completed 31-hero-selector 31-01-PLAN.md
 Resume file: None
