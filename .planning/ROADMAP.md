@@ -185,12 +185,13 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 ### Phase 24: Audio Prompts & Volume Control
 
 **Goal:** TTS or audio cue system that announces item timing alerts, purchase reminders, and coaching callouts with configurable volume control
-**Requirements**: TBD
+**Requirements**: AUDIO-01, AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 24 to break down)
+- [ ] 24-01-PLAN.md -- audioStore, speak utility, audioUtils, SettingsPanel Audio Coaching section
+- [ ] 24-02-PLAN.md -- useAudio hook (GSI toast + recommendation subscriptions), App.tsx registration
 
 ### Phase 25: API-Driven Draft Input
 
