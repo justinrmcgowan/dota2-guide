@@ -108,10 +108,12 @@
   3. Precomputed synergy and counter matrices are available to the prediction engine, segmented by MMR bracket
   4. Win probability appears in the recommendation view alongside Claude's win condition framing so users can compare statistical and reasoning-based signals
   5. The model is trained on 200k+ recent OpenDota matches filtered to current patch
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 30 to break down)
+- [ ] 30-01-PLAN.md — Training pipeline: OpenDota data download, XGBoost training, synergy/counter matrices (PRED-02, PRED-03, PRED-04)
+- [ ] 30-02-PLAN.md — Runtime integration: WinPredictor class, DataCache extension, RecommendResponse field, recommender enrichment (PRED-01)
+- [ ] 30-03-PLAN.md — UI display: WinConditionBadge updated to show "Teamfight 54%" (PRED-05)
 
 ### Phase 31: Hero Selector
 **Goal**: Users can get ranked hero suggestions for their role and lane that account for current ally synergies and enemy counter-value before locking in their hero
@@ -153,6 +155,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 30. ML Win Predictor | 0/TBD | Not started | - |
+| 30. ML Win Predictor | 0/3 | Not started | - |
 | 31. Hero Selector | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
