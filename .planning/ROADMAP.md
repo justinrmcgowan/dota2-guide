@@ -124,10 +124,12 @@ Plans:
   2. Suggestions are filtered to heroes viable for the user's selected position and lane
   3. Suggestions rank higher for heroes with strong synergy with already-picked allies and counter-value against already-picked enemies
   4. User can select a suggested hero directly from the list and the draft input updates, proceeding to the recommendation flow
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 31 to break down)
+- [ ] 31-01-PLAN.md — Backend scoring engine: SuggestHero schemas + HeroSelector class with HERO_ROLE_VIABLE filter and matrix scoring (HERO-01, HERO-02, HERO-03)
+- [ ] 31-02-PLAN.md — Frontend contracts: TypeScript types + api.suggestHero() client method (HERO-04)
+- [ ] 31-03-PLAN.md — Integration: POST /api/suggest-hero route, HeroSuggestPanel component, Sidebar wiring (HERO-01, HERO-02, HERO-03, HERO-04)
 
 ### v7.0 Desktop Distribution (Planned)
 
@@ -156,5 +158,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 30. ML Win Predictor | 3/3 | Complete    | 2026-03-29 |
-| 31. Hero Selector | 0/TBD | Not started | - |
+| 31. Hero Selector | 0/3 | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
