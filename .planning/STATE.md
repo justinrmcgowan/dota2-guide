@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Draft Intelligence
-status: executing
-stopped_at: "Checkpoint: 31-03 Task 3 human-verify"
-last_updated: "2026-03-29T21:10:28.848Z"
+status: verifying
+stopped_at: Completed 31-03-PLAN.md — Phase 31 hero-selector complete
+last_updated: "2026-03-29T21:13:07.821Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 2
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 31 (hero-selector) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 30-ml-win-predictor P03 | 3 | 1 tasks | 3 files |
 | Phase 31-hero-selector P02 | 3 | 2 tasks | 2 files |
 | Phase 31-hero-selector P01 | 5 | 2 tasks | 4 files |
+| Phase 31-hero-selector P03 | 8 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 31-hero-selector]: No engine mode injection for suggestHero (unlike recommend); suggest-hero has no engine mode concept
 - [Phase 31-hero-selector]: HERO_ROLE_VIABLE transcribed from heroPlaystyles.ts as static Python mirror; synergy*0.4+counter*0.4 composite with counter[c][e]-0.5 centering
 - [Phase 31-hero-selector]: onFocus prop added to HeroPicker to close HeroSuggestPanel before dropdown opens — prevents dual-open state
+- [Phase 31-hero-selector]: Score bar omitted when matrices_available=false to avoid misleading 50%-bar display for all-zero scores
+- [Phase 31-hero-selector]: Stable serialized keys (join(',')) used in useEffect deps instead of array refs to avoid infinite fetch loops
+- [Phase 31-hero-selector]: Fallback text-row render in HeroSuggestPanel when hero not yet in useHeroes() cache protects against cache race
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T21:10:17.716Z
-Stopped at: Checkpoint: 31-03 Task 3 human-verify
+Last session: 2026-03-29T21:13:07.819Z
+Stopped at: Completed 31-03-PLAN.md — Phase 31 hero-selector complete
 Resume file: None

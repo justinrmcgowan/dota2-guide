@@ -76,4 +76,4 @@ None — all data is wired from the live API endpoint. When `matrices_available=
 TypeScript strict-mode compile: zero errors.
 Python import check: `from api.routes.suggest_hero import router` → `Route OK: ['/suggest-hero']`
 
-Pending: Human browser verification per Task 3 checkpoint.
+Human browser verification (Task 3 checkpoint): Approved by user on 2026-03-29.
