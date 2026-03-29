@@ -370,3 +370,38 @@ class ScreenshotParseResponse(BaseModel):
     error: str | None = None
     message: str | None = None
     latency_ms: int | None = None
+
+
+# ---------------------------------------------------------------------------
+# Hero suggestion schemas (Phase 31)
+# ---------------------------------------------------------------------------
+
+
+class SuggestHeroRequest(BaseModel):
+    """POST /api/suggest-hero request body."""
+
+    role: int = Field(ge=1, le=5)
+    ally_ids: list[int] = Field(default_factory=list, max_length=4)
+    enemy_ids: list[int] = Field(default_factory=list, max_length=5)
+    excluded_hero_ids: list[int] = Field(default_factory=list)
+    top_n: int = Field(default=10, ge=1, le=30)
+    bracket: int = Field(default=2, ge=1, le=4)
+
+
+class HeroSuggestion(BaseModel):
+    """Single ranked hero candidate."""
+
+    hero_id: int
+    hero_name: str
+    internal_name: str
+    icon_url: str | None
+    score: float
+    synergy_score: float
+    counter_score: float
+
+
+class SuggestHeroResponse(BaseModel):
+    """POST /api/suggest-hero response body."""
+
+    suggestions: list[HeroSuggestion]
+    matrices_available: bool
