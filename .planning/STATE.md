@@ -1,22 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v5.0
-milestone_name: Supreme Companion
-status: v5.0 milestone complete
-stopped_at: Completed 29-02-PLAN.md
-last_updated: "2026-03-29T12:14:33.280Z"
+milestone: v6.0
+milestone_name: Draft Intelligence
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-03-29T14:00:00.000Z"
 progress:
-  total_phases: 30
-  completed_phases: 30
-  total_plans: 73
-  completed_plans: 73
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-27)
+See: .planning/PROJECT.md (updated 2026-03-29)
+
+**Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
+**Current focus:** v6.0 Draft Intelligence — ML win prediction + hero suggestions
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-29 — Milestone v6.0 started
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
 **Current focus:** Phase 29 — stream-deck-integration

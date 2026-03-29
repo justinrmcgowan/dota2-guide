@@ -35,26 +35,25 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ### Active
 
-## Current Milestone: v4.0 Coaching Intelligence
+(Defined in REQUIREMENTS.md per milestone)
 
-**Goal:** Transform Prismlab from an item list generator into a strategic coach — with data-backed timing windows, ability-aware counter-itemization, build path ordering, and win condition framing.
+## Current Milestone: v6.0 Draft Intelligence
+
+**Goal:** Add statistical ML-driven draft analysis — win probability prediction from hero compositions and intelligent hero suggestions filtered by role, lane, and team context.
 
 **Target features:**
-- Timing benchmarks — mine OpenDota purchase-timing data, surface urgency signals, integrate into rules + prompt
-- Counter-item depth — ability-specific counters beyond current rules (Eul's vs channeled ults, Spirit Vessel vs regen heroes), driven by hero ability data
-- Build path intelligence — component-level ordering, not just final item recommendations
-- Win condition framing — classify team compositions into macro strategies, frame item builds around how the game is won
+- ML Win Predictor — XGBoost/logistic model on 200k+ recent matches, draft win probability, synergy/counter matrices by MMR bracket
+- Hero Selector — role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value
 
 ### Out of Scope
 
 - Mobile optimization — desktop-first
-- Voice coaching / audio callouts — text-only
 - Hotkey screen capture / clipboard monitoring — manual paste only
 - Ability build suggestions — item-focused only
 
 ## Context
 
-- **Shipped:** v1.0 MVP (2026-03-21), v1.1 Allied Synergy & Neutral Items (2026-03-23), v2.0 Live Game Intelligence (2026-03-26), v3.0 Design Overhaul & Performance (2026-03-27)
+- **Shipped:** v1.0 MVP (2026-03-21), v1.1 (2026-03-23), v2.0 (2026-03-26), v3.0 (2026-03-27), v4.0 (2026-03-28), v5.0 (2026-03-29)
 - **Codebase:** React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
 - **Test suite:** 160+ tests (backend pytest + frontend vitest), zero failures
 - **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
@@ -106,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 — v4.0 Coaching Intelligence milestone started*
+*Last updated: 2026-03-29 — v6.0 Draft Intelligence milestone started*
