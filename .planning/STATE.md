@@ -4,7 +4,7 @@ milestone: v6.0
 milestone_name: Draft Intelligence
 status: verifying
 stopped_at: Completed 31-03-PLAN.md — Phase 31 hero-selector complete
-last_updated: "2026-03-29T21:18:26.718Z"
+last_updated: "2026-03-29T21:19:32.240Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 2

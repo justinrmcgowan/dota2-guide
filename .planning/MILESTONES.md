@@ -1,5 +1,19 @@
 # Milestones
 
+## v6.0 Draft Intelligence (Shipped: 2026-03-29)
+
+**Phases completed:** 2 phases, 6 plans, 8 tasks
+
+**Key accomplishments:**
+
+- XGBoost offline training pipeline: OpenDota SQL Explorer paged download, 252-dim one-hot feature vectors, 4 bracket models (.ubj), and synergy/counter matrices in matrices.json
+- One-liner:
+- WinConditionBadge now renders ML win probability inline with allied archetype — e.g. "Teamfight 54%" — using a single optional prop wired from RecommendResponse
+- One-liner:
+- TypeScript interfaces (SuggestHeroRequest, HeroSuggestion, SuggestHeroResponse) added to hero.ts with api.suggestHero() method wired to POST /api/suggest-hero in client.ts
+
+---
+
 ## v5.0 Supreme Companion (Shipped: 2026-03-29)
 
 **Phases completed:** 30 phases, 73 plans, 147 tasks
