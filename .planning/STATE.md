@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Phase complete — ready for verification
-stopped_at: Completed 33-03-PLAN.md
-last_updated: "2026-03-28T20:11:07.058Z"
+status: Ready to execute
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-03-29T10:51:48.892Z"
 progress:
   total_phases: 29
   completed_phases: 28
-  total_plans: 69
-  completed_plans: 69
+  total_plans: 71
+  completed_plans: 70
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** v5.0 Supreme Companion — Phases 24-28
+**Current focus:** Phase 24 — audio-prompts
 
 ## Current Position
 
-Phase: 28-patch-data-refresh
+Phase: 24 (audio-prompts) — EXECUTING
 Plan: 2 of 2
 
 ## Performance Metrics
@@ -64,6 +64,7 @@ Plan: 2 of 2
 | Phase 33-game-analytics P01 | 4min | 2 tasks | 3 files |
 | Phase 33-game-analytics P02 | 2min | 2 tasks | 3 files |
 | Phase 33-game-analytics P03 | 4min | 2 tasks | 5 files |
+| Phase 24-audio-prompts P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,9 @@ Recent decisions affecting current work:
 - [Phase 33-game-analytics]: Synchronous getState() snapshot before clear() on match_id change; fire-and-forget POST never blocks new game flow
 - [Phase 33-game-analytics]: useState view routing ('advisor' | 'match-history') instead of React Router for simplicity
 - [Phase 33-game-analytics]: Client-side hero name text filter + server-side result/mode filters for hybrid UX
+- [Phase 24-audio-prompts]: useAudioStore uses standard Zustand persist (no custom storage adapter) — only primitive types (bool, number) so no Set serialization needed
+- [Phase 24-audio-prompts]: speak() does not set utterance.voice — avoids getVoices() async race condition on Chrome
+- [Phase 24-audio-prompts]: Volume slider hidden when audio disabled — clean SettingsPanel UI with no redundant controls
 
 ### Pending Todos
 
@@ -130,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:11:07.054Z
-Stopped at: Completed 33-03-PLAN.md
+Last session: 2026-03-29T10:51:48.889Z
+Stopped at: Completed 24-01-PLAN.md
 Resume file: None
