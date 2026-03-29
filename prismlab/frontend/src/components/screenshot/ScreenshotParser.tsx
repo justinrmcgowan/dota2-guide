@@ -97,24 +97,60 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
 
   const handleApply = useCallback(() => {
     const gameStore = useGameStore.getState();
+    const myHeroId = gameStore.selectedHero?.id ?? null;
+
+    // Split parsed heroes into allies and enemies.
+    // The Dota 2 scoreboard shows Radiant (top 5) then Dire (bottom 5).
+    // If our hero is in the first 5, those are allies and the rest are enemies.
+    // If our hero is in the last 5, those are enemies and the first 5 are allies.
+    // If we can't find our hero, treat all as enemies (legacy behavior).
+    let allyHeroes: typeof parsedHeroes = [];
+    let enemyHeroes: typeof parsedHeroes = [];
+
+    if (myHeroId && parsedHeroes.length >= 6) {
+      const myIdx = parsedHeroes.findIndex((h) => h.hero_id === myHeroId);
+      if (myIdx >= 0 && myIdx < 5) {
+        // Our hero is in the first group (Radiant side of scoreboard)
+        allyHeroes = parsedHeroes.slice(0, 5).filter((h) => h.hero_id !== myHeroId);
+        enemyHeroes = parsedHeroes.slice(5, 10);
+      } else if (myIdx >= 5) {
+        // Our hero is in the second group (Dire side of scoreboard)
+        enemyHeroes = parsedHeroes.slice(0, 5);
+        allyHeroes = parsedHeroes.slice(5, 10).filter((h) => h.hero_id !== myHeroId);
+      } else {
+        // Hero not found — all enemies (fallback)
+        enemyHeroes = parsedHeroes.slice(0, 5);
+      }
+    } else {
+      // Less than 6 heroes parsed or no hero selected — all enemies
+      enemyHeroes = parsedHeroes.slice(0, 5);
+    }
+
+    // Set allies (up to 4, excluding self)
+    allyHeroes.slice(0, 4).forEach((parsedHero, idx) => {
+      const matched = heroes.find((h) => h.id === parsedHero.hero_id);
+      if (matched) {
+        gameStore.setAlly(idx, matched);
+      }
+    });
 
     // Set opponents (up to 5)
-    parsedHeroes.slice(0, 5).forEach((parsedHero, idx) => {
+    enemyHeroes.slice(0, 5).forEach((parsedHero, idx) => {
       const matched = heroes.find((h) => h.id === parsedHero.hero_id);
       if (matched) {
         gameStore.setOpponent(idx, matched);
       }
     });
 
-    // Set enemy items -- collect all unique internal_names
-    const itemNames = parsedHeroes.flatMap((h) =>
+    // Set enemy items -- collect from ENEMY heroes only
+    const itemNames = enemyHeroes.flatMap((h) =>
       h.items.map((i) => i.internal_name),
     );
     const uniqueItems = [...new Set(itemNames)];
     gameStore.setEnemyItemsSpotted(uniqueItems);
 
-    // Collect enemy KDA/level context from parsed heroes
-    const enemyCtx = parsedHeroes
+    // Collect enemy KDA/level context from enemy heroes only
+    const enemyCtx = enemyHeroes
       .filter((h) => h.hero_id !== null)
       .map((h) => ({
         hero_id: h.hero_id!,
