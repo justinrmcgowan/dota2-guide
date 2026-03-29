@@ -22,3 +22,27 @@ export interface Hero {
   img_url: string;
   icon_url: string;
 }
+
+export interface SuggestHeroRequest {
+  role: number;
+  ally_ids: number[];
+  enemy_ids: number[];
+  excluded_hero_ids: number[];
+  top_n?: number;       // default 10 on backend
+  bracket?: number;     // default 2 on backend
+}
+
+export interface HeroSuggestion {
+  hero_id: number;
+  hero_name: string;
+  internal_name: string;
+  icon_url: string | null;
+  score: number;
+  synergy_score: number;
+  counter_score: number;
+}
+
+export interface SuggestHeroResponse {
+  suggestions: HeroSuggestion[];
+  matrices_available: boolean;
+}
