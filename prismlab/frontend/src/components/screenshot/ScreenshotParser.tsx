@@ -98,31 +98,36 @@ function ScreenshotParser({ heroes }: ScreenshotParserProps) {
   const handleApply = useCallback(() => {
     const gameStore = useGameStore.getState();
     const myHeroId = gameStore.selectedHero?.id ?? null;
+    const mySide = gameStore.side ?? "radiant";
 
-    // Split parsed heroes into allies and enemies.
-    // The Dota 2 scoreboard shows Radiant (top 5) then Dire (bottom 5).
-    // If our hero is in the first 5, those are allies and the rest are enemies.
-    // If our hero is in the last 5, those are enemies and the first 5 are allies.
-    // If we can't find our hero, treat all as enemies (legacy behavior).
+    // Split parsed heroes into allies and enemies using team field from vision parser.
+    // If team field is available, use it directly. Otherwise fall back to finding
+    // our hero in the list to determine sides.
     let allyHeroes: typeof parsedHeroes = [];
     let enemyHeroes: typeof parsedHeroes = [];
 
-    if (myHeroId && parsedHeroes.length >= 6) {
+    const hasTeamData = parsedHeroes.some((h) => h.team !== null);
+
+    if (hasTeamData) {
+      // Vision parser provided team assignments — use them directly
+      const myTeam = mySide === "dire" ? "dire" : "radiant";
+      allyHeroes = parsedHeroes.filter(
+        (h) => h.team === myTeam && h.hero_id !== myHeroId,
+      );
+      enemyHeroes = parsedHeroes.filter((h) => h.team !== myTeam);
+    } else if (myHeroId && parsedHeroes.length >= 6) {
+      // Fallback: use hero position in list (Radiant first 5, Dire last 5)
       const myIdx = parsedHeroes.findIndex((h) => h.hero_id === myHeroId);
       if (myIdx >= 0 && myIdx < 5) {
-        // Our hero is in the first group (Radiant side of scoreboard)
         allyHeroes = parsedHeroes.slice(0, 5).filter((h) => h.hero_id !== myHeroId);
         enemyHeroes = parsedHeroes.slice(5, 10);
       } else if (myIdx >= 5) {
-        // Our hero is in the second group (Dire side of scoreboard)
         enemyHeroes = parsedHeroes.slice(0, 5);
         allyHeroes = parsedHeroes.slice(5, 10).filter((h) => h.hero_id !== myHeroId);
       } else {
-        // Hero not found — all enemies (fallback)
         enemyHeroes = parsedHeroes.slice(0, 5);
       }
     } else {
-      // Less than 6 heroes parsed or no hero selected — all enemies
       enemyHeroes = parsedHeroes.slice(0, 5);
     }
 

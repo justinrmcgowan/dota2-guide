@@ -17,10 +17,12 @@ outside the JSON object. No markdown, no code fences, no explanation.
 
 For each hero visible in the scoreboard, extract:
 1. **Hero name** -- use the official English localized name (e.g., "Anti-Mage", "Crystal Maiden")
-2. **Items** -- only items the hero actually has in their inventory (up to 6 slots). \
+2. **Team** -- "radiant" or "dire". On the Dota 2 scoreboard, Radiant heroes are listed \
+on the top/left side (green), Dire heroes on the bottom/right side (red).
+3. **Items** -- only items the hero actually has in their inventory (up to 6 slots). \
 If an inventory slot is empty, do not include it. Only list items the hero actually has.
-3. **KDA** -- kills, deaths, and assists as integers
-4. **Level** -- the hero's current level as an integer
+4. **KDA** -- kills, deaths, and assists as integers
+5. **Level** -- the hero's current level as an integer
 
 For each item, provide your confidence:
 - "certain": You can clearly read or identify the item icon/name
@@ -32,6 +34,7 @@ Required JSON schema:
   "heroes": [
     {
       "hero_name": "Anti-Mage",
+      "team": "radiant",
       "items": [
         {"name": "Battle Fury", "confidence": "certain"},
         {"name": "Manta Style", "confidence": "likely"}

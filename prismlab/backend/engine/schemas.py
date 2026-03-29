@@ -317,6 +317,7 @@ class VisionHero(BaseModel):
     """Raw hero from Vision output before DB matching."""
 
     hero_name: str
+    team: str | None = None  # "radiant" or "dire"
     items: list[VisionItem] = Field(default_factory=list)
     kills: int | None = None
     deaths: int | None = None
@@ -341,11 +342,12 @@ class ParsedItem(BaseModel):
 
 
 class ParsedHero(BaseModel):
-    """Single enemy hero after DB matching."""
+    """Single hero after DB matching."""
 
     hero_name: str
     hero_id: int | None = None
     internal_name: str | None = None
+    team: str | None = None  # "radiant" or "dire"
     items: list[ParsedItem] = Field(default_factory=list)
     kills: int | None = None
     deaths: int | None = None

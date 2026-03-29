@@ -10,6 +10,7 @@ export interface ParsedHero {
   hero_name: string;
   hero_id: number | null;
   internal_name: string | null;
+  team: "radiant" | "dire" | null;
   items: ParsedItem[];
   kills: number | null;
   deaths: number | null;

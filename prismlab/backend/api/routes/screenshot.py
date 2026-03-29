@@ -109,6 +109,7 @@ async def parse_screenshot(
                 hero_name=hero_obj.localized_name if hero_obj else vh.hero_name,
                 hero_id=hero_obj.id if hero_obj else None,
                 internal_name=hero_obj.internal_name if hero_obj else None,
+                team=vh.team,
                 items=matched_items,
                 kills=vh.kills,
                 deaths=vh.deaths,
