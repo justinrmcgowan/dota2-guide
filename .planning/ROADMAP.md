@@ -253,10 +253,11 @@ Plans:
 **Goal:** Elgato Stream Deck plugin (Node.js, SDK v2) that connects to Prismlab's existing WebSocket broadcast as a display consumer, rendering live game state data (gold, KDA, game clock, items, Rosh status, tower counts, alive/dead) to Stream Deck XL buttons with no backend changes required
 **Requirements**: TBD
 **Depends on:** Phase 10 (GSI + WebSocket pipeline must be operational)
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 29 to break down)
+- [ ] 29-01-PLAN.md -- Plugin scaffold: package.json, tsconfig, rollup, manifest.json, connection.ts, plugin.ts, property inspector
+- [ ] 29-02-PLAN.md -- 6 action implementations: Gold/GPM, KDA, Clock, Items, Rosh, Towers with SVG rendering
 
 ### Phase 33: Game Analytics & Match Logging
 
