@@ -74,7 +74,7 @@
 
 **Milestone Goal:** Transform Prismlab into the definitive Dota 2 companion -- with audio coaching, auto-populated drafts from live API data, sub-5s recommendation latency, graceful game lifecycle handling, and patch 7.41 data freshness.
 
-- [ ] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control
+- [x] **Phase 24: Audio Prompts & Volume Control** - TTS/audio cues for item timing alerts, purchase reminders, coaching callouts with volume control (completed 2026-03-29)
 - [x] **Phase 25: API-Driven Draft Input** - Auto-populate allies/opponents from OpenDota/Stratz live match API using Steam ID (completed 2026-03-28)
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
@@ -187,11 +187,11 @@ Note: Phase 20 and Phase 21 both depend only on Phase 19 and could theoretically
 **Goal:** TTS or audio cue system that announces item timing alerts, purchase reminders, and coaching callouts with configurable volume control
 **Requirements**: AUDIO-01, AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05
 **Depends on:** Phase 23
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 24-01-PLAN.md -- audioStore, speak utility, audioUtils, SettingsPanel Audio Coaching section
-- [ ] 24-02-PLAN.md -- useAudio hook (GSI toast + recommendation subscriptions), App.tsx registration
+- [x] 24-02-PLAN.md -- useAudio hook (GSI toast + recommendation subscriptions), App.tsx registration
 
 ### Phase 25: API-Driven Draft Input
 
