@@ -53,8 +53,8 @@ streamDeck.settings
   });
 
 // Re-connect when user changes URL in property inspector
-streamDeck.settings.onDidReceiveGlobalSettings(({ payload }) => {
-  const url = (payload.settings as { backendUrl?: string }).backendUrl;
+streamDeck.settings.onDidReceiveGlobalSettings(({ settings }) => {
+  const url = (settings as { backendUrl?: string }).backendUrl;
   if (url) {
     backendConnection.reconnect(url);
   }
