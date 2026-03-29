@@ -79,7 +79,7 @@
 - [x] **Phase 26: Engine Optimization** - Reduce eval latency, rule-only fast path, local LLM via Ollama, courier exclusion, concise reasoning (completed 2026-03-28)
 - [x] **Phase 27: Game Lifecycle Management** - Handle mid-game abandons, new game starts, state reset between matches, GSI reconnection (completed 2026-03-28)
 - [x] **Phase 28: Patch 7.41 Data Refresh** - New items (Wizard Hat, Shawl, Splintmail, Chasm Stone, Consecrated Wraps, Essence Distiller, Crella's Crozier, Hydra's Breath), updated costs/recipes (completed 2026-03-28)
-- [ ] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons
+- [x] **Phase 29: Stream Deck Integration** - Elgato Stream Deck plugin consuming existing WebSocket game state feed, rendering live Dota 2 data to XL buttons (completed 2026-03-29)
 - [x] **Phase 33: Game Analytics & Match Logging** — Log every match, track recommendations vs actual purchases, win/loss, match history dashboard (completed 2026-03-28)
 
 ### v6.0 Draft Intelligence (Planned)
@@ -253,11 +253,11 @@ Plans:
 **Goal:** Elgato Stream Deck plugin (Node.js, SDK v2) that connects to Prismlab's existing WebSocket broadcast as a display consumer, rendering live game state data (gold, KDA, game clock, items, Rosh status, tower counts, alive/dead) to Stream Deck XL buttons with no backend changes required
 **Requirements**: TBD
 **Depends on:** Phase 10 (GSI + WebSocket pipeline must be operational)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 29-01-PLAN.md -- Plugin scaffold: package.json, tsconfig, rollup, manifest.json, connection.ts, plugin.ts, property inspector
-- [ ] 29-02-PLAN.md -- 6 action implementations: Gold/GPM, KDA, Clock, Items, Rosh, Towers with SVG rendering
+- [x] 29-02-PLAN.md -- 6 action implementations: Gold/GPM, KDA, Clock, Items, Rosh, Towers with SVG rendering
 
 ### Phase 33: Game Analytics & Match Logging
 

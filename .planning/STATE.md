@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Supreme Companion
-status: Ready to execute
-stopped_at: Completed 29-01-PLAN.md
-last_updated: "2026-03-29T11:27:20.150Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 29-02-PLAN.md
+last_updated: "2026-03-29T11:34:54.560Z"
 progress:
   total_phases: 30
-  completed_phases: 29
+  completed_phases: 30
   total_plans: 73
-  completed_plans: 72
+  completed_plans: 73
 ---
 
 # Project State
@@ -67,6 +67,7 @@ Plan: 2 of 2
 | Phase 24-audio-prompts P01 | 2min | 2 tasks | 3 files |
 | Phase 24-audio-prompts P02 | 3 | 2 tasks | 2 files |
 | Phase 29-stream-deck-integration P01 | 5min | 2 tasks | 20 files |
+| Phase 29-stream-deck-integration P02 | 5min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,8 @@ Recent decisions affecting current work:
 - [Phase 29-stream-deck-integration]: ws package for BackendConnection (not reconnecting-websocket) — lighter, manual exponential backoff mirrors useWebSocket.ts pattern
 - [Phase 29-stream-deck-integration]: Module-level BackendConnection singleton shared across all 6 action types — avoids 6 separate WebSocket connections
 - [Phase 29-stream-deck-integration]: Stub action files allow TypeScript compilation in Plan 01; Plan 02 replaces with full SingletonAction implementations
+- [Phase 29-stream-deck-integration]: TC39 stage-3 decorators: removed experimentalDecorators from tsconfig to match @elgato/streamdeck SDK ClassDecoratorContext signature
+- [Phase 29-stream-deck-integration]: SVG data URL pattern for Stream Deck buttons: buildXxxSvg() returns inline SVG string, setImage() uses data:image/svg+xml with encodeURIComponent
 
 ### Pending Todos
 
@@ -140,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T11:27:20.146Z
-Stopped at: Completed 29-01-PLAN.md
+Last session: 2026-03-29T11:34:54.556Z
+Stopped at: Completed 29-02-PLAN.md
 Resume file: None
