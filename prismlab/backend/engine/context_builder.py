@@ -92,6 +92,16 @@ class ContextBuilder:
             f"Primary: {primary_attr}, Attack: {attack_type}",
         ]
 
+        # Phase 36: Game clock for time-aware reasoning (PROM-02)
+        clock_section = self._build_game_clock_section(request)
+        if clock_section:
+            sections.append(clock_section)
+
+        # Phase 36: Unusual role detection (PROM-03)
+        unusual_role = self._build_unusual_role_section(request)
+        if unusual_role:
+            sections.append(unusual_role)
+
         if ally_lines:
             sections.append(f"## Allied Heroes\n{ally_lines}")
 
@@ -107,6 +117,11 @@ class ContextBuilder:
         enemy_status = self._build_enemy_context_section(request)
         if enemy_status:
             sections.append(enemy_status)
+
+        # Phase 36: Partial draft caveats (PROM-04)
+        partial_draft = self._build_partial_draft_section(request)
+        if partial_draft:
+            sections.append(partial_draft)
 
         if midgame_section:
             sections.append(midgame_section)
@@ -258,6 +273,74 @@ class ContextBuilder:
     def _get_hero(self, hero_id: int) -> HeroCached | None:
         """Look up a hero by ID from the in-memory cache."""
         return self.cache.get_hero(hero_id)
+
+    # ------------------------------------------------------------------
+    # Phase 36: Game clock, unusual role, partial draft annotations
+    # ------------------------------------------------------------------
+
+    def _build_game_clock_section(self, request: RecommendRequest) -> str:
+        """Inject game clock into Claude context for time-aware reasoning.
+
+        Returns empty string if game_time_seconds is None (pre-game or unknown).
+        """
+        if request.game_time_seconds is None:
+            return ""
+
+        minutes = request.game_time_seconds // 60
+        seconds = request.game_time_seconds % 60
+        clock_str = f"{minutes}:{seconds:02d}"
+
+        turbo_note = " (TURBO MODE -- all timing benchmarks halved)" if request.turbo else ""
+
+        return (
+            f"## Game Clock\n"
+            f"Current game time: {clock_str}{turbo_note}. "
+            f"Adjust item recommendations for this timing window. "
+            f"Items that are strong early may be too late; items that scale "
+            f"may be the right pivot."
+        )
+
+    def _build_unusual_role_section(self, request: RecommendRequest) -> str:
+        """Detect and flag unusual hero-role combinations.
+
+        Uses HERO_ROLE_VIABLE from hero_selector to check if the hero
+        is commonly played in this role. Returns annotation for Claude
+        if the role is uncommon.
+        """
+        from engine.hero_selector import HERO_ROLE_VIABLE
+
+        viable_ids = HERO_ROLE_VIABLE.get(request.role, set())
+        if not viable_ids or request.hero_id in viable_ids:
+            return ""  # Normal role or no data
+
+        hero = self._get_hero(request.hero_id)
+        hero_name = hero.localized_name if hero else f"Hero #{request.hero_id}"
+
+        return (
+            f"## Unusual Role Alert\n"
+            f"{hero_name} is in an uncommon role (Pos {request.role}). "
+            f"This is NOT a standard pick for this position. Adjust item builds "
+            f"accordingly -- prioritize items that compensate for the hero's "
+            f"weaknesses in this role rather than standard builds. "
+            f"Acknowledge the unconventional pick in your strategy."
+        )
+
+    def _build_partial_draft_section(self, request: RecommendRequest) -> str:
+        """Add caveats when draft is incomplete (<10 heroes picked).
+
+        Returns empty string if draft is complete (5 allies + 5 enemies = 10).
+        """
+        total_heroes = 1 + len(request.allies) + len(request.all_opponents)  # player + allies + enemies
+        if total_heroes >= 10:
+            return ""  # Full draft
+
+        return (
+            f"## Partial Draft ({total_heroes}/10 heroes picked)\n"
+            f"Draft is incomplete -- {10 - total_heroes} heroes not yet picked. "
+            f"Focus on hero-intrinsic items (stats, lane sustainability, core timing items) "
+            f"rather than counter-specific items. Recommendations will be refined as more "
+            f"heroes are revealed. Acknowledge this uncertainty in your strategy."
+        )
 
     def _get_counter_relevant_abilities(self, hero_id: int) -> str:
         """Pre-filter abilities to only counter-relevant properties.
