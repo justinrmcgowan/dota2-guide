@@ -129,7 +129,11 @@
   3. Response validator catches phase-cost violations, cross-phase duplicates, and missing counter items — retries once on failure
   4. Rules engine covers 50+ deterministic scenarios (currently ~20) including item-vs-item counters and meta-aware team composition rules
   5. Validation failure rates are logged for prompt tuning
-**Plans:** TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 35-01-PLAN.md — Pro/high-MMR build baselines data pipeline and context builder integration
+- [ ] 35-02-PLAN.md — Response validation layer with retry-on-failure and metrics logging
+- [ ] 35-03-PLAN.md — Expanded rules engine (50+ rules: item-vs-item, meta-aware, self-hero)
 
 ### Phase 36: Prompt Intelligence
 **Goal:** Claude's reasoning consistently matches the quality of an expert coach through few-shot exemplars, game-clock awareness, and graceful handling of edge cases
@@ -171,7 +175,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 34. UX Speed & Instant Items | 7/7 | Complete | 2026-03-30 |
-| 35. Quality Foundation | 0/TBD | Not started | - |
+| 35. Quality Foundation | 0/3 | Planning complete | - |
 | 36. Prompt Intelligence | 0/TBD | Not started | - |
 | 37. Latency & Caching | 0/TBD | Not started | - |
 | 38. Adaptiveness & Accuracy | 0/TBD | Not started | - |
