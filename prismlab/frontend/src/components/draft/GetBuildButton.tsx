@@ -8,6 +8,7 @@ function GetBuildButton() {
   const role = useGameStore((s) => s.role);
   const { recommend, isLoading } = useRecommendation();
   const hasData = useRecommendationStore((s) => s.data !== null);
+  const isPartial = useRecommendationStore((s) => s.isPartial);
   const secondsRemaining = useRefreshStore((s) => s.secondsRemaining);
   const queuedEvent = useRefreshStore((s) => s.queuedEvent);
 
@@ -16,7 +17,9 @@ function GetBuildButton() {
 
   const label = isLoading
     ? hasData ? "Re-Evaluating..." : "Analyzing..."
-    : hasData ? "Re-Evaluate" : "Get Item Build";
+    : isPartial
+      ? "Updating..."
+      : hasData ? "Re-Evaluate" : "Get Item Build";
 
   return (
     <div>

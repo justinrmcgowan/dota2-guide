@@ -1,5 +1,6 @@
 import { useGameStore } from "../../stores/gameStore";
 import { useRecommendation } from "../../hooks/useRecommendation";
+import { useRecommendationStore } from "../../stores/recommendationStore";
 import { heroIconUrl, heroSlugFromInternal } from "../../utils/imageUrls";
 import ItemTimeline from "../timeline/ItemTimeline";
 import LoadingSkeleton from "../timeline/LoadingSkeleton";
@@ -9,6 +10,7 @@ function MainPanel() {
   const selectedHero = useGameStore((s) => s.selectedHero);
   const { data, isLoading, error, selectedItemId, selectItem, clear } =
     useRecommendation();
+  const isPartial = useRecommendationStore((s) => s.isPartial);
 
   return (
     <main className="flex-1 bg-surface overflow-y-auto p-6">
@@ -55,6 +57,7 @@ function MainPanel() {
             data={data}
             selectedItemId={selectedItemId}
             onSelectItem={selectItem}
+            isPartial={isPartial}
           />
         </div>
       )}

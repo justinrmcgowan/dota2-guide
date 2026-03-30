@@ -10,9 +10,10 @@ interface ItemTimelineProps {
   data: RecommendResponse;
   selectedItemId: string | null;
   onSelectItem: (key: string | null) => void;
+  isPartial?: boolean;
 }
 
-function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps) {
+function ItemTimeline({ data, selectedItemId, onSelectItem, isPartial = false }: ItemTimelineProps) {
   const gsiStatus = useGsiStore((s) => s.gsiStatus);
   const gameClock = useGsiStore((s) => s.liveState?.game_clock ?? null);
   const gold = useGsiStore((s) => s.liveState?.gold ?? null);
@@ -89,6 +90,13 @@ function ItemTimeline({ data, selectedItemId, onSelectItem }: ItemTimelineProps)
           currentTier={currentTier}
           gameClock={gsiStatus === "connected" ? gameClock : null}
         />
+      )}
+
+      {isPartial && (
+        <div className="flex items-center gap-2 px-4 py-3 text-sm text-on-surface-variant/60 italic">
+          <span className="inline-block w-3 h-3 border-2 border-secondary/50 border-t-secondary rounded-full animate-spin" />
+          Analyzing full matchup for detailed recommendations...
+        </div>
       )}
     </div>
   );
