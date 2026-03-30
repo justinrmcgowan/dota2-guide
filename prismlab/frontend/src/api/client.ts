@@ -1,4 +1,4 @@
-import type { Hero, SuggestHeroRequest, HeroSuggestion, SuggestHeroResponse } from "../types/hero";
+import type { Hero, SuggestHeroRequest, SuggestHeroResponse } from "../types/hero";
 import type { LiveMatchResponse } from "../types/livematch";
 import type {
   MatchLogPayload,
