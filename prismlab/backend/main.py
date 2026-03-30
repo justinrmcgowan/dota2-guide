@@ -44,7 +44,10 @@ async def lifespan(app: FastAPI):
     )
 
     # Load ML win predictor models and matrices (synchronous file I/O)
-    data_cache.load_win_predictor(models_dir="models")
+    try:
+        data_cache.load_win_predictor(models_dir="models")
+    except Exception as e:
+        logger.warning("Win predictor models failed to load (non-fatal): %s", e)
 
     # Start data refresh scheduler — every 6h to catch patches same day
     scheduler = AsyncIOScheduler()
