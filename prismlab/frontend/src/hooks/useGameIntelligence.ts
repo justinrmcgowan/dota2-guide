@@ -72,7 +72,10 @@ const DISCONNECT_TIMEOUT_MS = 10 * 60 * 1000;
  *
  * @param heroes - Array of all heroes from useHeroes()
  */
-export function useGameIntelligence(heroes: Hero[]): void {
+export function useGameIntelligence(
+  heroes: Hero[],
+  fetchDraft?: () => void,
+): void {
   // --- Refs (combined from both hooks) ---
   const heroesRef = useRef<Hero[]>(heroes);
   const prevHeroIdRef = useRef<number>(0);
@@ -92,6 +95,7 @@ export function useGameIntelligence(heroes: Hero[]): void {
   const prevGameStateRef = useRef<string>("");
   const capturedWinTeamRef = useRef<string>("");
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchDraftRef = useRef(fetchDraft);
 
   /**
    * Fire a recommendation refresh -- replicates useRecommendation.recommend()
@@ -174,6 +178,10 @@ export function useGameIntelligence(heroes: Hero[]): void {
   useEffect(() => {
     heroesRef.current = heroes;
   }, [heroes]);
+
+  useEffect(() => {
+    fetchDraftRef.current = fetchDraft;
+  }, [fetchDraft]);
 
   // --- FIRST useEffect: gsiStore subscription ---
   // Handles: hero detection, playstyle auto-suggest, item marking,
@@ -377,6 +385,11 @@ export function useGameIntelligence(heroes: Hero[]): void {
         if (hero) {
           useGameStore.getState().selectHero(hero);
           prevHeroIdRef.current = live.hero_id;
+
+          // Immediately refresh draft data to pick up allies/opponents faster
+          if (fetchDraftRef.current) {
+            fetchDraftRef.current();
+          }
 
           // Role suggestion
           const role = inferRole(hero);

@@ -20,7 +20,7 @@ function App() {
   const { heroes } = useHeroes();
   const { recommendTwoPass } = useRecommendation();
   const { fetchDraft } = useLiveDraft(heroes, recommendTwoPass);
-  useGameIntelligence(heroes);
+  useGameIntelligence(heroes, fetchDraft);
   useAudio(); // Audio coaching — speaks GSI trigger toasts and new recommendation callouts
 
   const [settingsOpen, setSettingsOpen] = useState(false);
