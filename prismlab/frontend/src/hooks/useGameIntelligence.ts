@@ -75,6 +75,7 @@ const DISCONNECT_TIMEOUT_MS = 10 * 60 * 1000;
 export function useGameIntelligence(
   heroes: Hero[],
   fetchDraft?: () => void,
+  recommendTwoPass?: () => Promise<void>,
 ): void {
   // --- Refs (combined from both hooks) ---
   const heroesRef = useRef<Hero[]>(heroes);
@@ -96,6 +97,8 @@ export function useGameIntelligence(
   const capturedWinTeamRef = useRef<string>("");
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchDraftRef = useRef(fetchDraft);
+  const recommendTwoPassRef = useRef(recommendTwoPass);
+  const gsiAutoTriggeredRef = useRef(false);
 
   /**
    * Fire a recommendation refresh -- replicates useRecommendation.recommend()
@@ -183,6 +186,10 @@ export function useGameIntelligence(
     fetchDraftRef.current = fetchDraft;
   }, [fetchDraft]);
 
+  useEffect(() => {
+    recommendTwoPassRef.current = recommendTwoPass;
+  }, [recommendTwoPass]);
+
   // --- FIRST useEffect: gsiStore subscription ---
   // Handles: hero detection, playstyle auto-suggest, item marking,
   // lane detection, event detection, cooldown, 1Hz interval
@@ -207,6 +214,7 @@ export function useGameIntelligence(
           prevMatchIdRef.current = "";
           firedPhasesRef.current = new Set();
           laneAutoDetectedRef.current = false;
+          gsiAutoTriggeredRef.current = false;
           cooldownEndRef.current = 0;
           queuedEventRef.current = null;
           prevStateRef.current = {
@@ -364,6 +372,7 @@ export function useGameIntelligence(
         prevGameStateRef.current = "";
         firedPhasesRef.current = new Set();
         laneAutoDetectedRef.current = false;
+        gsiAutoTriggeredRef.current = false;
         cooldownEndRef.current = 0;
         queuedEventRef.current = null;
         prevStateRef.current = {
@@ -399,6 +408,18 @@ export function useGameIntelligence(
             // so immediately set the suggested playstyle after setRole
             const playstyle = suggestPlaystyle(hero.id, role);
             useGameStore.getState().setPlaystyle(playstyle);
+
+            // Auto-trigger: fire two-pass recommend when GSI detects hero+role
+            const recStore = useRecommendationStore.getState();
+            if (
+              !gsiAutoTriggeredRef.current &&
+              !recStore.data &&
+              !recStore.isLoading &&
+              recommendTwoPassRef.current
+            ) {
+              gsiAutoTriggeredRef.current = true;
+              recommendTwoPassRef.current();
+            }
           }
         } else {
           console.warn(
