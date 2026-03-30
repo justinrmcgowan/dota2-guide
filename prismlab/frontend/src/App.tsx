@@ -5,6 +5,7 @@ import MainPanel from "./components/layout/MainPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGameIntelligence } from "./hooks/useGameIntelligence";
 import { useLiveDraft } from "./hooks/useLiveDraft";
+import { useRecommendation } from "./hooks/useRecommendation";
 import { useAudio } from "./hooks/useAudio";
 import { useHeroes } from "./hooks/useHeroes";
 import { useScreenshotPaste } from "./hooks/useScreenshotPaste";
@@ -17,8 +18,9 @@ import MatchHistory from "./pages/MatchHistory";
 
 function App() {
   const { heroes } = useHeroes();
+  const { recommendTwoPass } = useRecommendation();
+  const { fetchDraft } = useLiveDraft(heroes, recommendTwoPass);
   useGameIntelligence(heroes);
-  useLiveDraft(heroes);
   useAudio(); // Audio coaching — speaks GSI trigger toasts and new recommendation callouts
 
   const [settingsOpen, setSettingsOpen] = useState(false);
