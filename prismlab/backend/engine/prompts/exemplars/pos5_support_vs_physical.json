@@ -1,0 +1,61 @@
+{
+  "role": 5,
+  "threat_profile": "physical",
+  "matchup_type": "physical",
+  "hero_example": "Dazzle",
+  "enemy_example": "Phantom Assassin + Sven",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Lane sustain against PA Stifling Dagger harass and Sven Storm Hammer trades."},
+          {"item_name": "Observer Ward", "reasoning": "Ward carry lane pull camp; deny PA free farm with vision on pull timing."},
+          {"item_name": "Healing Salve", "reasoning": "Emergency heal on carry when PA crits for 200+ at level 3."},
+          {"item_name": "Iron Branch", "reasoning": "2x branches for +2 stats; builds into Wand. Every HP point matters."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Boots of Speed", "reasoning": "Positioning for Shadow Wave heal bounces. Stay within 450 range of carry."},
+          {"item_name": "Magic Wand", "reasoning": "PA Dagger + Sven Storm Hammer spam generate wand charges consistently."},
+          {"item_name": "Medallion of Courage", "reasoning": "-5 armor on PA amplifies your carry's right-click damage. PA has low base armor."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Solar Crest", "reasoning": "+6 armor + 10% evasion on your carry. PA and Sven deal physical only -- Crest reduces all of it."},
+          {"item_name": "Ghost Scepter", "reasoning": "Ethereal form dodges PA crit + Sven cleave. Both deal purely physical damage -- 0 damage taken."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Glimmer Cape", "reasoning": "Invisible heal on carry during PA + Sven focus. Buys 5s for Shallow Grave CD."},
+          {"item_name": "Aeon Disk", "reasoning": "Survives PA crit initiation. 2.5s invulnerability ensures Shallow Grave cast on carry."},
+          {"item_name": "Aghanim's Shard", "reasoning": "Dazzle Shard upgrade for extended team utility and healing."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 8000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Force Staff", "reasoning": "Push carry out of Sven God's Strength range. Reposition after PA blink strike."},
+          {"item_name": "Guardian Greaves", "reasoning": "If ahead, Greaves dispel + heal aura sustains team through extended physical siege."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Dazzle's Shallow Grave is the ultimate answer to physical burst. Ghost Scepter makes Dazzle untargetable by both PA and Sven. Solar Crest on carry reduces incoming physical by 30%+. Keep Shallow Grave for PA crits and prioritize positioning to always be in range of your carry."
+  }
+}

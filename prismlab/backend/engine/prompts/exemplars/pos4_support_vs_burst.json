@@ -1,0 +1,61 @@
+{
+  "role": 4,
+  "threat_profile": "burst",
+  "matchup_type": "magic",
+  "hero_example": "Earth Spirit",
+  "enemy_example": "Lion + Lina",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Earth Spike + Dragon Slave harass. Both heroes nuke hard at level 2."},
+          {"item_name": "Observer Ward", "reasoning": "Vision on enemy rotation paths -- Lion and Lina combo kills at level 3."},
+          {"item_name": "Iron Branch", "reasoning": "2x branches for +2 stats; Earth Spirit's base HP is mediocre."},
+          {"item_name": "Enchanted Mango", "reasoning": "Burst mana for Rolling Boulder escape when ganked by Finger + Laguna combo."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Boots of Speed", "reasoning": "Positioning speed for Boulder Smash + Rolling Boulder combos; kite Lion's melee range."},
+          {"item_name": "Magic Wand", "reasoning": "Lion Earth Spike + Lina Dragon Slave = 6+ wand charges per minute. Burst heal saves lives."},
+          {"item_name": "Bracer", "reasoning": "Cheap HP to survive one nuke rotation. 480g for +5 STR."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Glimmer Cape", "reasoning": "45% magic resistance while invisible. Saves allies from Finger of Death + Laguna Blade combo."},
+          {"item_name": "Urn of Shadows", "reasoning": "Kill participation gold; heal allies between burst combos."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aeon Disk", "reasoning": "Survives Finger + Laguna instant-kill combo. 2.5s of invulnerability to escape or cast Magnetize."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Enchant Remnant on Lion silences him for 4s; on Lina prevents Laguna Blade cast."},
+          {"item_name": "Force Staff", "reasoning": "Push yourself or ally out of Earth Spike range after stun. Repositioning tool."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 8000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "If targeted by Finger + Laguna every fight, BKB prevents instant death."},
+          {"item_name": "Ghost Scepter", "reasoning": "Ethereal dodges Lion right-click drain and Lina Fiery Soul attacks."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Earth Spirit's Rolling Boulder provides the mobility to dodge burst combos. Glimmer Cape is the critical save item -- 45% magic resistance makes Finger + Laguna survivable. Play the vision game with wards to avoid getting caught by their burst rotation. Aeon Disk as insurance."
+  }
+}

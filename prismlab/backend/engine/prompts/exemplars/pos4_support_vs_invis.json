@@ -1,0 +1,61 @@
+{
+  "role": 4,
+  "threat_profile": "invis",
+  "matchup_type": "physical",
+  "hero_example": "Bounty Hunter",
+  "enemy_example": "Riki + Clinkz",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Lane sustain against Clinkz Searing Arrows harass and Riki Blink Strike trades."},
+          {"item_name": "Observer Ward", "reasoning": "Vision spots Riki smoke cloud setup zones. Critical for early invis detection."},
+          {"item_name": "Sentry Ward", "reasoning": "Immediate sentry for lane reveals Riki's Tricks of the Trade positioning."},
+          {"item_name": "Orb of Venom", "reasoning": "Slow on BH Jinada strikes; tracks down invis heroes after reveal."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Boots of Speed", "reasoning": "Chase down revealed invis heroes; Riki and Clinkz are both squishy when caught."},
+          {"item_name": "Dust of Appearance", "reasoning": "12s true sight on all nearby invis heroes. Track + Dust = guaranteed kill."},
+          {"item_name": "Urn of Shadows", "reasoning": "Kill participation through Track gives 150-200 bonus gold. Urn heals or damages."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Spirit Vessel", "reasoning": "Urn upgrade; 4% max HP damage per second reveals invis heroes through heal reduction indicator."},
+          {"item_name": "Force Staff", "reasoning": "Escape from Riki Smoke Cloud AoE silence. Push allies out of danger."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aeon Disk", "reasoning": "Survives Clinkz Strafe + Skeleton Walk burst initiation. 2.5s of invulnerability to escape."},
+          {"item_name": "Aghanim's Shard", "reasoning": "BH Shard upgrade for extended Track utility and team fight contribution."},
+          {"item_name": "Lotus Orb", "reasoning": "Reflects single-target spells; dispels Riki Smoke Cloud silence from allies."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 8000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Ghost Scepter", "reasoning": "Ethereal form dodges Riki and Clinkz right-click burst. Both deal purely physical."},
+          {"item_name": "Gem of True Sight", "reasoning": "Permanent true sight aura. BH's Track already provides but Gem covers team."}
+        ],
+        "timing": "any",
+        "gold_budget": 1500
+      }
+    ],
+    "overall_strategy": "BH counters invis heroes through Track's true sight and bonus gold. Sentry wards early, Dust for ganks, Track for permanent vision on Riki and Clinkz. Spirit Vessel marks targets and prevents Salve/regen during invis escapes. The gold advantage from Track kills snowballs the team."
+  }
+}

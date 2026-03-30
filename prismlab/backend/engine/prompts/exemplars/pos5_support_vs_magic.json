@@ -1,0 +1,61 @@
+{
+  "role": 5,
+  "threat_profile": "magic",
+  "matchup_type": "magic",
+  "hero_example": "Oracle",
+  "enemy_example": "Zeus + Leshrac",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Arc Lightning + Split Earth magic harass combo."},
+          {"item_name": "Observer Ward", "reasoning": "Vision on Zeus positioning for Arc Lightning harass angles."},
+          {"item_name": "Healing Salve", "reasoning": "Emergency heal when Leshrac Lightning Storm + Zeus combo chunks HP."},
+          {"item_name": "Enchanted Mango", "reasoning": "Burst mana for Fortune's End purge when carry is caught by Split Earth."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Boots of Speed", "reasoning": "Dodge Split Earth 0.35s delay. Oracle needs positioning for Fate's Edict range."},
+          {"item_name": "Magic Wand", "reasoning": "Zeus + Leshrac spam 8+ spells per minute. Wand charges save lives."},
+          {"item_name": "Infused Raindrops", "reasoning": "Block 120 magic damage per proc. 5 charges absorb ~600 magic damage for 225g."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Glimmer Cape", "reasoning": "45% magic resistance on ally during Zeus + Leshrac burst. Thundergod's Wrath damage halved."},
+          {"item_name": "Force Staff", "reasoning": "Push carry out of Leshrac Pulse Nova AoE. Reposition Oracle for False Promise range."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aeon Disk", "reasoning": "Survives Zeus Nimbus + Thundergod's Wrath global combo. Ensures False Promise cast."},
+          {"item_name": "Holy Locket", "reasoning": "35% healing amplification on False Promise healing. Turns ult into full HP recovery."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "False Promise on 2 targets simultaneously. Oracle becomes the ultimate anti-burst hero."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 8000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Pipe of Insight", "reasoning": "If no one else builds it, Oracle Pipe + Fate's Edict = 80%+ magic reduction."},
+          {"item_name": "Ghost Scepter", "reasoning": "Ethereal form + Fate's Edict = complete damage immunity for 4 seconds."}
+        ],
+        "timing": "any",
+        "gold_budget": 3500
+      }
+    ],
+    "overall_strategy": "Oracle's Fate's Edict grants 100% magic damage immunity for 3.5s -- the hardest counter to Zeus and Leshrac. False Promise delays all damage for 7 seconds while healing doubles. Stack magic resistance with Glimmer Cape and position to cast Fate's Edict before Thundergod's Wrath global."
+  }
+}

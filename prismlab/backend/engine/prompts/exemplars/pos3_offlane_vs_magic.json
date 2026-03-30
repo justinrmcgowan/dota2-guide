@@ -1,0 +1,60 @@
+{
+  "role": 3,
+  "threat_profile": "magic",
+  "matchup_type": "magic",
+  "hero_example": "Tidehunter",
+  "enemy_example": "Zeus + Crystal Maiden",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Arc Lightning + Crystal Nova magic spam. Both heroes harass constantly."},
+          {"item_name": "Ring of Protection", "reasoning": "Builds into Hood later; early armor for mixed damage lane."},
+          {"item_name": "Iron Branch", "reasoning": "2x branches for +2 all stats; cheap and efficient for offlane."},
+          {"item_name": "Enchanted Mango", "reasoning": "Burst mana for Anchor Smash when contesting CS or trading with Zeus."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Hood of Defiance", "reasoning": "Kraken Shell + Hood = 60%+ magic resistance. Arc Lightning deals negligible damage."},
+          {"item_name": "Boots of Speed", "reasoning": "Dodge Crystal Nova slow zone and position for Anchor Smash last hits."},
+          {"item_name": "Magic Wand", "reasoning": "Arc Lightning + Crystal Nova spam = 8+ charges per minute. Best investment."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Blink Dagger", "reasoning": "Blink + Ravage catches Zeus and CM who position in the backline. 2.8s stun AoE."},
+          {"item_name": "Pipe of Insight", "reasoning": "Hood upgrade; 400 magic damage barrier for entire team. Negates Thundergod's Wrath."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Refresher Orb", "reasoning": "Double Ravage = 5.6s AoE stun. Zeus and CM cannot survive two full Ravage combos."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Anchor Smash upgrade with additional utility. Tide scales well with stats."},
+          {"item_name": "Shiva's Guard", "reasoning": "AoE slow + armor. Active hits Freezing Field channeling CM for interrupt setup."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Lotus Orb", "reasoning": "Reflects Zeus Lightning Bolt back on him. Dispels ally targeted by Frostbite."}
+        ],
+        "timing": "any",
+        "gold_budget": 3850
+      }
+    ],
+    "overall_strategy": "Kraken Shell's damage block plus Hood makes Tide nearly immune to magic damage. Rush Blink for game-changing Ravage initiations on the squishy backline. Pipe shields the entire team from Thundergod's Wrath global damage. Double Ravage with Refresher ends teamfights instantly."
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "role": 1,
+  "threat_profile": "burst",
+  "matchup_type": "magic",
+  "hero_example": "Anti-Mage",
+  "enemy_example": "Zeus + Lina",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Double tangoes sustain through Arc Lightning + Dragon Slave harass in a heavy magic damage lane."},
+          {"item_name": "Healing Salve", "reasoning": "Emergency HP recovery if caught by Laguna Blade or Finger of Death combo at level 6."},
+          {"item_name": "Iron Branch", "reasoning": "Cheap +2 all stats for last-hit contests; builds into Magic Wand later."},
+          {"item_name": "Quelling Blade", "reasoning": "Guarantees last hits under Arc Lightning spam; AM needs uninterrupted farm."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Magic Wand", "reasoning": "Zeus Arc Lightning + Lina Dragon Slave generate 6-8 charges per minute. Best 450g investment in this lane."},
+          {"item_name": "Power Treads", "reasoning": "Tread-switch to INT for Blink mana cost, STR for surviving burst combos. Core mobility."},
+          {"item_name": "Ring of Health", "reasoning": "Passive HP regen sustains between burst combos; builds into Battlefury."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Battlefury", "reasoning": "Farm accelerator that doubles farming speed. Target 15-17 min timing to outpace Zeus tempo."},
+          {"item_name": "Manta Style", "reasoning": "Dispels Lina Flame Cloak root and creates illusions that burn mana. Splits push pressure."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Butterfly", "reasoning": "35% evasion is pure scaling -- Zeus and Lina deal spell damage, so no MKB threat. +35 agi multiplies AM."},
+          {"item_name": "Abyssal Blade", "reasoning": "2-second BKB-piercing stun locks Zeus for Mana Void. Also blocks physical damage instances."},
+          {"item_name": "Heart of Tarrasque", "reasoning": "4000+ HP pool makes AM unkillable between fights. Passive regen negates poke from Arc Lightning."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "If Zeus + Lina combo can burst through Mana Shield, BKB gives 6-10s of uninterrupted fighting."},
+          {"item_name": "Linken's Sphere", "reasoning": "Blocks single-target Laguna Blade initiation; also provides mana regen for Blink spam."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Survive the heavy magic burst lane with regen and Wand charges. Rush Battlefury for flash-farming, then Manta to dispel and burn mana pools. Late game, AM's Mana Void punishes Zeus and Lina's massive mana pools for 1000+ damage teamfight combos."
+  }
+}

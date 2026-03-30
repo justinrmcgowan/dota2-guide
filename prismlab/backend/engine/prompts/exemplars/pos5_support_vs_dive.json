@@ -1,0 +1,61 @@
+{
+  "role": 5,
+  "threat_profile": "dive",
+  "matchup_type": "mixed",
+  "hero_example": "Winter Wyvern",
+  "enemy_example": "Slark + Storm Spirit",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Pounce harass and Remnant + Overload trades from two dive heroes."},
+          {"item_name": "Observer Ward", "reasoning": "Deep ward spots Slark Shadow Dance movement and Storm rotations."},
+          {"item_name": "Sentry Ward", "reasoning": "Deward pull camp; Slark likes to deward to enable Dark Pact ganks."},
+          {"item_name": "Iron Branch", "reasoning": "2x branches for +2 stats; WW's base HP is dangerously low."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Boots of Speed", "reasoning": "Positioning to stay outside Pounce 700 range. WW needs to be alive to cast spells."},
+          {"item_name": "Magic Wand", "reasoning": "Storm Remnant + Overload spam generates charges. Dark Pact also triggers charges."},
+          {"item_name": "Wind Lace", "reasoning": "+20 MS helps kite Slark's Pounce approach; cheap and efficient."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Force Staff", "reasoning": "Push yourself or ally OUT of Pounce leash. Critical save tool against both divers."},
+          {"item_name": "Glimmer Cape", "reasoning": "Invisible save on carry during Slark + Storm dive. Magic resistance helps vs Storm."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aeon Disk", "reasoning": "Survives Storm Ball Lightning initiation. 2.5s invulnerability ensures Winter's Curse cast."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Arctic Burn becomes toggle -- permanent flying vision reveals Slark ganks and Storm rotations."},
+          {"item_name": "Holy Locket", "reasoning": "Cold Embrace heal amplified by 35%. 4s heal + immunity = full HP restoration."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 8000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Ghost Scepter", "reasoning": "Ethereal form dodges Slark right-clicks entirely. Slark's damage is 95% physical."},
+          {"item_name": "Solar Crest", "reasoning": "Armor + evasion buff on dive target. Reduces Slark Essence Shift damage."}
+        ],
+        "timing": "any",
+        "gold_budget": 3500
+      }
+    ],
+    "overall_strategy": "Winter's Curse forces Slark and Storm to attack each other during dives -- the perfect anti-dive ultimate. Cold Embrace protects the dive target with 4s physical immunity. Force Staff breaks Pounce leash. Position behind carry and save spells for AFTER they commit to the dive."
+  }
+}

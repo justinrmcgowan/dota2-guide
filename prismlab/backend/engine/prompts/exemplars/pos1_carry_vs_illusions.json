@@ -1,0 +1,60 @@
+{
+  "role": 1,
+  "threat_profile": "illusions",
+  "matchup_type": "physical",
+  "hero_example": "Sven",
+  "enemy_example": "Phantom Lancer + Naga Siren",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Standard regen for PL Spirit Lance harass and Naga Riptide magic damage."},
+          {"item_name": "Healing Salve", "reasoning": "Emergency burst heal if caught by Riptide + Spirit Lance combo early."},
+          {"item_name": "Quelling Blade", "reasoning": "Sven needs guaranteed CS; Naga illusions contest the lane aggressively."},
+          {"item_name": "Iron Branch", "reasoning": "Builds into Magic Wand; cheap stats for early trading."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Power Treads", "reasoning": "STR treads for HP in lane, AGI when farming jungle with cleave."},
+          {"item_name": "Mask of Madness", "reasoning": "Attack speed + lifesteal accelerates farm. Cleave from Great Cleave + MoM melts stacked camps."},
+          {"item_name": "Magic Wand", "reasoning": "Spirit Lance + Mirror Image spam gives consistent wand charges."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "Prevents Naga Song into PL Diffusal mana drain combo. Ensures you can channel Storm Hammer."},
+          {"item_name": "Echo Sabre", "reasoning": "Double hit procs on real PL hero; mana sustain for Storm Hammer spam in fights."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aghanim's Scepter", "reasoning": "Storm Hammer AoE stun hits all illusions and finds real PL. 900 AoE radius."},
+          {"item_name": "Assault Cuirass", "reasoning": "-5 enemy armor aura affects all illusions. +30 AS for God's Strength cleave."},
+          {"item_name": "Daedalus", "reasoning": "Crit cleave from God's Strength one-shots entire illusion armies. Multiplicative scaling."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Overwhelming Blink", "reasoning": "Initiation + AoE slow that tags all illusions. 150% STR damage on landing during God's Strength."}
+        ],
+        "timing": "any",
+        "gold_budget": 6800
+      }
+    ],
+    "overall_strategy": "Sven's Great Cleave is the natural answer to illusion heroes. Rush farm speed with MoM, get BKB to fight through Song + Diffusal, then Aghanim's to guarantee AoE stun on the real PL. God's Strength + Daedalus crit cleave erases illusion armies in 2 hits."
+  }
+}
