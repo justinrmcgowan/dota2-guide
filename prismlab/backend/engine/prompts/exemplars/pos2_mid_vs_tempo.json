@@ -1,0 +1,61 @@
+{
+  "role": 2,
+  "threat_profile": "tempo",
+  "matchup_type": "mixed",
+  "hero_example": "Queen of Pain",
+  "enemy_example": "Puck + Earth Spirit",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Lane sustain against Illusory Orb + Boulder Smash harass from two mobile heroes."},
+          {"item_name": "Faerie Fire", "reasoning": "+2 damage for mid CS; instant heal survives a level 2 Rolling Boulder combo."},
+          {"item_name": "Mantle of Intelligence", "reasoning": "+3 INT for Shadow Strike harass damage; QoP wants to trade aggressively."},
+          {"item_name": "Iron Branch", "reasoning": "Cheap stats; double branch + circlet for early Null Talisman."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Bottle", "reasoning": "Blink gives QoP rune control advantage over Puck. Refill between trades."},
+          {"item_name": "Power Treads", "reasoning": "INT treads for mana-efficient Shadow Strike harass; STR treads when Earth Spirit ganks."},
+          {"item_name": "Null Talisman", "reasoning": "INT efficiency for spell spam. QoP needs mana for Blink + Scream + Strike combos."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Witch Blade", "reasoning": "Slow on attack procs after Blink-in; 40 INT + 100 projectile damage. Keeps up with tempo."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Sonic Wave 70s->40s CD, 40% spell amp during Fear effect. QoP out-tempos both heroes."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Scythe of Vyse", "reasoning": "3.5s hex locks Puck before Phase Shift or Earth Spirit before Rolling Boulder escape."},
+          {"item_name": "Refresher Orb", "reasoning": "Double Sonic Wave deals 1200+ magic damage after reductions. Fights end instantly."},
+          {"item_name": "Shiva's Guard", "reasoning": "AoE slow catches both mobile heroes; armor counters Earth Spirit physical damage."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "If Waning Rift silence + Magnetize combo chains, BKB prevents lockdown."},
+          {"item_name": "Linken's Sphere", "reasoning": "Blocks Earth Spirit Boulder Smash targeting; mana regen for Blink rotations."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Match Puck and Earth Spirit's tempo with QoP's natural mobility advantage. Blink gives free rune control and gank dodging. Witch Blade into Aghs creates a mid-game power spike that out-damages both tempo controllers. Hex in late game prevents their escape mechanics entirely."
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "role": 3,
+  "threat_profile": "physical",
+  "matchup_type": "physical",
+  "hero_example": "Axe",
+  "enemy_example": "Phantom Assassin + Drow Ranger",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Stifling Dagger and Frost Arrows chip damage in a dual physical lane."},
+          {"item_name": "Ring of Protection", "reasoning": "+2 armor directly reduces PA Dagger and Drow right-click physical damage."},
+          {"item_name": "Quelling Blade", "reasoning": "Axe needs to cut creep waves behind enemy tower for Counter Helix procs."},
+          {"item_name": "Iron Branch", "reasoning": "Cheap stats; Axe's base HP regen benefits from every point of STR."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Vanguard", "reasoning": "70% chance to block 70 damage per hit. PA attacks fast with low base damage -- Vanguard neutralizes her."},
+          {"item_name": "Boots of Speed", "reasoning": "Close gap to PA for Counter Helix trades; she wants range with Dagger."},
+          {"item_name": "Magic Wand", "reasoning": "PA Dagger spam generates wand charges. 3-4 charges per minute."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Blink Dagger", "reasoning": "Blink + Call catches PA and Drow together. 3.2s taunt forces them to attack you (Counter Helix procs)."},
+          {"item_name": "Blade Mail", "reasoning": "PA Coup de Grace crits reflected back for 2000+ damage. She literally kills herself attacking you during Call."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Assault Cuirass", "reasoning": "+10 armor aura helps entire team vs PA + Drow physical. -5 enemy armor amplifies team damage."},
+          {"item_name": "Heart of Tarrasque", "reasoning": "5000+ HP pool makes Axe unkillable between fights. Counter Helix scales with survival time."},
+          {"item_name": "Overwhelming Blink", "reasoning": "150% STR damage on landing + AoE slow. Axe's 3000+ HP pool means 4500 bonus AoE damage."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "If enemy supports chain-stun you before Call, BKB ensures Blink + Call lands."},
+          {"item_name": "Shiva's Guard", "reasoning": "AoE attack speed slow cripples both PA and Drow. +15 armor stacks with AC."}
+        ],
+        "timing": "any",
+        "gold_budget": 5000
+      }
+    ],
+    "overall_strategy": "Axe hard-counters physical carries. Vanguard negates PA's lane damage, Blade Mail reflects Coup de Grace crits during Call. Blink + Call + Blade Mail combo kills PA outright. Stack armor with AC and Shiva's to become immune to physical damage in late game teamfights."
+  }
+}

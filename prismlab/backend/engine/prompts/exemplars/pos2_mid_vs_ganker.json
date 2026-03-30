@@ -1,0 +1,60 @@
+{
+  "role": 2,
+  "threat_profile": "ganker",
+  "matchup_type": "mixed",
+  "hero_example": "Storm Spirit",
+  "enemy_example": "Pudge + Bounty Hunter",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Lane sustain against Pudge Rot trades and BH Shuriken Toss harass."},
+          {"item_name": "Faerie Fire", "reasoning": "+2 damage for mid CS wars; instant 85 HP heal survives a surprise Meat Hook."},
+          {"item_name": "Iron Branch", "reasoning": "2x branches for +2 all stats; builds into Magic Wand after ganker reveals."},
+          {"item_name": "Mantle of Intelligence", "reasoning": "+3 INT for last hit damage; Storm's base damage needs help early."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Magic Wand", "reasoning": "Pudge Rot + BH Shuriken spam generate constant charges. Wand saves lives against gank attempts."},
+          {"item_name": "Power Treads", "reasoning": "INT treads for mana-efficient Remnant farming; STR treads when ganked."},
+          {"item_name": "Null Talisman", "reasoning": "Mana efficiency for Overload farming. Every point of INT matters for Ball Lightning range."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Orchid Malevolence", "reasoning": "5-second silence prevents Pudge Dismember and BH Track escape. +40 AS for Overload procs."},
+          {"item_name": "Black King Bar", "reasoning": "Prevents Dismember stun and BH Track slow during teamfights. Storm needs uninterrupted Ball Lightning."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Bloodthorn", "reasoning": "Orchid upgrade -- 100% crit on silenced target destroys BH; Soul Rend procs on every Overload."},
+          {"item_name": "Shiva's Guard", "reasoning": "AoE blast reveals invis BH and slows Pudge approach. +15 armor vs physical gank damage."},
+          {"item_name": "Linken's Sphere", "reasoning": "Blocks single-target Dismember initiation; passive mana regen sustains Ball Lightning."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Eul's Scepter", "reasoning": "Self-cyclone dodges Meat Hook, purges Track debuff. Mana regen for Ball Lightning."}
+        ],
+        "timing": "any",
+        "gold_budget": 2750
+      }
+    ],
+    "overall_strategy": "Play safe in lane with vision on Pudge hook angles. Once Orchid online, Storm becomes the ganker -- silence BH before he Tracks, pick off Pudge before Dismember. BKB timing is critical to avoid chain-stun gank setups. Shiva's Guard reveals invis heroes in teamfights."
+  }
+}

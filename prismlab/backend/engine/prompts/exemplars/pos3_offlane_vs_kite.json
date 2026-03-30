@@ -1,0 +1,61 @@
+{
+  "role": 3,
+  "threat_profile": "kite",
+  "matchup_type": "physical",
+  "hero_example": "Centaur Warrunner",
+  "enemy_example": "Drow Ranger + Sniper",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Frost Arrows + Shrapnel chip damage from two ranged heroes."},
+          {"item_name": "Ring of Protection", "reasoning": "+2 armor against Drow and Sniper physical right-clicks. Both deal only physical."},
+          {"item_name": "Quelling Blade", "reasoning": "Centaur needs last hits from range using Double Edge; QB for melee creeps."},
+          {"item_name": "Iron Branch", "reasoning": "STR stats increase Double Edge nuke damage and HP pool."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Hood of Defiance", "reasoning": "Reduces Double Edge self-damage from 300 to ~180; also gives HP regen for lane sustain."},
+          {"item_name": "Boots of Speed", "reasoning": "Critical movement speed to close gap on Drow's Frost Arrow slow."},
+          {"item_name": "Bracer", "reasoning": "Cheap HP for surviving Drow Marksmanship proc damage; doubles stats at 25 min."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Blink Dagger", "reasoning": "Blink + Stomp closes the kiting gap instantly. 2.0s stun on both ranged heroes."},
+          {"item_name": "Vanguard", "reasoning": "Damage block reduces Sniper headshot procs and Drow right-clicks. Centaur needs to survive kite damage."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Heart of Tarrasque", "reasoning": "5000+ HP with Stampede active = unkillable initiator. Return damage scales with Centaur's massive HP pool."},
+          {"item_name": "Assault Cuirass", "reasoning": "Armor aura protects team from Drow Marksmanship armor reduction. -5 armor on enemies."},
+          {"item_name": "Overwhelming Blink", "reasoning": "Blink upgrade deals 150% STR damage on landing. Centaur's 3500+ HP = 5250 AoE damage."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Blade Mail", "reasoning": "Drow and Sniper deal high single-target DPS -- Blade Mail reflects it all during Stomp followup."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Stampede becomes BKB-piercing stun on contact. Gap-closer for entire team."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Centaur is the anti-kite hero. Blink Dagger eliminates the range advantage that Drow and Sniper rely on. Stomp + Double Edge combo one-shots supports and chunks carries. Stampede gives the entire team a gap-closer against the kite-heavy lineup. Stack HP for Return damage."
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "role": 2,
+  "threat_profile": "nuker",
+  "matchup_type": "magic",
+  "hero_example": "Ember Spirit",
+  "enemy_example": "Tinker + Skywrath Mage",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Laser + Arcane Bolt spam; both heroes harass relentlessly in lane."},
+          {"item_name": "Healing Salve", "reasoning": "Emergency recovery after Laser blinds + Ancient Seal into Bolt combo."},
+          {"item_name": "Quelling Blade", "reasoning": "Ember needs CS under Laser blind debuff; last-hitting is critical for bottle timing."},
+          {"item_name": "Faerie Fire", "reasoning": "+2 damage helps last hit under pressure; instant heal survives kill attempts."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Bottle", "reasoning": "Power rune control refills HP/mana against heavy nuke spam. Ember's rune control is strong with Fire Remnant."},
+          {"item_name": "Boots of Speed", "reasoning": "Dodge Rocket + position out of Arcane Bolt range. Mobility before fights."},
+          {"item_name": "Magic Wand", "reasoning": "Skywrath Bolt spam + Tinker Laser/Rocket = 6-10 wand charges per fight."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Maelstrom", "reasoning": "Farm accelerator; chain lightning clears waves that March of Machines pushes. Enables split-pushing."},
+          {"item_name": "Eul's Scepter", "reasoning": "Self-cyclone dodges Mystic Flare's 2.4s channel. Purges Ancient Seal silence. Mana regen for SoF."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aghanim's Scepter", "reasoning": "Fire Remnant charges become unlimited escape and chase. SoF + Chains range increased."},
+          {"item_name": "Shiva's Guard", "reasoning": "Armor + AoE slow counters both nukers. Active reveals Tinker blinking in trees."},
+          {"item_name": "Octarine Core", "reasoning": "25% cooldown reduction on all spells; Remnant + SoF + Chains on 4.5s rotation."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "If Ancient Seal + Mystic Flare one-shots through positioning, BKB is mandatory."},
+          {"item_name": "Linken's Sphere", "reasoning": "Blocks Laser targeting; gives mana regen for constant Remnant usage."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Survive the nuke-heavy lane with Bottle and Wand, contest runes with Fire Remnant. Eul's is the key mid-game item -- dodge Mystic Flare and purge Ancient Seal silence. Late game, Ember's mobility with Aghs outpaces both nukers who need to stand still to deal damage."
+  }
+}

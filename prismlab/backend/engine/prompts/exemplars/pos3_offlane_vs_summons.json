@@ -1,0 +1,61 @@
+{
+  "role": 3,
+  "threat_profile": "summons",
+  "matchup_type": "physical",
+  "hero_example": "Underlord",
+  "enemy_example": "Lycan + Broodmother",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Lane sustain against Spiderling harass and wolf pack right-clicks."},
+          {"item_name": "Healing Salve", "reasoning": "Emergency recovery after a Broodmother dive with 6+ Spiderlings."},
+          {"item_name": "Ring of Protection", "reasoning": "+2 armor against summon army physical damage. Builds into Buckler."},
+          {"item_name": "Iron Branch", "reasoning": "Stats for Firestorm last-hitting and HP pool against summon pressure."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Buckler", "reasoning": "+2 armor aura helps your support survive summon dives. Active gives +2.5 bonus."},
+          {"item_name": "Boots of Speed", "reasoning": "Movement speed to kite summons back into Firestorm AoE."},
+          {"item_name": "Soul Ring", "reasoning": "Free mana for Firestorm spam; Firestorm clears Spiderling waves instantly."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Crimson Guard", "reasoning": "Active blocks 75 damage per hit from ALL summons for 12 seconds. Summons deal 20-40 damage per hit -- completely negated."},
+          {"item_name": "Pipe of Insight", "reasoning": "Magic barrier absorbs Spawn Spiderlings magic damage and protects team during push defense."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Assault Cuirass", "reasoning": "+10 armor aura for entire team during Lycan Shapeshift push. -5 armor on Lycan himself."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Underlord Firestorm upgrade rains fire on summon armies. AoE damage scales."},
+          {"item_name": "Shiva's Guard", "reasoning": "AoE attack speed slow cripples wolf and spiderling DPS. +15 armor stacks with AC."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Mekansm", "reasoning": "Early heal aura for push defense; builds into Guardian Greaves later."},
+          {"item_name": "Rod of Atos", "reasoning": "2-second root catches Lycan during Shapeshift before he reaches high ground."}
+        ],
+        "timing": "any",
+        "gold_budget": 3000
+      }
+    ],
+    "overall_strategy": "Underlord's Firestorm is the best anti-summon ability in the game -- it melts Spiderlings and wolves in 2 ticks. Crimson Guard is the critical mid-game timing: activate during push and summon damage becomes zero. Stack aura items (AC + Shiva's) to protect the team from push-heavy lineups."
+  }
+}

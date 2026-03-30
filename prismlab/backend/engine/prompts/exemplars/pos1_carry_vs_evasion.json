@@ -1,0 +1,61 @@
+{
+  "role": 1,
+  "threat_profile": "evasion",
+  "matchup_type": "physical",
+  "hero_example": "Phantom Assassin",
+  "enemy_example": "Windranger + Brewmaster",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Powershot harass; WR likes to snipe from range."},
+          {"item_name": "Healing Salve", "reasoning": "Recovery after a Powershot + Thunder Clap combo trades poorly."},
+          {"item_name": "Quelling Blade", "reasoning": "PA needs last hits for Dagger harass mana and early Battle Fury timing."},
+          {"item_name": "Iron Branch", "reasoning": "Cost-efficient stats; PA's base damage is low without Coup de Grace."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Power Treads", "reasoning": "AGI treads for last-hit damage; STR for Thunder Clap resistance."},
+          {"item_name": "Ring of Health", "reasoning": "Passive regen for Powershot chip damage; builds into Battle Fury."},
+          {"item_name": "Blight Stone", "reasoning": "-2 armor on Stifling Dagger harass stacks up against WR's low base armor."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Battle Fury", "reasoning": "Farm accelerator; cleave ignores evasion so PA still farms fast. 14-16 min target."},
+          {"item_name": "Desolator", "reasoning": "-6 armor amplifies Coup de Grace crits. Even evasion heroes melt when a 2000 crit lands."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Monkey King Bar", "reasoning": "Counters Windrun 100% evasion and Brewmaster's Drunken Brawler evasion. Non-negotiable pickup."},
+          {"item_name": "Satanic", "reasoning": "200% lifesteal active turns Coup de Grace crits into full HP recovery. PA's best survival item."},
+          {"item_name": "Abyssal Blade", "reasoning": "BKB-piercing stun cancels Windrun or locks Brewmaster before Primal Split."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Black King Bar", "reasoning": "If Brewmaster cyclone + WR Shackleshot chain-stun, BKB prevents lockdown."},
+          {"item_name": "Nullifier", "reasoning": "Purges Windrun and prevents WR from using defensive items. Seals kills."}
+        ],
+        "timing": "any",
+        "gold_budget": 5000
+      }
+    ],
+    "overall_strategy": "Farm aggressively with Battle Fury into Desolator for early kills. MKB is mandatory third item against two evasion heroes. PA's Blur gives evasion advantage in the mirror -- combine with Satanic for unkillable status during Coup de Grace proc chains."
+  }
+}

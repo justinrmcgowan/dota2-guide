@@ -1,0 +1,61 @@
+{
+  "role": 4,
+  "threat_profile": "push",
+  "matchup_type": "physical",
+  "hero_example": "Clockwerk",
+  "enemy_example": "Nature's Prophet + Lycan",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Treant right-click harass and wolf pack trades."},
+          {"item_name": "Observer Ward", "reasoning": "Spot NP Teleportation flanks and Lycan jungle movements."},
+          {"item_name": "Clarity", "reasoning": "Mana sustain for Battery Assault + Cogs combo; Clockwerk is mana-hungry early."},
+          {"item_name": "Enchanted Mango", "reasoning": "Emergency mana for Power Cogs when NP teleports in for surprise kills."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Boots of Speed", "reasoning": "Chase Treants and wolves to deny push value. Movement speed for Cog trapping."},
+          {"item_name": "Magic Wand", "reasoning": "NP Treant summons and Lycan wolves generate steady charges."},
+          {"item_name": "Urn of Shadows", "reasoning": "Kill participation from Hookshot ganks; heal allies after push defense fights."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Blade Mail", "reasoning": "Reflects summon damage inside Cogs. NP + Lycan summons shred themselves attacking Clockwerk."},
+          {"item_name": "Force Staff", "reasoning": "Escape after Hookshot deep into push wave. Push allies out of Sprout."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Aghanim's Scepter", "reasoning": "Hookshot on 12s CD catches split-pushing NP repeatedly. BKB-piercing stun."},
+          {"item_name": "Lotus Orb", "reasoning": "Reflects Sprout back on NP. Dispels ally from Lycan Howl debuff."},
+          {"item_name": "Shiva's Guard", "reasoning": "AoE slow + attack speed reduction cripples summon army DPS. +15 armor."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 8000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Crimson Guard", "reasoning": "If team lacks, CG blocks 75 damage per summon hit for 12s. Counters entire push."},
+          {"item_name": "Ghost Scepter", "reasoning": "Ethereal dodges wolf and treant physical attacks during push defense."}
+        ],
+        "timing": "any",
+        "gold_budget": 3500
+      }
+    ],
+    "overall_strategy": "Clockwerk's Hookshot catches split-pushing NP across the map on 12s CD with Aghs. Battery Assault inside Cogs prevents NP from Teleporting away. Blade Mail punishes summon damage during Cog trap. Force Staff for repositioning after deep initiations. Anti-push through picks."
+  }
+}

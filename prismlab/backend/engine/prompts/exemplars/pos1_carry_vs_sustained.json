@@ -1,0 +1,60 @@
+{
+  "role": 1,
+  "threat_profile": "sustained",
+  "matchup_type": "physical",
+  "hero_example": "Faceless Void",
+  "enemy_example": "Bristleback + Undying",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Quill Spray + Decay chip damage; this lane grinds HP constantly."},
+          {"item_name": "Healing Salve", "reasoning": "Undying Decay steals 4 STR per cast -- salve recovers after falling below 50% HP."},
+          {"item_name": "Iron Branch", "reasoning": "2x branches + circlet build into Wraith Band for lane stat efficiency."},
+          {"item_name": "Slippers of Agility", "reasoning": "+3 agi for last-hit damage; Void base damage is low at level 1."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Wraith Band", "reasoning": "510g for +5 agi/str/int; doubles stats at 25 min. Lane sustain against Decay."},
+          {"item_name": "Power Treads", "reasoning": "STR treads for surviving Tombstone fights; AGI for farming after lane."},
+          {"item_name": "Magic Wand", "reasoning": "Bristle Quill Spray + Undying Decay spam = 5+ wand charges per engagement."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Maelstrom", "reasoning": "Chain Lightning accelerates farm and clears Tombstone zombies instantly."},
+          {"item_name": "Black King Bar", "reasoning": "Chronosphere is wasted if Decay debuff + Quill stacks kill you during it. BKB ensures you survive your own ult."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Mjollnir", "reasoning": "Upgrade from Maelstrom; Static Charge punishes Bristle's melee attack speed. +70 AS for Chronosphere DPS."},
+          {"item_name": "Satanic", "reasoning": "200% lifesteal active inside Chronosphere = full HP recovery. Counters sustained damage over time."},
+          {"item_name": "Butterfly", "reasoning": "35% evasion + 35 agi. Bristleback has no MKB in typical builds; pure scaling."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Silver Edge", "reasoning": "Breaks Bristleback passive -- removes 40% damage reduction. Essential if Bristle becomes unkillable."}
+        ],
+        "timing": "any",
+        "gold_budget": 5000
+      }
+    ],
+    "overall_strategy": "Accept a slow lane against Bristle + Undying's sustained pressure. Farm with Time Walk recovery and rush Maelstrom for jungle speed. Once Chronosphere + BKB online, trap priority targets and burst them before Bristle stacks become lethal."
+  }
+}

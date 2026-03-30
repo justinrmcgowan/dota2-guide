@@ -1,0 +1,61 @@
+{
+  "role": 2,
+  "threat_profile": "silence",
+  "matchup_type": "magic",
+  "hero_example": "Invoker",
+  "enemy_example": "Silencer + Death Prophet",
+  "recommendation": {
+    "phases": [
+      {
+        "phase": "starting",
+        "items": [
+          {"item_name": "Tango", "reasoning": "Sustain through Last Word damage proc and Crypt Swarm harass."},
+          {"item_name": "Healing Salve", "reasoning": "Recovery after Arcane Curse + Spirit Siphon drains HP over time."},
+          {"item_name": "Mantle of Intelligence", "reasoning": "+3 INT counters Silencer INT steal; every point of INT stolen hurts Invoker."},
+          {"item_name": "Iron Branch", "reasoning": "Cheap +2 stats; builds into Wand against spell-heavy lane."}
+        ],
+        "timing": "0-2 min",
+        "gold_budget": 600
+      },
+      {
+        "phase": "laning",
+        "items": [
+          {"item_name": "Null Talisman", "reasoning": "INT efficiency to offset Silencer's permanent INT steal. Every kill or assist steals 2 INT."},
+          {"item_name": "Boots of Speed", "reasoning": "Movement speed to position outside Last Word trigger range."},
+          {"item_name": "Magic Wand", "reasoning": "Silencer Curse + Last Word + DP Swarm = 5+ charges per minute."}
+        ],
+        "timing": "2-12 min",
+        "gold_budget": 2000
+      },
+      {
+        "phase": "core",
+        "items": [
+          {"item_name": "Eul's Scepter", "reasoning": "Self-cyclone dispels Global Silence and Silence. +2.5 mana regen sustains Invoke combos."},
+          {"item_name": "Black King Bar", "reasoning": "Prevents both silences during teamfight combo execution. Invoker needs 3-4 seconds of uninterrupted casting."}
+        ],
+        "timing": "12-25 min",
+        "gold_budget": 5000
+      },
+      {
+        "phase": "late_game",
+        "items": [
+          {"item_name": "Scythe of Vyse", "reasoning": "3.5s hex locks DP before Exorcism spirits spawn. Massive INT boost offsets steal."},
+          {"item_name": "Aghanim's Scepter", "reasoning": "Cataclysm double Sun Strike melts teamfights. Additional Invoke spells available."},
+          {"item_name": "Octarine Core", "reasoning": "25% CDR on Invoke and all spells. Tornado + EMP + Meteor combo every 20s."}
+        ],
+        "timing": "25+ min",
+        "gold_budget": 10000
+      },
+      {
+        "phase": "situational",
+        "items": [
+          {"item_name": "Manta Style", "reasoning": "Dispels silence on use; illusions proc Cold Snap and add confusion."},
+          {"item_name": "Lotus Orb", "reasoning": "Reflects Last Word cast back on Silencer; dispels silence on ally."}
+        ],
+        "timing": "any",
+        "gold_budget": 4000
+      }
+    ],
+    "overall_strategy": "Eul's is the critical first item -- dispels both silences and enables Tornado combos. BKB second for teamfight execution. Invoker outscales both heroes hard with 10+ spells at level 25, but only if he can cast. Stack INT items to offset Silencer's permanent steal and maintain mana pool."
+  }
+}
