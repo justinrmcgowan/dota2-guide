@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 35 (Quality Foundation)
-Plan: Not started
-Status: Ready for planning
+Plan: 1 of 3 complete
+Status: Executing
 Last activity: 2026-03-30
 
 Progress: [██░░░░░░░░] 20%
@@ -43,6 +43,8 @@ Progress: [██░░░░░░░░] 20%
 
 ### Decisions
 
+- [Phase 35]: minMmr=5420 for Divine+ bracket filtering; win_rate=0.0 placeholder (OpenDota only provides counts)
+- [Phase 35]: Pro baselines refresh is non-fatal with 0.1s rate limiting per hero
 - [Phase 34]: Two-pass recommendation (fast-mode rules first, Claude merges in) for zero-click auto-trigger
 - [Phase 34]: 3s draft polling (down from 10s) during hero selection
 - [Phase 34]: Auto-trigger fires from both useLiveDraft AND useGameIntelligence (GSI hero detection)
@@ -64,5 +66,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 34 complete — ready for Phase 35 planning
+Stopped at: Completed 35-01-PLAN.md — pro baselines data pipeline + context builder
 Resume file: None
