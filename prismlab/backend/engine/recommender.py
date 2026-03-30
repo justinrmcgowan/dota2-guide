@@ -14,6 +14,7 @@ Item validation uses DataCache -- zero DB queries for item lookups on the hot pa
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import time
 import logging
@@ -433,23 +434,25 @@ class HybridRecommender:
         phases: list[RecommendPhase],
         db: AsyncSession,
     ) -> tuple[list[ItemTimingResponse], list[BuildPathResponse], WinConditionResponse | None, float | None]:
-        """Run all post-LLM enrichment steps: timing, build paths, win condition, win probability."""
-        timing_data: list[ItemTimingResponse] = []
-        if self.cache:
-            timing_data = await self._enrich_timing_data(request.hero_id, phases, db)
+        """Run all post-LLM enrichment steps in parallel."""
+        if not self.cache:
+            return [], [], None, None
 
-        build_paths: list[BuildPathResponse] = []
-        if self.cache:
-            build_paths = self._enrich_build_paths(request, phases)
+        async def _timing() -> list[ItemTimingResponse]:
+            return await self._enrich_timing_data(request.hero_id, phases, db)
 
-        win_condition: WinConditionResponse | None = None
-        if self.cache:
-            win_condition = self._enrich_win_condition(request)
+        async def _build_paths() -> list[BuildPathResponse]:
+            return self._enrich_build_paths(request, phases)
 
-        win_probability: float | None = None
-        if self.cache:
-            win_probability = self._enrich_win_probability(request)
+        async def _win_cond() -> WinConditionResponse | None:
+            return self._enrich_win_condition(request)
 
+        async def _win_prob() -> float | None:
+            return self._enrich_win_probability(request)
+
+        timing_data, build_paths, win_condition, win_probability = await asyncio.gather(
+            _timing(), _build_paths(), _win_cond(), _win_prob()
+        )
         return timing_data, build_paths, win_condition, win_probability
 
     # ------------------------------------------------------------------
