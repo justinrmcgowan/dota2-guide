@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
-status: executing
-stopped_at: Phase 34 complete — UX Speed & Instant Items shipped
-last_updated: "2026-03-30T18:00:00.000Z"
+status: planning
+stopped_at: Completed 35-02-PLAN.md (Response Validation Layer)
+last_updated: "2026-03-30T20:02:48.917Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 2
   percent: 20
 ---
 
@@ -52,6 +52,8 @@ Progress: [██░░░░░░░░] 20%
 - [Phase 34]: Graceful fallback when win predictor models fail to load (non-fatal)
 - [v7.0]: Tauri Desktop App deferred to v8.0 — engine quality before distribution
 - [v7.0]: Design spec at docs/superpowers/specs/2026-03-30-engine-hardening-design.md
+- [Phase 35]: Counter-logic audit uses curated RELIABLE_STUN_HEROES set since ability data lacks stun tags
+- [Phase 35]: Validation retry always via Claude (not Ollama) for higher correction quality
 
 ### Pending Todos
 
@@ -63,6 +65,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Phase 34 complete — ready for Phase 35 planning
+Last session: 2026-03-30T20:02:48.914Z
+Stopped at: Completed 35-02-PLAN.md (Response Validation Layer)
 Resume file: None
