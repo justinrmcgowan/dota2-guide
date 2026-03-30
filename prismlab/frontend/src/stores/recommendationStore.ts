@@ -5,12 +5,15 @@ import type { RecommendResponse } from "../types/recommendation";
 interface RecommendationStore {
   data: RecommendResponse | null;
   isLoading: boolean;
+  isPartial: boolean;
   error: string | null;
   selectedItemId: string | null; // Composite key "phase-itemId" for expanded reasoning
   purchasedItems: Set<string>; // Set of composite keys "phase-itemId"
   dismissedItems: Set<string>; // Set of composite keys for denied/dismissed items
 
   setData: (data: RecommendResponse) => void;
+  setPartialData: (data: RecommendResponse) => void;
+  mergeData: (data: RecommendResponse) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string) => void;
   selectItem: (phaseItemKey: string | null) => void;
@@ -27,6 +30,7 @@ export const useRecommendationStore = create<RecommendationStore>()(
     (set, get) => ({
     data: null,
     isLoading: false,
+    isPartial: false,
     error: null,
     selectedItemId: null,
     purchasedItems: new Set<string>(),
@@ -57,6 +61,44 @@ export const useRecommendationStore = create<RecommendationStore>()(
         data,
         error: null,
         isLoading: false,
+        purchasedItems: newPurchased.size > 0 ? newPurchased : oldPurchased,
+      });
+    },
+
+    setPartialData: (data) => {
+      set({
+        data,
+        error: null,
+        isLoading: false,
+        isPartial: true,
+      });
+    },
+
+    mergeData: (data) => {
+      const oldPurchased = get().purchasedItems;
+      const oldItemIds = new Set<number>();
+      for (const key of oldPurchased) {
+        const parts = key.split("-");
+        const id = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(id)) oldItemIds.add(id);
+      }
+
+      const newPurchased = new Set<string>();
+      if (oldItemIds.size > 0) {
+        for (const phase of data.phases) {
+          for (const item of phase.items) {
+            if (oldItemIds.has(item.item_id)) {
+              newPurchased.add(`${phase.phase}-${item.item_id}`);
+            }
+          }
+        }
+      }
+
+      set({
+        data,
+        error: null,
+        isLoading: false,
+        isPartial: false,
         purchasedItems: newPurchased.size > 0 ? newPurchased : oldPurchased,
       });
     },
@@ -115,12 +157,13 @@ export const useRecommendationStore = create<RecommendationStore>()(
     },
 
     clearResults: () =>
-      set({ data: null, error: null, selectedItemId: null }),
+      set({ data: null, error: null, selectedItemId: null, isPartial: false }),
 
     clear: () =>
       set({
         data: null,
         isLoading: false,
+        isPartial: false,
         error: null,
         selectedItemId: null,
         purchasedItems: new Set<string>(),
