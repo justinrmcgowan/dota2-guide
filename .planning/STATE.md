@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
-status: executing
-stopped_at: Phase 34 complete — UX Speed & Instant Items shipped
-last_updated: "2026-03-30T18:00:00.000Z"
+status: planning
+stopped_at: Completed 35-02-PLAN.md (Response Validation Layer)
+last_updated: "2026-03-30T20:02:48.917Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 2
   percent: 20
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 35 (Quality Foundation)
-Plan: 1 of 3 complete
-Status: Executing
+Plan: Not started
+Status: Ready for planning
 Last activity: 2026-03-30
 
 Progress: [██░░░░░░░░] 20%
@@ -43,8 +43,6 @@ Progress: [██░░░░░░░░] 20%
 
 ### Decisions
 
-- [Phase 35]: minMmr=5420 for Divine+ bracket filtering; win_rate=0.0 placeholder (OpenDota only provides counts)
-- [Phase 35]: Pro baselines refresh is non-fatal with 0.1s rate limiting per hero
 - [Phase 34]: Two-pass recommendation (fast-mode rules first, Claude merges in) for zero-click auto-trigger
 - [Phase 34]: 3s draft polling (down from 10s) during hero selection
 - [Phase 34]: Auto-trigger fires from both useLiveDraft AND useGameIntelligence (GSI hero detection)
@@ -54,6 +52,8 @@ Progress: [██░░░░░░░░] 20%
 - [Phase 34]: Graceful fallback when win predictor models fail to load (non-fatal)
 - [v7.0]: Tauri Desktop App deferred to v8.0 — engine quality before distribution
 - [v7.0]: Design spec at docs/superpowers/specs/2026-03-30-engine-hardening-design.md
+- [Phase 35]: Counter-logic audit uses curated RELIABLE_STUN_HEROES set since ability data lacks stun tags
+- [Phase 35]: Validation retry always via Claude (not Ollama) for higher correction quality
 
 ### Pending Todos
 
@@ -65,6 +65,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Completed 35-01-PLAN.md — pro baselines data pipeline + context builder
+Last session: 2026-03-30T20:02:48.914Z
+Stopped at: Completed 35-02-PLAN.md (Response Validation Layer)
 Resume file: None

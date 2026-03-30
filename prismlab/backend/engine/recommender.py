@@ -41,6 +41,7 @@ from engine.context_builder import ContextBuilder
 from engine.timing_zones import classify_timing_zones
 from data.cache import DataCache
 from data.matchup_service import get_or_fetch_hero_timings
+from engine.response_validator import ResponseValidator
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ class HybridRecommender:
         self.cache = cache
         self.ollama = ollama
         self.cost_tracker = cost_tracker
+        self.response_validator = ResponseValidator(cache) if cache else None
 
     # Reason-specific fallback messages for the overall_strategy field
     FALLBACK_STRATEGIES = {
@@ -290,6 +292,17 @@ class HybridRecommender:
         phases = self._validate_item_ids(phases)
         phases = self._deduplicate_across_phases(phases)
 
+        # Step 7b: Post-parse validation with retry (retry via Claude, not Ollama)
+        if self.response_validator:
+            # user_message was built in Step 4 when self.ollama is set
+            retry_phases, retry_strategy, retry_neutrals = await self._validate_and_retry(
+                phases, request, rules_items, db, user_message
+            )
+            if retry_strategy is not None:
+                phases = retry_phases
+                overall_strategy = retry_strategy
+                neutral_items = retry_neutrals or []
+
         timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
         )
@@ -363,6 +376,16 @@ class HybridRecommender:
         phases = self._validate_item_ids(phases)
         phases = self._deduplicate_across_phases(phases)
 
+        # Step 5b: Post-parse validation with retry
+        if not fallback and self.response_validator:
+            retry_phases, retry_strategy, retry_neutrals = await self._validate_and_retry(
+                phases, request, rules_items, db, user_message
+            )
+            if retry_strategy is not None:
+                phases = retry_phases
+                overall_strategy = retry_strategy
+                neutral_items = retry_neutrals or []
+
         timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
         )
@@ -427,6 +450,59 @@ class HybridRecommender:
             usage = self.cost_tracker.get_usage()
             response.budget_used = usage["cost"]
             response.budget_limit = usage["budget"]
+
+    # ------------------------------------------------------------------
+    # Post-parse validation with retry
+    # ------------------------------------------------------------------
+
+    async def _validate_and_retry(
+        self,
+        phases: list[RecommendPhase],
+        request: RecommendRequest,
+        rules_items: list[RuleResult],
+        db: AsyncSession,
+        user_message: str,
+    ) -> tuple[list[RecommendPhase], str | None, list | None]:
+        """Validate LLM output. On error, retry once with error feedback.
+
+        Returns (validated_phases, overall_strategy, neutral_items).
+        If validation passes, returns (phases, None, None) -- caller keeps
+        its own strategy/neutrals. If retry also fails validation, returns
+        the retry result anyway (best-effort).
+        """
+        if not self.response_validator:
+            return phases, None, None
+
+        result = self.response_validator.validate(phases, request)
+        if result.valid:
+            return phases, None, None
+
+        # Retry once: append error messages to user message
+        error_feedback = (
+            "\n\nYour previous recommendation had these issues, please correct:\n"
+            + "\n".join(f"- {msg}" for msg in result.error_messages)
+        )
+        retry_message = user_message + error_feedback
+        logger.info("Validation failed, retrying with %d error(s)", len(result.error_messages))
+
+        llm_result, _ = await self.llm.generate(retry_message)
+        if llm_result is None:
+            # Retry failed to produce output, return original
+            return phases, None, None
+
+        retry_phases = self._merge(rules_items, llm_result)
+        retry_phases = self._validate_item_ids(retry_phases)
+        retry_phases = self._deduplicate_across_phases(retry_phases)
+
+        # Validate retry result (log but don't retry again)
+        retry_result = self.response_validator.validate(retry_phases, request)
+        if not retry_result.valid:
+            logger.warning(
+                "Retry also failed validation (%d errors), using best-effort result",
+                len(retry_result.error_messages),
+            )
+
+        return retry_phases, llm_result.overall_strategy, llm_result.neutral_items
 
     # ------------------------------------------------------------------
     # Shared enrichment pipeline

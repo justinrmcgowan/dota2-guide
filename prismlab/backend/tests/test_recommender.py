@@ -450,3 +450,32 @@ class TestFallbackReason:
         response = await recommender.recommend(sample_request, test_db_session)
         assert response.fallback is False
         assert response.fallback_reason is None
+
+
+# -------------------------------------------------------------------
+# Response validator integration tests
+# -------------------------------------------------------------------
+
+
+class TestResponseValidatorIntegration:
+    """Tests that ResponseValidator is properly integrated into HybridRecommender."""
+
+    def test_recommender_has_response_validator(self, mock_llm_engine, mock_context_builder):
+        """HybridRecommender with DataCache creates a ResponseValidator."""
+        recommender = HybridRecommender(
+            rules=RulesEngine(cache=data_cache),
+            llm=mock_llm_engine,
+            context_builder=mock_context_builder,
+            cache=data_cache,
+        )
+        assert recommender.response_validator is not None
+
+    def test_recommender_no_validator_without_cache(self, mock_llm_engine, mock_context_builder):
+        """HybridRecommender without DataCache has no ResponseValidator."""
+        recommender = HybridRecommender(
+            rules=RulesEngine(cache=data_cache),
+            llm=mock_llm_engine,
+            context_builder=mock_context_builder,
+            cache=None,
+        )
+        assert recommender.response_validator is None
