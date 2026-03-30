@@ -82,7 +82,7 @@ export const api = {
     fetchJson<{ steam_id: string | null }>("/settings/defaults"),
   getEngineBudget: () => fetchJson<EngineBudget>("/settings/budget"),
   setEngineBudget: async (budget: number): Promise<EngineBudget> => {
-    const res = await fetch(`${BASE}/settings/budget`, {
+    const res = await fetch(`${API_BASE}/settings/budget`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ budget }),
