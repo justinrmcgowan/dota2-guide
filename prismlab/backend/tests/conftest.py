@@ -467,6 +467,32 @@ async def test_db_setup():
             Item(id=600, name="Splintmail", internal_name="splintmail", cost=950),
             Item(id=601, name="Blade Mail", internal_name="blade_mail", cost=2300,
                  components=["splintmail", "broadsword", "robe"]),
+            # Phase 35: New items for expanded rules engine
+            Item(id=259, name="Nullifier", internal_name="nullifier", cost=4725),
+            Item(id=174, name="Diffusal Blade", internal_name="diffusal_blade", cost=2500),
+            Item(id=220, name="Butterfly", internal_name="butterfly", cost=4975),
+            Item(id=156, name="Satanic", internal_name="satanic", cost=5050),
+            Item(id=242, name="Crimson Guard", internal_name="crimson_guard", cost=3550),
+            Item(id=294, name="Aeon Disk", internal_name="aeon_disk", cost=3000),
+            Item(id=290, name="Gleipnir", internal_name="gungungir", cost=5650),
+            Item(id=229, name="Solar Crest", internal_name="solar_crest", cost=2625),
+            Item(id=251, name="Bloodthorn", internal_name="bloodthorn", cost=6800),
+            Item(id=243, name="Hood of Defiance", internal_name="hood_of_defiance", cost=1500),
+            Item(id=295, name="Wraith Pact", internal_name="wraith_pact", cost=4050),
+            Item(id=254, name="Glimmer Cape", internal_name="glimmer_cape", cost=1950),
+            Item(id=108, name="Aghanim's Scepter", internal_name="ultimate_scepter", cost=4200),
+            Item(id=609, name="Aghanim's Shard", internal_name="aghanims_shard", cost=1400),
+            Item(id=293, name="Mage Slayer", internal_name="mage_slayer", cost=2400),
+            Item(id=160, name="Eye of Skadi", internal_name="skadi", cost=5300),
+            Item(id=137, name="Radiance", internal_name="radiance", cost=5150),
+            Item(id=57, name="Vanguard", internal_name="vanguard", cost=1700),
+            Item(id=223, name="Meteor Hammer", internal_name="meteor_hammer", cost=2350),
+            Item(id=291, name="Witch Blade", internal_name="witch_blade", cost=2600),
+            Item(id=130, name="Desolator", internal_name="desolator", cost=3500),
+            Item(id=232, name="Guardian Greaves", internal_name="guardian_greaves", cost=5300),
+            Item(id=114, name="Heart of Tarrasque", internal_name="heart", cost=5000),
+            Item(id=176, name="Ethereal Blade", internal_name="ethereal_blade", cost=4650),
+            Item(id=90, name="Urn of Shadows", internal_name="urn_of_shadows", cost=880),
         ]
         session.add_all(items)
 
@@ -857,6 +883,106 @@ async def test_db_setup():
                         "dname": "Tricks of the Trade",
                         "behavior": ["AOE", "Point Target", "Channeled"],
                         "dmg_type": "Physical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                },
+            ),
+            # Phase 35: Ability data for expanded rules tests
+            HeroAbilityData(
+                hero_id=22,  # Zeus
+                abilities_json={
+                    "zuus_arc_lightning": {
+                        "dname": "Arc Lightning",
+                        "behavior": "Unit Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                    "zuus_lightning_bolt": {
+                        "dname": "Lightning Bolt",
+                        "behavior": ["Unit Target", "Point Target"],
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                    "zuus_heavenly_jump": {
+                        "dname": "Heavenly Jump",
+                        "behavior": "No Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": "Yes",
+                    },
+                    "zuus_thundergods_wrath": {
+                        "dname": "Thundergod's Wrath",
+                        "behavior": "No Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                },
+            ),
+            HeroAbilityData(
+                hero_id=25,  # Lina
+                abilities_json={
+                    "lina_dragon_slave": {
+                        "dname": "Dragon Slave",
+                        "behavior": "Point Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                    "lina_light_strike_array": {
+                        "dname": "Light Strike Array",
+                        "behavior": ["AOE", "Point Target"],
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": "Yes",
+                    },
+                    "lina_fiery_soul": {
+                        "dname": "Fiery Soul",
+                        "behavior": "Passive",
+                        "dmg_type": None,
+                        "bkbpierce": None,
+                        "dispellable": None,
+                    },
+                    "lina_laguna_blade": {
+                        "dname": "Laguna Blade",
+                        "behavior": "Unit Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": None,
+                    },
+                },
+            ),
+            HeroAbilityData(
+                hero_id=52,  # Leshrac
+                abilities_json={
+                    "leshrac_split_earth": {
+                        "dname": "Split Earth",
+                        "behavior": ["AOE", "Point Target"],
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": "Yes",
+                    },
+                    "leshrac_diabolic_edict": {
+                        "dname": "Diabolic Edict",
+                        "behavior": "No Target",
+                        "dmg_type": "Physical",
+                        "bkbpierce": "Yes",
+                        "dispellable": None,
+                    },
+                    "leshrac_lightning_storm": {
+                        "dname": "Lightning Storm",
+                        "behavior": "Unit Target",
+                        "dmg_type": "Magical",
+                        "bkbpierce": "No",
+                        "dispellable": "Yes",
+                    },
+                    "leshrac_pulse_nova": {
+                        "dname": "Pulse Nova",
+                        "behavior": ["No Target", "Toggle"],
+                        "dmg_type": "Magical",
                         "bkbpierce": "No",
                         "dispellable": None,
                     },
