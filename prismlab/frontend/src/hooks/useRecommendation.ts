@@ -1,5 +1,6 @@
 import { useRecommendationStore } from "../stores/recommendationStore";
 import { useGameStore } from "../stores/gameStore";
+import { useGsiStore } from "../stores/gsiStore";
 import { api } from "../api/client";
 import type { RecommendRequest } from "../types/recommendation";
 import { PLAYSTYLE_OPTIONS } from "../utils/constants";
@@ -15,6 +16,10 @@ function buildRequest(): RecommendRequest | null {
 
   const playstyle =
     game.playstyle ?? PLAYSTYLE_OPTIONS[game.role]?.[0] ?? "Farm-first";
+
+  // Read GSI game clock if available (Phase 36: PROM-02)
+  const gsi = useGsiStore.getState();
+  const gameTimeSec = gsi.liveState?.game_clock ?? null;
 
   return {
     hero_id: game.selectedHero.id,
@@ -37,6 +42,10 @@ function buildRequest(): RecommendRequest | null {
       excludedItemIds.length > 0 ? excludedItemIds : undefined,
     enemy_context:
       game.enemyContext.length > 0 ? game.enemyContext : undefined,
+
+    // Phase 36: Time-aware fields (PROM-02, PROM-05)
+    game_time_seconds: gameTimeSec != null && gameTimeSec > 0 ? Math.round(gameTimeSec) : undefined,
+    turbo: game.turbo || undefined,  // omit if false (default)
   };
 }
 

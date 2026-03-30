@@ -121,4 +121,8 @@ export interface RecommendRequest {
   enemy_items_spotted?: string[];
   purchased_items?: number[];
   enemy_context?: EnemyContext[];
+
+  // Phase 36: Time-aware reasoning (PROM-02, PROM-05)
+  game_time_seconds?: number | null;  // from GSI game_clock; null = pre-game
+  turbo?: boolean;                     // halves all timing benchmarks
 }
