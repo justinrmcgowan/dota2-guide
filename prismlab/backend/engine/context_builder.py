@@ -126,6 +126,15 @@ class ContextBuilder:
                 f"## Popular Items on This Hero\n{popularity_section}"
             )
 
+        # 6a. Pro reference section: Divine/Immortal item baselines
+        pro_section = self._build_pro_reference_section(request.hero_id)
+        if pro_section:
+            sections.append(
+                f"## What Divine/Immortal Players Build (5400+ MMR)\n{pro_section}\n"
+                f"If you deviate from these popular choices, explain WHY your recommendation "
+                f"is better for this specific matchup."
+            )
+
         # 6b. Build timing benchmarks section (per D-05)
         timing_section = await self._build_timing_section(request.hero_id, db)
         if timing_section:
@@ -152,7 +161,8 @@ class ContextBuilder:
             )
         else:
             matchup_focus = (
-                "Be specific about WHY each item counters THIS matchup."
+                "Be specific about WHY each item counters THIS matchup. "
+                "Reference what top players build and explain any deviations."
                 if request.lane_opponents
                 else "Focus on WHY each item synergizes with this hero's kit and role."
             )
@@ -427,6 +437,33 @@ class ContextBuilder:
                 sections.append(f"{label}: {', '.join(item_names)}")
 
         return "\n".join(sections)
+
+    def _build_pro_reference_section(self, hero_id: int) -> str:
+        """Build 'What Divine/Immortal players build' section from cached baselines.
+
+        Returns empty string if no baselines available (graceful fallback).
+        """
+        baselines = self.cache.get_hero_item_baselines(hero_id)
+        if not baselines:
+            return ""
+
+        lines: list[str] = []
+        phase_labels = {
+            "starting": "Starting",
+            "laning": "Laning",
+            "core": "Core",
+            "late_game": "Late Game",
+        }
+        for phase_key, label in phase_labels.items():
+            items = baselines.get(phase_key, [])
+            if not items:
+                continue
+            item_strs = [f"{name} ({count} games)" for _, name, count, _ in items[:5]]
+            lines.append(f"{label}: {', '.join(item_strs)}")
+
+        if not lines:
+            return ""
+        return "\n".join(lines)
 
     def _build_neutral_catalog(self) -> str:
         """Build compact neutral items catalog grouped by tier.

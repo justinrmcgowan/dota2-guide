@@ -461,6 +461,113 @@ class TestSystemPromptNeutralRules:
         assert "neutral_items" in SYSTEM_PROMPT
 
 
+# ---------------------------------------------------------------------------
+# Pro Reference Section tests (Phase 35: Quality Foundation)
+# ---------------------------------------------------------------------------
+
+
+class TestProReferenceSection:
+    """Tests for _build_pro_reference_section in context_builder."""
+
+    def test_pro_section_included_when_baselines_exist(self):
+        """Pro section contains hero item baselines with game counts."""
+        mock_cache = MagicMock(spec=DataCache)
+        mock_cache.get_hero_item_baselines.return_value = {
+            "starting": [(36, "Magic Stick", 5000, 0.0), (237, "Tango", 8000, 0.0)],
+            "laning": [(48, "Power Treads", 3000, 0.0)],
+            "core": [(116, "Black King Bar", 2500, 0.0)],
+        }
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
+
+        result = cb._build_pro_reference_section(hero_id=1)
+        assert "Starting:" in result
+        assert "Magic Stick (5000 games)" in result
+        assert "Tango (8000 games)" in result
+        assert "Laning:" in result
+        assert "Power Treads (3000 games)" in result
+        assert "Core:" in result
+        assert "Black King Bar (2500 games)" in result
+
+    def test_pro_section_skipped_when_no_baselines(self):
+        """Pro section returns empty string when no baselines available."""
+        mock_cache = MagicMock(spec=DataCache)
+        mock_cache.get_hero_item_baselines.return_value = None
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
+
+        result = cb._build_pro_reference_section(hero_id=1)
+        assert result == ""
+
+    def test_pro_section_skipped_when_baselines_empty_dict(self):
+        """Pro section returns empty string when baselines is empty dict."""
+        mock_cache = MagicMock(spec=DataCache)
+        mock_cache.get_hero_item_baselines.return_value = {}
+        mock_opendota = MagicMock()
+        cb = ContextBuilder(opendota_client=mock_opendota, cache=mock_cache)
+
+        result = cb._build_pro_reference_section(hero_id=1)
+        assert result == ""
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_includes_pro_section_when_baselines_cached(
+        self, mock_matchup, mock_popularity, test_db_session
+    ):
+        """Full build() includes 'What Divine/Immortal Players Build' when baselines exist."""
+        original_baselines = data_cache._hero_item_baselines.copy()
+        data_cache._hero_item_baselines[1] = {
+            "starting": [(36, "Magic Stick", 5000, 0.0)],
+            "core": [(116, "Black King Bar", 2500, 0.0)],
+        }
+        try:
+            mock_opendota = MagicMock()
+            cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
+            req = _make_request()
+            result = await cb.build(req, [], test_db_session)
+            assert "What Divine/Immortal Players Build" in result
+            assert "explain WHY your recommendation is better" in result
+            assert "Magic Stick (5000 games)" in result
+        finally:
+            data_cache._hero_item_baselines = original_baselines
+
+    @pytest.mark.asyncio
+    @patch(
+        "engine.context_builder.get_hero_item_popularity",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    @patch(
+        "engine.context_builder.get_or_fetch_matchup",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
+    async def test_build_excludes_pro_section_when_no_baselines(
+        self, mock_matchup, mock_popularity, test_db_session
+    ):
+        """Full build() does NOT include 'What Divine/Immortal Players Build' when no baselines."""
+        original_baselines = data_cache._hero_item_baselines.copy()
+        # Ensure no baselines for hero 1
+        data_cache._hero_item_baselines.pop(1, None)
+        try:
+            mock_opendota = MagicMock()
+            cb = ContextBuilder(opendota_client=mock_opendota, cache=data_cache)
+            req = _make_request()
+            result = await cb.build(req, [], test_db_session)
+            assert "What Divine/Immortal Players Build" not in result
+        finally:
+            data_cache._hero_item_baselines = original_baselines
+
+
 class TestBuildFull:
     @pytest.mark.asyncio
     @patch(
