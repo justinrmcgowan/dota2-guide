@@ -10,8 +10,12 @@ synchronous dict reads with zero DB queries.
 This is NOT a fallback -- it fires on every request before Claude API.
 """
 
+import logging
+
 from data.cache import DataCache, AbilityCached
 from engine.schemas import RecommendRequest, RuleResult, EnemyContext, compute_threat_level
+
+logger = logging.getLogger(__name__)
 
 
 class RulesEngine:
@@ -141,6 +145,9 @@ class RulesEngine:
         for rule_fn in self._rules:
             results.extend(rule_fn(request))
 
+        # Phase 36: Timing gate filter -- remove timing-inappropriate items
+        results = self._apply_timing_gates(results, request)
+
         # Post-process: adjust priority based on threat
         if not threat_map:
             return results
@@ -162,6 +169,60 @@ class RulesEngine:
                     break
             adjusted.append(result)
         return adjusted
+
+    def _apply_timing_gates(
+        self, results: list[RuleResult], req: RecommendRequest
+    ) -> list[RuleResult]:
+        """Filter out timing-inappropriate items based on game clock.
+
+        Returns results unchanged if game_time_seconds is None (unknown timing).
+        In turbo mode, all thresholds are halved (per PROM-05).
+        """
+        game_time = req.game_time_seconds
+        if game_time is None:
+            return results
+
+        turbo_mult = 0.5 if req.turbo else 1.0
+
+        # Timing thresholds (seconds). Turbo halves them.
+        midas_cutoff = int(1200 * turbo_mult)   # 20 min normal, 10 min turbo
+        rapier_min = int(2100 * turbo_mult)      # 35 min normal, 17.5 min turbo
+
+        filtered: list[RuleResult] = []
+        for r in results:
+            item_name_lower = r.item_name.lower()
+
+            # Midas after cutoff -> never
+            if "midas" in item_name_lower and game_time > midas_cutoff:
+                logger.debug(
+                    "Timing gate: blocked %s (game_time=%ds > %ds)",
+                    r.item_name, game_time, midas_cutoff,
+                )
+                continue
+
+            # Rapier before minimum -> block
+            if "rapier" in item_name_lower and game_time < rapier_min:
+                logger.debug(
+                    "Timing gate: blocked %s (game_time=%ds < %ds)",
+                    r.item_name, game_time, rapier_min,
+                )
+                continue
+
+            filtered.append(r)
+
+        # BKB urgency escalation: if game_time > 25 min (normal) / 12.5 min (turbo)
+        # and BKB is recommended as situational, escalate to core
+        bkb_escalation_time = int(1500 * turbo_mult)
+        if game_time > bkb_escalation_time:
+            for i, r in enumerate(filtered):
+                if "black king bar" in r.item_name.lower():
+                    if r.priority == "situational":
+                        filtered[i] = r.model_copy(update={
+                            "priority": "core",
+                            "reasoning": r.reasoning + f" [URGENT: {game_time // 60}min without BKB]",
+                        })
+
+        return filtered
 
     def _hero_attack_type(self, hero_id: int) -> str | None:
         """Return hero attack_type ('Melee' or 'Ranged') from cache, or None."""

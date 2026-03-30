@@ -857,3 +857,98 @@ class TestBuildTimingSection:
             assert "Power Treads" in result
         finally:
             data_cache._timing_benchmarks = original_timings
+
+
+# ── Phase 36: Game clock, unusual role, partial draft ─────────────────
+
+
+class TestBuildGameClockSection:
+    """Tests for _build_game_clock_section (PROM-02)."""
+
+    def test_game_clock_with_time(self, builder: ContextBuilder):
+        """Game clock section formats minutes:seconds from game_time_seconds."""
+        req = _make_request(game_time_seconds=1500)
+        result = builder._build_game_clock_section(req)
+        assert "25:00" in result
+        assert "## Game Clock" in result
+
+    def test_game_clock_none(self, builder: ContextBuilder):
+        """Game clock section returns empty when game_time_seconds is None."""
+        req = _make_request(game_time_seconds=None)
+        result = builder._build_game_clock_section(req)
+        assert result == ""
+
+    def test_game_clock_turbo(self, builder: ContextBuilder):
+        """Game clock section includes TURBO annotation in turbo mode."""
+        req = _make_request(game_time_seconds=600, turbo=True)
+        result = builder._build_game_clock_section(req)
+        assert "TURBO" in result
+        assert "10:00" in result
+
+    def test_game_clock_non_turbo_no_turbo_text(self, builder: ContextBuilder):
+        """Game clock section omits TURBO when turbo is False."""
+        req = _make_request(game_time_seconds=600, turbo=False)
+        result = builder._build_game_clock_section(req)
+        assert "TURBO" not in result
+
+
+class TestBuildUnusualRoleSection:
+    """Tests for _build_unusual_role_section (PROM-03)."""
+
+    def test_unusual_role_detected(self, builder: ContextBuilder):
+        """Unusual role flagged when hero_id NOT in HERO_ROLE_VIABLE[role]."""
+        from engine.hero_selector import HERO_ROLE_VIABLE
+
+        # Find a hero_id that is NOT viable for role 1 (carry)
+        # hero_id=22 is Zeus -- typically pos 2/4, not pos 1
+        viable = HERO_ROLE_VIABLE.get(1, set())
+        # Use hero_id 22 (Zeus) as pos 1 carry -- should be unusual
+        req = _make_request(hero_id=22, role=1, playstyle="Aggressive")
+        result = builder._build_unusual_role_section(req)
+        if 22 not in viable:
+            assert "Unusual Role" in result
+            assert "Pos 1" in result
+        else:
+            # If hero happens to be viable, just verify no crash
+            assert isinstance(result, str)
+
+    def test_normal_role_returns_empty(self, builder: ContextBuilder):
+        """Normal role (hero in HERO_ROLE_VIABLE[role]) returns empty string."""
+        from engine.hero_selector import HERO_ROLE_VIABLE
+
+        # hero_id=1 is Anti-Mage, role=1 is carry -- very standard
+        viable = HERO_ROLE_VIABLE.get(1, set())
+        req = _make_request(hero_id=1, role=1, playstyle="Aggressive")
+        result = builder._build_unusual_role_section(req)
+        if 1 in viable:
+            assert result == ""
+        else:
+            assert isinstance(result, str)
+
+
+class TestBuildPartialDraftSection:
+    """Tests for _build_partial_draft_section (PROM-04)."""
+
+    def test_partial_draft_detected(self, builder: ContextBuilder):
+        """Partial draft section shown when < 10 heroes total."""
+        # 1 (player) + 0 allies + 2 opponents = 3 total
+        req = _make_request(all_opponents=[22, 69])
+        result = builder._build_partial_draft_section(req)
+        assert "3/10" in result
+        assert "Partial Draft" in result
+
+    def test_full_draft_returns_empty(self, builder: ContextBuilder):
+        """Full draft (10 heroes) returns empty string."""
+        req = _make_request(
+            allies=[2, 3, 5, 6],
+            all_opponents=[22, 69, 11, 12, 8],
+        )
+        result = builder._build_partial_draft_section(req)
+        assert result == ""
+
+    def test_partial_draft_solo_hero(self, builder: ContextBuilder):
+        """Solo hero (1/10) shows maximum partial draft caveat."""
+        req = _make_request()
+        result = builder._build_partial_draft_section(req)
+        assert "1/10" in result
+        assert "9 heroes not yet picked" in result

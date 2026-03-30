@@ -14,6 +14,9 @@ interface GameStore {
   lane: "safe" | "mid" | "off" | null;
   laneOpponents: Hero[];
 
+  // Game mode
+  turbo: boolean;
+
   // Mid-game adaptation state
   laneResult: "won" | "even" | "lost" | null;
   damageProfile: { physical: number; magical: number; pure: number } | null;
@@ -42,6 +45,7 @@ interface GameStore {
   }) => void;
   toggleEnemyItem: (itemName: string) => void;
   setEnemyItemsSpotted: (items: string[]) => void;
+  setTurbo: (turbo: boolean) => void;
   setEnemyContext: (ctx: EnemyContext[]) => void;
   clearMidGameState: () => void;
   clear: () => void;
@@ -58,6 +62,7 @@ export const useGameStore = create<GameStore>()(
   side: null,
   lane: null,
   laneOpponents: [],
+  turbo: false,
   laneResult: null,
   damageProfile: null,
   enemyItemsSpotted: [],
@@ -145,6 +150,8 @@ export const useGameStore = create<GameStore>()(
     }
   },
 
+  setTurbo: (turbo) => set({ turbo }),
+
   setEnemyItemsSpotted: (items) => set({ enemyItemsSpotted: items }),
 
   setEnemyContext: (ctx) => set({ enemyContext: ctx }),
@@ -162,6 +169,7 @@ export const useGameStore = create<GameStore>()(
       side: null,
       lane: null,
       laneOpponents: [],
+      turbo: false,
       laneResult: null,
       damageProfile: null,
       enemyItemsSpotted: [],

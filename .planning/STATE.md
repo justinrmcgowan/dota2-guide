@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 36-01 Few-Shot Exemplar System
-last_updated: "2026-03-30T20:35:09.735Z"
+stopped_at: Completed 36-02 Game Clock + Timing Gates
+last_updated: "2026-03-30T20:48:51Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 3
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 5
-  percent: 20
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 35 (Quality Foundation)
-Plan: 35-03 complete
+Phase: 36 (Prompt Intelligence)
+Plan: 36-02 complete
 Status: Executing
 Last activity: 2026-03-30
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -55,8 +55,10 @@ Progress: [██░░░░░░░░] 20%
 - [Phase 34]: Graceful fallback when win predictor models fail to load (non-fatal)
 - [v7.0]: Tauri Desktop App deferred to v8.0 — engine quality before distribution
 - [v7.0]: Design spec at docs/superpowers/specs/2026-03-30-engine-hardening-design.md
-- [Phase 36]: Threat profile heuristic priority: summons > invis > evasion > magic > physical > burst
-- [Phase 36]: Few-shot exemplar scoring: role=+3, category=+1, threat_profile=+2, partial=+1
+- [Phase 36-02]: Timing gates as post-processing filter in evaluate(), not separate rule methods
+- [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
+- [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
+- [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
 
 ### Pending Todos
 
@@ -68,6 +70,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:35:09.732Z
-Stopped at: Completed 36-01 Few-Shot Exemplar System
+Last session: 2026-03-30T20:48:51Z
+Stopped at: Completed 36-02 Game Clock + Timing Gates
 Resume file: None

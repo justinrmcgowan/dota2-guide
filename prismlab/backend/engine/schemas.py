@@ -49,6 +49,12 @@ class RecommendRequest(BaseModel):
     # Engine mode override (Phase 26): "fast" | "auto" | "deep" | None (uses settings default)
     mode: str | None = None
 
+    # Game clock for time-aware reasoning (Phase 36: PROM-02)
+    game_time_seconds: int | None = None  # from GSI clock; None = unknown/pre-game
+
+    # Turbo mode flag (Phase 36: PROM-05) -- halves all timing benchmarks
+    turbo: bool = False
+
     @field_validator("playstyle")
     @classmethod
     def validate_playstyle(cls, v: str, info) -> str:

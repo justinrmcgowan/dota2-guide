@@ -29,6 +29,8 @@ def _make_request(
     enemy_context: list | None = None,
     all_opponents: list[int] | None = None,
     allies: list[int] | None = None,
+    game_time_seconds: int | None = None,
+    turbo: bool = False,
 ) -> RecommendRequest:
     """Create a minimal valid RecommendRequest for testing."""
     if playstyle is None:
@@ -43,6 +45,8 @@ def _make_request(
         all_opponents=all_opponents or [],
         allies=allies or [],
         enemy_context=enemy_context or [],
+        game_time_seconds=game_time_seconds,
+        turbo=turbo,
     )
 
 
@@ -936,3 +940,143 @@ class TestMetaAwareRulesUseAllOpponents:
             "Shiva's team armor rule should fire when all_opponents has 3+ physical "
             "even if lane_opponents has only 1"
         )
+
+
+# ── Phase 36: Schema fields ──────────────────────────────────────────
+
+class TestSchemaGameTimeAndTurbo:
+    """Test that RecommendRequest accepts game_time_seconds and turbo."""
+
+    def test_accepts_game_time_seconds(self):
+        """RecommendRequest accepts game_time_seconds=1500 without error."""
+        req = _make_request(game_time_seconds=1500)
+        assert req.game_time_seconds == 1500
+
+    def test_accepts_turbo_true(self):
+        """RecommendRequest accepts turbo=True without error."""
+        req = _make_request(turbo=True)
+        assert req.turbo is True
+
+    def test_defaults_game_time_none(self):
+        """RecommendRequest defaults game_time_seconds to None."""
+        req = _make_request()
+        assert req.game_time_seconds is None
+
+    def test_defaults_turbo_false(self):
+        """RecommendRequest defaults turbo to False."""
+        req = _make_request()
+        assert req.turbo is False
+
+
+# ── Phase 36: Timing gate rules ──────────────────────────────────────
+
+class TestTimingGateRules:
+    """Test timing-gated item filtering."""
+
+    async def test_midas_blocked_after_20min(self, engine: RulesEngine):
+        """Timing gate blocks Midas when game_time_seconds > 1200 (20 min)."""
+        from engine.schemas import RuleResult
+        # Directly test _apply_timing_gates with a mock Midas result
+        mock_results = [RuleResult(
+            item_id=65,
+            item_name="Hand of Midas",
+            reasoning="Test midas",
+            phase="core",
+            priority="core",
+        )]
+        req = _make_request(game_time_seconds=1500)  # 25 min
+        filtered = engine._apply_timing_gates(mock_results, req)
+        midas = [r for r in filtered if "midas" in r.item_name.lower()]
+        assert len(midas) == 0, "Midas should be blocked after 20 min"
+
+    async def test_midas_allowed_at_10min(self, engine: RulesEngine):
+        """Timing gate allows Midas when game_time_seconds is 600 (10 min)."""
+        from engine.schemas import RuleResult
+        mock_results = [RuleResult(
+            item_id=65,
+            item_name="Hand of Midas",
+            reasoning="Test midas",
+            phase="core",
+            priority="core",
+        )]
+        req = _make_request(game_time_seconds=600)
+        filtered = engine._apply_timing_gates(mock_results, req)
+        midas = [r for r in filtered if "midas" in r.item_name.lower()]
+        assert len(midas) == 1, "Midas should be allowed at 10 min"
+
+    async def test_midas_allowed_when_time_none(self, engine: RulesEngine):
+        """Timing gate allows Midas when game_time_seconds is None."""
+        from engine.schemas import RuleResult
+        mock_results = [RuleResult(
+            item_id=65,
+            item_name="Hand of Midas",
+            reasoning="Test midas",
+            phase="core",
+            priority="core",
+        )]
+        req = _make_request(game_time_seconds=None)
+        filtered = engine._apply_timing_gates(mock_results, req)
+        midas = [r for r in filtered if "midas" in r.item_name.lower()]
+        assert len(midas) == 1, "Midas should be allowed when time is unknown"
+
+    async def test_rapier_blocked_before_35min(self, engine: RulesEngine):
+        """Timing gate blocks Rapier when game_time_seconds < 2100 (35 min)."""
+        from engine.schemas import RuleResult
+        mock_results = [RuleResult(
+            item_id=133,
+            item_name="Divine Rapier",
+            reasoning="Test rapier",
+            phase="late_game",
+            priority="luxury",
+        )]
+        req = _make_request(game_time_seconds=1800)  # 30 min
+        filtered = engine._apply_timing_gates(mock_results, req)
+        rapier = [r for r in filtered if "rapier" in r.item_name.lower()]
+        assert len(rapier) == 0, "Rapier should be blocked before 35 min"
+
+    async def test_turbo_halves_midas_threshold(self, engine: RulesEngine):
+        """Turbo mode: Midas blocked after 600s (10 min) instead of 1200s."""
+        from engine.schemas import RuleResult
+        mock_results = [RuleResult(
+            item_id=65,
+            item_name="Hand of Midas",
+            reasoning="Test midas",
+            phase="core",
+            priority="core",
+        )]
+        req = _make_request(game_time_seconds=700, turbo=True)  # 11:40 in turbo
+        filtered = engine._apply_timing_gates(mock_results, req)
+        midas = [r for r in filtered if "midas" in r.item_name.lower()]
+        assert len(midas) == 0, "Turbo: Midas should be blocked after 10 min"
+
+    async def test_turbo_allows_midas_under_threshold(self, engine: RulesEngine):
+        """Turbo mode: Midas allowed before 600s (10 min)."""
+        from engine.schemas import RuleResult
+        mock_results = [RuleResult(
+            item_id=65,
+            item_name="Hand of Midas",
+            reasoning="Test midas",
+            phase="core",
+            priority="core",
+        )]
+        req = _make_request(game_time_seconds=500, turbo=True)  # 8:20 in turbo
+        filtered = engine._apply_timing_gates(mock_results, req)
+        midas = [r for r in filtered if "midas" in r.item_name.lower()]
+        assert len(midas) == 1, "Turbo: Midas should be allowed before 10 min"
+
+    async def test_bkb_urgency_escalation(self, engine: RulesEngine):
+        """BKB priority escalated to core when game_time > 25 min."""
+        from engine.schemas import RuleResult
+        mock_results = [RuleResult(
+            item_id=116,
+            item_name="Black King Bar",
+            reasoning="BKB for stuns",
+            phase="core",
+            priority="situational",
+        )]
+        req = _make_request(game_time_seconds=1800)  # 30 min
+        filtered = engine._apply_timing_gates(mock_results, req)
+        bkb = [r for r in filtered if "black king bar" in r.item_name.lower()]
+        assert len(bkb) == 1
+        assert bkb[0].priority == "core", "BKB should be escalated to core at 30 min"
+        assert "URGENT" in bkb[0].reasoning
