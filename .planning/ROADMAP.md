@@ -178,7 +178,7 @@
 |-------|----------------|--------|-----------|
 | 34. UX Speed & Instant Items | 7/7 | Complete | 2026-03-30 |
 | 35. Quality Foundation | 1/TBD | In progress | - |
-| 36. Prompt Intelligence | 0/TBD | Not started | - |
+| 36. Prompt Intelligence | 2/TBD | In progress | - |
 | 37. Latency & Caching | 0/TBD | Not started | - |
 | 38. Adaptiveness & Accuracy | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |

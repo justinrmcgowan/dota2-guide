@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 35-03 Rules Engine Expansion
-last_updated: "2026-03-30T20:04:09Z"
+stopped_at: Completed 36-02 Game Clock + Timing Gates
+last_updated: "2026-03-30T20:48:51Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 0
-  completed_plans: 2
-  percent: 20
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 35 (Quality Foundation)
-Plan: 35-03 complete
+Phase: 36 (Prompt Intelligence)
+Plan: 36-02 complete
 Status: Executing
 Last activity: 2026-03-30
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -55,6 +55,10 @@ Progress: [██░░░░░░░░] 20%
 - [Phase 34]: Graceful fallback when win predictor models fail to load (non-fatal)
 - [v7.0]: Tauri Desktop App deferred to v8.0 — engine quality before distribution
 - [v7.0]: Design spec at docs/superpowers/specs/2026-03-30-engine-hardening-design.md
+- [Phase 36-02]: Timing gates as post-processing filter in evaluate(), not separate rule methods
+- [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
+- [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
+- [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
 
 ### Pending Todos
 
@@ -66,6 +70,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Completed 35-03 Rules Engine Expansion
+Last session: 2026-03-30T20:48:51Z
+Stopped at: Completed 36-02 Game Clock + Timing Gates
 Resume file: None
