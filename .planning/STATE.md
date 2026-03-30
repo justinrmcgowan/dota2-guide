@@ -1,83 +1,57 @@
 ---
 gsd_state_version: 1.0
-milestone: v6.0
-milestone_name: Draft Intelligence
-status: verifying
-stopped_at: Completed 31-03-PLAN.md — Phase 31 hero-selector complete
-last_updated: "2026-03-29T21:19:32.240Z"
-last_activity: 2026-03-29
+milestone: v7.0
+milestone_name: Engine Hardening
+status: executing
+stopped_at: Phase 34 complete — UX Speed & Instant Items shipped
+last_updated: "2026-03-30T18:00:00.000Z"
+last_activity: 2026-03-30
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
-  percent: 0
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 7
+  percent: 20
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-29)
+See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 31 — hero-selector
+**Current focus:** v7.0 Engine Hardening — make recommendations monetization-ready
 
 ## Current Position
 
-Phase: 31
+Phase: 35 (Quality Foundation)
 Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Status: Ready for planning
+Last activity: 2026-03-30
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 73 (v1.0-v5.0 combined)
-- Average duration: ~5 min (v5.0 trend)
-- Total execution time: ~15h+
-
-**By Phase (recent):**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| Phase 29-stream-deck P01 | 5min | 2 tasks | 20 files |
-| Phase 29-stream-deck P02 | 5min | 2 tasks | 8 files |
-| Phase 33-game-analytics P01-P03 | ~10min | 6 tasks | - |
-| Phase 30-ml-win-predictor P01 | 12 | 3 tasks | 8 files |
-| Phase 30-ml-win-predictor P02 | 4 | 2 tasks | 5 files |
-| Phase 30-ml-win-predictor P03 | 3 | 1 tasks | 3 files |
-| Phase 31-hero-selector P02 | 3 | 2 tasks | 2 files |
-| Phase 31-hero-selector P01 | 5 | 2 tasks | 4 files |
-| Phase 31-hero-selector P03 | 8 | 2 tasks | 5 files |
+- Total plans completed: 80 (v1.0-v7.0 combined)
+- Average duration: ~5 min (v5.0+ trend)
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Phase 23]: win_condition is post-LLM enrichment only -- WinConditionBadge displays allied/enemy archetype pills above ItemTimeline
-- [Phase 25]: Dual-source live match API (Stratz primary, OpenDota fallback) wired to Steam ID in Settings
-- [Phase 28]: session.merge() for upserts -- current patch data (7.41) in place, ready for ML training
-- [Phase 33]: Normalized match logging schema (MatchLog + MatchItem + MatchRecommendation) live, match history page shipped
-- [Phase 30-ml-win-predictor]: Placeholder .ubj and matrices.json committed to repo — real artifacts require running train_win_predictor.py from prismlab/backend/ on patch day
-- [Phase 30-ml-win-predictor]: hero_id_to_index embedded in matrices.json at training time for training/inference parity in Plan 02
-- [Phase 30-ml-win-predictor]: get_booster().save_model() used for XGBoost .ubj artifacts (not joblib) — version-stable across XGBoost upgrades
-- [Phase 30-ml-win-predictor]: bracket_2 (Archon-Legend) default for win probability when request has no MMR field
-- [Phase 30-ml-win-predictor]: WinPredictor is stateless; DataCache holds xgb.Booster instances loaded at startup
-- [Phase 30-ml-win-predictor]: winProbability != null guard used (not falsy) so 0% probability renders correctly; text-secondary/80 matches confidence-opacity visual pattern
-- [Phase 31-hero-selector]: snake_case field names in TypeScript interfaces match backend JSON keys exactly — no camelCase conversion middleware
-- [Phase 31-hero-selector]: No engine mode injection for suggestHero (unlike recommend); suggest-hero has no engine mode concept
-- [Phase 31-hero-selector]: HERO_ROLE_VIABLE transcribed from heroPlaystyles.ts as static Python mirror; synergy*0.4+counter*0.4 composite with counter[c][e]-0.5 centering
-- [Phase 31-hero-selector]: onFocus prop added to HeroPicker to close HeroSuggestPanel before dropdown opens — prevents dual-open state
-- [Phase 31-hero-selector]: Score bar omitted when matrices_available=false to avoid misleading 50%-bar display for all-zero scores
-- [Phase 31-hero-selector]: Stable serialized keys (join(',')) used in useEffect deps instead of array refs to avoid infinite fetch loops
-- [Phase 31-hero-selector]: Fallback text-row render in HeroSuggestPanel when hero not yet in useHeroes() cache protects against cache race
+- [Phase 34]: Two-pass recommendation (fast-mode rules first, Claude merges in) for zero-click auto-trigger
+- [Phase 34]: 3s draft polling (down from 10s) during hero selection
+- [Phase 34]: Auto-trigger fires from both useLiveDraft AND useGameIntelligence (GSI hero detection)
+- [Phase 34]: Cross-phase item deduplication — earlier phase wins
+- [Phase 34]: asyncio.gather() for parallel enrichment (timing, build paths, win condition, win probability)
+- [Phase 34]: Adjustable API budget via PUT /settings/budget + Settings panel input
+- [Phase 34]: Graceful fallback when win predictor models fail to load (non-fatal)
+- [v7.0]: Tauri Desktop App deferred to v8.0 — engine quality before distribution
+- [v7.0]: Design spec at docs/superpowers/specs/2026-03-30-engine-hardening-design.md
 
 ### Pending Todos
 
@@ -85,11 +59,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 30 requires OpenDota bulk data pipeline for 200k+ matches -- data download volume and patch filtering strategy need plan-phase scoping
-- Phase 31 "Suggest Hero" UI integration point needs design decision: modal vs inline expansion in draft panel
+None active.
 
 ## Session Continuity
 
-Last session: 2026-03-29T21:13:07.819Z
-Stopped at: Completed 31-03-PLAN.md — Phase 31 hero-selector complete
+Last session: 2026-03-30
+Stopped at: Phase 34 complete — ready for Phase 35 planning
 Resume file: None

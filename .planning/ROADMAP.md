@@ -9,7 +9,8 @@
 - [x] **v4.0 Coaching Intelligence** - Phases 19-23 (shipped 2026-03-28)
 - [x] **v5.0 Supreme Companion** - Phases 24-29, 33 (shipped 2026-03-29)
 - [x] **v6.0 Draft Intelligence** - Phases 30-31 (shipped 2026-03-29)
-- [ ] **v7.0 Desktop Distribution** - Phase 32 (planned)
+- [ ] **v7.0 Engine Hardening** - Phases 34-38 (in progress)
+- [ ] **v8.0 Desktop Distribution** - Phase 32 (planned)
 
 ## Phases
 
@@ -83,80 +84,101 @@
 
 </details>
 
-### v6.0 Draft Intelligence (Planned)
+<details>
+<summary>v6.0 Draft Intelligence (Phases 30-31) - SHIPPED 2026-03-29</summary>
 
 - [x] **Phase 30: ML Win Predictor** - XGBoost/logistic regression model trained on 200k+ recent matches, draft win probability, synergy/counter matrices by MMR bracket (completed 2026-03-29)
 - [x] **Phase 31: Hero Selector** - Role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value (completed 2026-03-29)
 
-### v7.0 Desktop Distribution (Planned)
+</details>
+
+### v7.0 Engine Hardening (In Progress)
+
+- [x] **Phase 34: UX Speed & Instant Items** - Two-pass recommendations (rules-fast then Claude-full), 3s draft polling, GSI auto-trigger, parallel enrichment, cross-phase deduplication (completed 2026-03-30)
+- [ ] **Phase 35: Quality Foundation** - Pro/high-MMR build baselines from OpenDota, response validation layer with retry, 30+ expanded deterministic rules (item-vs-item, meta-aware, timing-aware)
+- [ ] **Phase 36: Prompt Intelligence** - Exemplar few-shot prompting (15-20 gold-standard builds), time-aware reasoning with game clock injection, edge case handling (unusual roles, partial drafts, Turbo mode)
+- [ ] **Phase 37: Latency & Caching** - Hierarchical 3-tier cache (hero+role → matchup → full request), cache warming for top 90 hero+role combos, SSE streaming endpoint for progressive item display
+- [ ] **Phase 38: Adaptiveness & Accuracy** - Diff-based re-evaluation (send only what changed to Claude), post-match accuracy tracking (follow rate, follow win rate), accuracy dashboard on match history
+
+### v8.0 Desktop Distribution (Planned)
 
 - [ ] **Phase 32: Tauri Desktop App** - Native Windows app via Tauri (React frontend in native webview, Python backend as sidecar), first-run wizard with API key entry, auto-detect Dota 2 path, GSI cfg placement, system tray, native notifications
 
 ## Phase Details
 
-### v6.0 Draft Intelligence (Planned)
+### v7.0 Engine Hardening (In Progress)
 
-**Milestone Goal:** Add statistical ML-driven draft analysis — win probability prediction from hero compositions and intelligent hero suggestions filtered by role, lane, and team context. Combines data-driven predictions with Prismlab's existing Claude reasoning for high-confidence draft decisions.
+**Milestone Goal:** Make Prismlab's recommendation engine monetization-ready by improving quality, latency, and coverage. Advice should feel like a genuine 8K+ MMR coach. Zero-click from hero pick to starting items. Post-match accuracy tracking to prove value.
 
-### Phase 30: ML Win Predictor
-**Goal**: Users can see a statistical win probability for their draft alongside Claude's qualitative win condition assessment
-**Depends on**: Phase 28 (current patch data), Phase 23 (win condition framing for comparison)
-**Requirements**: PRED-01, PRED-02, PRED-03, PRED-04, PRED-05
+**Design Spec:** `docs/superpowers/specs/2026-03-30-engine-hardening-design.md`
+
+### Phase 34: UX Speed & Instant Items
+**Goal:** Zero manual clicks from hero pick (with GSI) to seeing starting items in under 3 seconds
+**Depends on:** Phase 26 (engine modes), Phase 25 (live draft API)
 **Success Criteria** (what must be TRUE):
-  1. User sees a win probability percentage for the allied team whenever a 10-hero draft is present
-  2. Win probability changes meaningfully as different hero compositions are entered
-  3. Precomputed synergy and counter matrices are available to the prediction engine, segmented by MMR bracket
-  4. Win probability appears in the recommendation view alongside Claude's win condition framing so users can compare statistical and reasoning-based signals
-  5. The model is trained on 200k+ recent OpenDota matches filtered to current patch
-**Plans**: 3 plans
+  1. When GSI detects hero + role, recommendations fire automatically without clicking "Get Item Build"
+  2. Rules-based starting items appear in <2s, full Claude recommendation merges in behind
+  3. Draft polling detects hero picks within 3 seconds (not 10)
+  4. No duplicate items appear across recommendation phases
+  5. Enrichment pipeline runs in parallel (asyncio.gather)
+**Status:** Complete (2026-03-30)
 
-Plans:
-- [x] 30-01-PLAN.md — Training pipeline: OpenDota data download, XGBoost training, synergy/counter matrices (PRED-02, PRED-03, PRED-04)
-- [x] 30-02-PLAN.md — Runtime integration: WinPredictor class, DataCache extension, RecommendResponse field, recommender enrichment (PRED-01)
-- [x] 30-03-PLAN.md — UI display: WinConditionBadge updated to show "Teamfight 54%" (PRED-05)
-
-### Phase 31: Hero Selector
-**Goal**: Users can get ranked hero suggestions for their role and lane that account for current ally synergies and enemy counter-value before locking in their hero
-**Depends on**: Phase 30 (ML model must be trained and serving predictions), Phase 25 (API-driven draft input for live draft context)
-**Requirements**: HERO-01, HERO-02, HERO-03, HERO-04
+### Phase 35: Quality Foundation
+**Goal:** Recommendations are grounded in what top players actually build, validated for logical consistency, and cover 50+ deterministic matchup scenarios
+**Depends on:** Phase 34 (UX speed ensures fast feedback loop for testing quality changes)
 **Success Criteria** (what must be TRUE):
-  1. User can invoke a "Suggest Hero" flow from the draft input panel before entering a hero and receive a ranked list of candidates
-  2. Suggestions are filtered to heroes viable for the user's selected position and lane
-  3. Suggestions rank higher for heroes with strong synergy with already-picked allies and counter-value against already-picked enemies
-  4. User can select a suggested hero directly from the list and the draft input updates, proceeding to the recommendation flow
-**Plans**: 3 plans
+  1. Context builder includes Divine/Immortal item win rates per hero per matchup from OpenDota
+  2. Claude explains deviations from pro builds rather than inventing from scratch
+  3. Response validator catches phase-cost violations, cross-phase duplicates, and missing counter items — retries once on failure
+  4. Rules engine covers 50+ deterministic scenarios (currently ~20) including item-vs-item counters and meta-aware team composition rules
+  5. Validation failure rates are logged for prompt tuning
 
-Plans:
-- [x] 31-01-PLAN.md — Backend scoring engine: SuggestHero schemas + HeroSelector class with HERO_ROLE_VIABLE filter and matrix scoring (HERO-01, HERO-02, HERO-03)
-- [x] 31-02-PLAN.md — Frontend contracts: TypeScript types + api.suggestHero() client method (HERO-04)
-- [x] 31-03-PLAN.md — Integration: POST /api/suggest-hero route, HeroSuggestPanel component, Sidebar wiring (HERO-01, HERO-02, HERO-03, HERO-04)
+### Phase 36: Prompt Intelligence
+**Goal:** Claude's reasoning consistently matches the quality of an expert coach through few-shot exemplars, game-clock awareness, and graceful handling of edge cases
+**Depends on:** Phase 35 (quality foundation provides the data and validation that exemplars build on)
+**Success Criteria** (what must be TRUE):
+  1. 15-20 curated gold-standard recommendations are stored and the 1-2 closest are injected as few-shot examples per request
+  2. Game clock is injected into context and rules hard-block timing-inappropriate items (no Midas after 20 min)
+  3. Unusual roles are detected and flagged to Claude with adjusted context
+  4. Partial drafts (<10 heroes) still produce useful recommendations with appropriate caveats
+  5. Turbo mode flag halves all timing benchmarks
 
-### v7.0 Desktop Distribution (Planned)
+### Phase 37: Latency & Caching
+**Goal:** P95 full recommendation latency under 5 seconds through hierarchical caching, pre-computation, and streaming
+**Depends on:** Phase 35 (pro baselines are the data cached at L1/L2)
+**Success Criteria** (what must be TRUE):
+  1. Three-tier cache: hero+role+lane (1h TTL) → +opponents (5min) → full request (5min)
+  2. Top 90 hero+role combos are pre-warmed on startup with rules-only recommendations
+  3. SSE streaming endpoint delivers rules items immediately, Claude results progressively, enrichment data last
+  4. Frontend progressively renders phases as they stream in
+
+### Phase 38: Adaptiveness & Accuracy
+**Goal:** Mid-game re-evaluations are faster and cheaper via diff-based context, and post-match tracking proves recommendation value
+**Depends on:** Phase 35 (validation ensures accuracy tracking data is clean)
+**Success Criteria** (what must be TRUE):
+  1. Re-evaluations send only what changed since last eval (new enemy items, deaths, gold swings, phase transitions)
+  2. Diff-based context reduces token usage by 40%+ for mid-game re-evals
+  3. Post-match accuracy score computed: % of core recommendations purchased
+  4. Match history dashboard shows "follow rate" and "follow win rate vs deviate win rate"
+  5. Items frequently recommended but rarely purchased are flagged for prompt review
+
+### v8.0 Desktop Distribution (Planned)
 
 **Milestone Goal:** Package Prismlab as a one-click Windows installer that non-technical users can install and run locally, with automatic Dota 2 GSI configuration, API key setup, and system tray operation.
 
 ### Phase 32: Tauri Desktop App
-
-**Goal:** Package Prismlab as a native Windows desktop application using Tauri v2. The existing React frontend renders in a native webview (no browser tab, no Electron bloat, ~15MB footprint). The Python FastAPI backend runs as a Tauri sidecar process (bundled via PyInstaller into a standalone exe that Tauri spawns and manages). First-run wizard handles Anthropic API key entry, auto-detects Dota 2 install path (Steam registry key → libraryfolders.vdf parsing across all library folders), generates and places `gamestate_integration_prismlab.cfg` into the correct `game\dota\cfg\gamestate_integration\` directory, and prompts user to add `-gamestateintegration` to Dota 2 launch options. Native system tray icon with "Open" / "Quit" via Tauri's tray API. Native OS notifications for item timing alerts (ties into Phase 24 audio prompts). Config stored in platform-appropriate app data directory via Tauri's path API. Produces a single `.msi` or `.exe` installer via Tauri's built-in bundler (WiX-based). Docker Compose deployment remains for dev/server use — Tauri app is a separate build target
+**Goal:** Package Prismlab as a native Windows desktop application using Tauri v2
+**Depends on:** Phase 27 (game lifecycle), Phase 28 (current patch data), v7.0 Engine Hardening (quality must be proven before shipping to external users)
 **Requirements**: TBD
-**Depends on:** Phase 27 (game lifecycle must be solid before shipping to external users), Phase 28 (current patch data)
-**Plans:** 3/3 plans complete
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 32 to break down)
-
-**Architecture Notes:**
-- Tauri v2 handles: native window, system tray, notifications, installer bundling (WiX `.msi`), auto-updater, app data paths
-- Python backend: bundled as a PyInstaller sidecar exe, spawned by Tauri's sidecar API, communicates via localhost HTTP (same as current Docker setup)
-- React frontend: builds to static files, loaded by Tauri's webview — existing code unchanged
-- Dota 2 detection: Rust-side reads Windows Registry (`HKLM\SOFTWARE\WOW6432Node\Valve\Steam`), parses `libraryfolders.vdf`, locates `dota 2 beta\game\dota\cfg\gamestate_integration\`
-- GSI cfg: generated and placed automatically, no user file management required
-- Launch options: wizard screen explains adding `-gamestateintegration` to Dota 2 Steam properties (cannot be automated safely)
+**Plans:** TBD
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 30. ML Win Predictor | 3/3 | Complete    | 2026-03-29 |
-| 31. Hero Selector | 3/3 | Complete    | 2026-03-29 |
+| 34. UX Speed & Instant Items | 7/7 | Complete | 2026-03-30 |
+| 35. Quality Foundation | 0/TBD | Not started | - |
+| 36. Prompt Intelligence | 0/TBD | Not started | - |
+| 37. Latency & Caching | 0/TBD | Not started | - |
+| 38. Adaptiveness & Accuracy | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
