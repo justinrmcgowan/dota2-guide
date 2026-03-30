@@ -181,6 +181,7 @@ class HybridRecommender:
 
         phases = self._rules_only(rules_items)
         phases = self._validate_item_ids(phases)
+        phases = self._deduplicate_across_phases(phases)
 
         # Enrich with timing, build paths, win condition (same as other paths)
         timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
@@ -254,6 +255,7 @@ class HybridRecommender:
             fr = fallback_reason or FallbackReason.ollama_error
             phases = self._rules_only(rules_items)
             phases = self._validate_item_ids(phases)
+            phases = self._deduplicate_across_phases(phases)
 
             timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
                 request, phases, db
@@ -286,6 +288,7 @@ class HybridRecommender:
         overall_strategy = llm_result.overall_strategy
         neutral_items = llm_result.neutral_items
         phases = self._validate_item_ids(phases)
+        phases = self._deduplicate_across_phases(phases)
 
         timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
@@ -356,8 +359,9 @@ class HybridRecommender:
             )
             neutral_items = []
 
-        # Step 5: Validate and enrich
+        # Step 5: Validate, deduplicate, and enrich
         phases = self._validate_item_ids(phases)
+        phases = self._deduplicate_across_phases(phases)
 
         timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
             request, phases, db
@@ -597,6 +601,39 @@ class HybridRecommender:
                 )
 
         return validated_phases
+
+    def _deduplicate_across_phases(
+        self, phases: list[RecommendPhase]
+    ) -> list[RecommendPhase]:
+        """Remove items that appear in multiple phases. Earlier phase wins.
+
+        Phase order follows the list order (starting, laning, core, late_game,
+        situational). If the same item_id appears in core and late_game, the
+        late_game duplicate is removed. Removes phases that become empty.
+        """
+        seen_ids: set[int] = set()
+        deduped: list[RecommendPhase] = []
+        for phase in phases:
+            unique_items = []
+            for item in phase.items:
+                if item.item_id not in seen_ids:
+                    seen_ids.add(item.item_id)
+                    unique_items.append(item)
+                else:
+                    logger.debug(
+                        "Removed cross-phase duplicate: %s (%d) in %s",
+                        item.item_name, item.item_id, phase.phase,
+                    )
+            if unique_items:
+                deduped.append(
+                    RecommendPhase(
+                        phase=phase.phase,
+                        items=unique_items,
+                        timing=phase.timing,
+                        gold_budget=phase.gold_budget,
+                    )
+                )
+        return deduped
 
     async def _enrich_timing_data(
         self, hero_id: int, phases: list[RecommendPhase], db: AsyncSession
