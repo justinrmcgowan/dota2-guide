@@ -4,58 +4,59 @@ import { api } from "../api/client";
 import type { RecommendRequest } from "../types/recommendation";
 import { PLAYSTYLE_OPTIONS } from "../utils/constants";
 
+function buildRequest(): RecommendRequest | null {
+  const game = useGameStore.getState();
+  if (!game.selectedHero || game.role === null) return null;
+
+  const store = useRecommendationStore.getState();
+  const purchasedItemIds = store.getPurchasedItemIds();
+  const dismissedItemIds = store.getDismissedItemIds();
+  const excludedItemIds = [...new Set([...purchasedItemIds, ...dismissedItemIds])];
+
+  const playstyle =
+    game.playstyle ?? PLAYSTYLE_OPTIONS[game.role]?.[0] ?? "Farm-first";
+
+  return {
+    hero_id: game.selectedHero.id,
+    role: game.role,
+    playstyle,
+    side: game.side ?? "radiant",
+    lane: game.lane ?? "safe",
+    lane_opponents: game.laneOpponents.length > 0
+      ? game.laneOpponents.map((h) => h.id)
+      : game.opponents.filter(Boolean).map((h) => h!.id).slice(0, 2),
+    allies: game.allies.filter(Boolean).map((h) => h!.id),
+    all_opponents: game.opponents.filter(Boolean).map((h) => h!.id),
+    lane_result: game.laneResult,
+    damage_profile: game.damageProfile,
+    enemy_items_spotted:
+      game.enemyItemsSpotted.length > 0
+        ? game.enemyItemsSpotted
+        : undefined,
+    purchased_items:
+      excludedItemIds.length > 0 ? excludedItemIds : undefined,
+    enemy_context:
+      game.enemyContext.length > 0 ? game.enemyContext : undefined,
+  };
+}
+
 export function useRecommendation() {
   const data = useRecommendationStore((s) => s.data);
   const isLoading = useRecommendationStore((s) => s.isLoading);
+  const isPartial = useRecommendationStore((s) => s.isPartial);
   const error = useRecommendationStore((s) => s.error);
   const selectedItemId = useRecommendationStore((s) => s.selectedItemId);
   const selectItem = useRecommendationStore((s) => s.selectItem);
   const clear = useRecommendationStore((s) => s.clear);
 
+  /** Standard single-pass recommendation (manual button click). */
   const recommend = async () => {
+    const request = buildRequest();
+    if (!request) return;
+
     const store = useRecommendationStore.getState();
-    const game = useGameStore.getState();
-
-    if (!game.selectedHero || game.role === null) return;
-
-    // Preserve purchasedItems across re-evaluations
     store.clearResults();
     store.setLoading(true);
-
-    // Get purchased + dismissed item IDs (both excluded from re-recommendations)
-    const purchasedItemIds = store.getPurchasedItemIds();
-    const dismissedItemIds = store.getDismissedItemIds();
-    const excludedItemIds = [...new Set([...purchasedItemIds, ...dismissedItemIds])];
-
-    // Use selected playstyle, or first valid option for the role
-    const playstyle =
-      game.playstyle ?? PLAYSTYLE_OPTIONS[game.role]?.[0] ?? "Farm-first";
-
-    const request: RecommendRequest = {
-      hero_id: game.selectedHero.id,
-      role: game.role,
-      playstyle,
-      side: game.side ?? "radiant",
-      lane: game.lane ?? "safe",
-      // If lane opponents not set, use first 2 from opponents list as fallback
-      lane_opponents: game.laneOpponents.length > 0
-        ? game.laneOpponents.map((h) => h.id)
-        : game.opponents.filter(Boolean).map((h) => h!.id).slice(0, 2),
-      allies: game.allies.filter(Boolean).map((h) => h!.id),
-      all_opponents: game.opponents.filter(Boolean).map((h) => h!.id),
-
-      // Mid-game adaptation fields (only include when present)
-      lane_result: game.laneResult,
-      damage_profile: game.damageProfile,
-      enemy_items_spotted:
-        game.enemyItemsSpotted.length > 0
-          ? game.enemyItemsSpotted
-          : undefined,
-      purchased_items:
-        excludedItemIds.length > 0 ? excludedItemIds : undefined,
-      enemy_context:
-        game.enemyContext.length > 0 ? game.enemyContext : undefined,
-    };
 
     try {
       const response = await api.recommend(request);
@@ -67,5 +68,59 @@ export function useRecommendation() {
     }
   };
 
-  return { recommend, data, isLoading, error, selectedItemId, selectItem, clear };
+  /**
+   * Two-pass recommendation for auto-trigger scenarios.
+   * 1. Fire fast-mode request -> show partial results immediately
+   * 2. Fire full auto/deep request -> merge over partial results
+   */
+  const recommendTwoPass = async () => {
+    const request = buildRequest();
+    if (!request) return;
+
+    const store = useRecommendationStore.getState();
+    // Don't interrupt an in-progress recommendation
+    if (store.isLoading) return;
+
+    store.clearResults();
+    store.setLoading(true);
+
+    // Pass 1: Fast mode (rules-only, <1s)
+    const fastRequest = { ...request, mode: "fast" as const };
+    try {
+      const fastResponse = await api.recommend(fastRequest);
+      // Show partial results immediately
+      useRecommendationStore.getState().setPartialData(fastResponse);
+    } catch {
+      // Fast mode failed -- continue to full request anyway
+    }
+
+    // Pass 2: Full recommendation (auto mode, 2-15s)
+    try {
+      const fullResponse = await api.recommend(request);
+      useRecommendationStore.getState().mergeData(fullResponse);
+    } catch (err) {
+      // If we already have partial data, keep it and clear the partial flag
+      const current = useRecommendationStore.getState();
+      if (current.data && current.isPartial) {
+        // Keep partial data but clear the partial flag
+        useRecommendationStore.getState().mergeData(current.data);
+      } else {
+        useRecommendationStore.getState().setError(
+          err instanceof Error ? err.message : "Failed to get recommendations",
+        );
+      }
+    }
+  };
+
+  return {
+    recommend,
+    recommendTwoPass,
+    data,
+    isLoading,
+    isPartial,
+    error,
+    selectedItemId,
+    selectItem,
+    clear,
+  };
 }
