@@ -136,6 +136,11 @@
 ### Phase 36: Prompt Intelligence
 **Goal:** Claude's reasoning consistently matches the quality of an expert coach through few-shot exemplars, game-clock awareness, and graceful handling of edge cases
 **Depends on:** Phase 35 (quality foundation provides the data and validation that exemplars build on)
+**Requirements:** [PROM-01, PROM-02, PROM-03, PROM-04, PROM-05]
+**Plans:** 2 plans
+Plans:
+- [ ] 36-01-PLAN.md — Exemplar few-shot system (JSON exemplars, archetype matcher, context injection)
+- [ ] 36-02-PLAN.md — Time-aware reasoning, edge cases, turbo mode, frontend wiring
 **Success Criteria** (what must be TRUE):
   1. 15-20 curated gold-standard recommendations are stored and the 1-2 closest are injected as few-shot examples per request
   2. Game clock is injected into context and rules hard-block timing-inappropriate items (no Midas after 20 min)
@@ -178,7 +183,7 @@
 |-------|----------------|--------|-----------|
 | 34. UX Speed & Instant Items | 7/7 | Complete | 2026-03-30 |
 | 35. Quality Foundation | 1/TBD | In progress | - |
-| 36. Prompt Intelligence | 0/TBD | Not started | - |
+| 36. Prompt Intelligence | 0/2 | Not started | - |
 | 37. Latency & Caching | 0/TBD | Not started | - |
 | 38. Adaptiveness & Accuracy | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
