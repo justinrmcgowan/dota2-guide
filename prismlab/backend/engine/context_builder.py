@@ -19,6 +19,7 @@ from data.matchup_service import (
     get_or_fetch_hero_timings,
 )
 from data.opendota_client import OpenDotaClient
+from engine.exemplar_matcher import ExemplarMatcher
 from engine.schemas import EnemyContext, RecommendRequest, RuleResult
 from engine.timing_zones import classify_timing_zones
 from engine.win_condition import classify_draft, WinConditionResult
@@ -41,9 +42,15 @@ class ContextBuilder:
     the per-request user message.
     """
 
-    def __init__(self, opendota_client: OpenDotaClient, cache: DataCache):
+    def __init__(
+        self,
+        opendota_client: OpenDotaClient,
+        cache: DataCache,
+        exemplar_matcher: ExemplarMatcher | None = None,
+    ):
         self.opendota = opendota_client
         self.cache = cache
+        self.exemplar_matcher = exemplar_matcher
 
     async def build(
         self,
@@ -149,6 +156,11 @@ class ContextBuilder:
         neutral_catalog = self._build_neutral_catalog()
         if neutral_catalog:
             sections.append(f"## Neutral Items Catalog\n{neutral_catalog}")
+
+        # Exemplar few-shot examples (PROM-01)
+        exemplar_section = self._build_exemplar_section(request)
+        if exemplar_section:
+            sections.append(exemplar_section)
 
         # Final instruction: the last thing Claude reads before generating
         if request.purchased_items:
@@ -554,3 +566,94 @@ class ContextBuilder:
             lines.append(f"Enemy strategy: {enemy_result.archetype}{confidence_note}")
 
         return "\n".join(lines)
+
+    def _build_exemplar_section(self, request: RecommendRequest) -> str:
+        """Build few-shot exemplar section for Claude context.
+
+        Selects 1-2 closest exemplars based on role + threat profile derived
+        from opponents. Returns empty string if no matcher or no close matches.
+        """
+        if not self.exemplar_matcher:
+            return ""
+
+        # Derive threat_profile from enemy composition
+        threat_profile = self._derive_threat_profile(request)
+
+        exemplars = self.exemplar_matcher.select(
+            role=request.role,
+            threat_profile=threat_profile,
+        )
+        if not exemplars:
+            return ""
+
+        lines = ["## Gold-Standard Examples (match this quality)"]
+        for ex in exemplars:
+            lines.append(self.exemplar_matcher.format_exemplar(ex))
+        return "\n\n".join(lines)
+
+    def _derive_threat_profile(self, request: RecommendRequest) -> str | None:
+        """Analyze opponent composition to derive a threat profile tag.
+
+        Checks all_opponents first (full enemy team), then falls back to
+        lane_opponents. Returns None if no opponents are provided.
+
+        Heuristic priority:
+        1. Summon heroes present -> "summons"
+        2. 2+ invis heroes -> "invis"
+        3. Evasion heroes present -> "evasion"
+        4. Majority magic damage -> "magic"
+        5. Majority physical damage -> "physical"
+        6. Default: "burst" (most common threat)
+        """
+        opp_ids = list(request.all_opponents) or list(request.lane_opponents)
+        if not opp_ids:
+            return None
+
+        # Hero classification sets (by localized_name)
+        SUMMON_HEROES = {"Lycan", "Broodmother", "Nature's Prophet", "Chen",
+                         "Enigma", "Beastmaster", "Visage"}
+        INVIS_HEROES = {"Riki", "Bounty Hunter", "Clinkz", "Nyx Assassin",
+                        "Mirana", "Invoker", "Sand King", "Templar Assassin",
+                        "Weaver", "Treant Protector"}
+        EVASION_HEROES = {"Phantom Assassin", "Windranger", "Brewmaster",
+                          "Troll Warlord"}
+
+        summon_count = 0
+        invis_count = 0
+        evasion_count = 0
+        magic_count = 0
+        physical_count = 0
+
+        for opp_id in opp_ids:
+            hero = self.cache.get_hero(opp_id)
+            if not hero:
+                continue
+            name = hero.localized_name or ""
+            attr = hero.primary_attr or ""
+
+            if name in SUMMON_HEROES:
+                summon_count += 1
+            if name in INVIS_HEROES:
+                invis_count += 1
+            if name in EVASION_HEROES:
+                evasion_count += 1
+
+            # Classify damage type by primary attribute
+            if attr in ("int",):
+                magic_count += 1
+            elif attr in ("agi", "str"):
+                physical_count += 1
+
+        # Priority-based classification
+        if summon_count >= 1:
+            return "summons"
+        if invis_count >= 2:
+            return "invis"
+        if evasion_count >= 1:
+            return "evasion"
+        if magic_count > physical_count:
+            return "magic"
+        if physical_count > magic_count:
+            return "physical"
+
+        return "burst"
