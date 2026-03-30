@@ -91,3 +91,19 @@ async def get_budget_status():
     exceeded flag, warning flag. Used by frontend budget display.
     """
     return _cost_tracker.get_usage()
+
+
+@router.put("/settings/budget")
+async def set_budget(payload: dict):
+    """Update the monthly API budget cap.
+
+    Accepts {"budget": <float>}. Updates the in-memory settings
+    and cost tracker. Does not persist across restarts (use .env
+    API_BUDGET_MONTHLY for that).
+    """
+    new_budget = payload.get("budget")
+    if new_budget is None or not isinstance(new_budget, (int, float)) or new_budget < 0:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="budget must be a non-negative number")
+    settings.api_budget_monthly = float(new_budget)
+    return _cost_tracker.get_usage()

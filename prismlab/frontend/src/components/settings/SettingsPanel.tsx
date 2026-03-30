@@ -330,10 +330,36 @@ function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   />
                 </div>
 
-                {/* Usage text */}
-                <p className="text-xs text-on-surface-variant">
-                  ${budget.cost.toFixed(2)} / ${budget.budget.toFixed(2)} used ({budget.requests} requests)
-                </p>
+                {/* Budget limit input + usage text */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-on-surface-variant">
+                    ${budget.cost.toFixed(2)} /
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-on-surface-variant">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="5"
+                      defaultValue={budget.budget}
+                      className="w-16 px-1 py-0.5 text-xs bg-surface-container-lowest text-on-surface border border-outline-variant/30 rounded focus:outline-none focus:border-primary"
+                      onBlur={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val) && val >= 0 && val !== budget.budget) {
+                          api.setEngineBudget(val).then((updated) => {
+                            setBudget(updated);
+                          }).catch(() => {});
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs text-on-surface-variant">
+                    ({budget.requests} requests)
+                  </span>
+                </div>
 
                 {/* Warning / exceeded messages */}
                 {budget.exceeded && (

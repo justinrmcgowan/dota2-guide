@@ -81,6 +81,15 @@ export const api = {
   getSettingsDefaults: () =>
     fetchJson<{ steam_id: string | null }>("/settings/defaults"),
   getEngineBudget: () => fetchJson<EngineBudget>("/settings/budget"),
+  setEngineBudget: async (budget: number): Promise<EngineBudget> => {
+    const res = await fetch(`${BASE}/settings/budget`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ budget }),
+    });
+    if (!res.ok) throw new Error(`Failed to set budget: ${res.status}`);
+    return res.json();
+  },
   logMatch: (payload: MatchLogPayload) =>
     postJson<MatchLogPayload, { status: string; id: number; follow_rate: number }>(
       "/match-log",
