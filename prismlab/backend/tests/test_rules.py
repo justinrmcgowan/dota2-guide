@@ -27,6 +27,8 @@ def _make_request(
     side: str = "radiant",
     lane: str = "safe",
     enemy_context: list | None = None,
+    all_opponents: list[int] | None = None,
+    allies: list[int] | None = None,
 ) -> RecommendRequest:
     """Create a minimal valid RecommendRequest for testing."""
     if playstyle is None:
@@ -38,6 +40,8 @@ def _make_request(
         side=side,
         lane=lane,
         lane_opponents=lane_opponents or [],
+        all_opponents=all_opponents or [],
+        allies=allies or [],
         enemy_context=enemy_context or [],
     )
 
@@ -293,8 +297,8 @@ class TestGhostScepterRule:
 
 class TestRuleCount:
     async def test_minimum_rule_count(self, engine: RulesEngine):
-        """Engine has at least 22 rules registered."""
-        assert len(engine._rules) >= 22
+        """Engine has at least 50 rules registered."""
+        assert len(engine._rules) >= 50
 
 
 class TestPatch741RuleAccuracy:
@@ -650,3 +654,285 @@ class TestThreatEscalation:
         se = [r for r in results if r.item_name == "Silver Edge"]
         assert len(se) >= 1
         assert se[0].priority == "situational"  # Original priority preserved
+
+
+# ------------------------------------------------------------------
+# Phase 35: Item-vs-item counter rules tests
+# ------------------------------------------------------------------
+
+
+class TestNullifierRule:
+    async def test_nullifier_vs_puck(self, engine: RulesEngine):
+        """Nullifier recommended against Puck (escape item user)."""
+        puck_id = engine._hero_id("Puck")
+        if puck_id is None:
+            pytest.skip("Puck not in cache")
+        req = _make_request(role=1, lane_opponents=[puck_id])
+        results = engine.evaluate(req)
+        nullifier = [r for r in results if "Nullifier" in r.item_name]
+        assert len(nullifier) >= 1
+        assert nullifier[0].phase == "late_game"
+
+    async def test_nullifier_vs_storm(self, engine: RulesEngine):
+        """Nullifier recommended against Storm Spirit."""
+        storm_id = engine._hero_id("Storm Spirit")
+        if storm_id is None:
+            pytest.skip("Storm Spirit not in cache")
+        req = _make_request(role=2, lane_opponents=[storm_id])
+        results = engine.evaluate(req)
+        nullifier = [r for r in results if "Nullifier" in r.item_name]
+        assert len(nullifier) >= 1
+
+    async def test_nullifier_not_for_supports(self, engine: RulesEngine):
+        """Nullifier NOT recommended for supports (role 4-5)."""
+        puck_id = engine._hero_id("Puck")
+        if puck_id is None:
+            pytest.skip("Puck not in cache")
+        req = _make_request(role=5, lane_opponents=[puck_id])
+        results = engine.evaluate(req)
+        nullifier = [r for r in results if "Nullifier" in r.item_name]
+        assert len(nullifier) == 0
+
+
+class TestTeamCompositionRules:
+    async def test_shivas_vs_3_physical(self, engine: RulesEngine):
+        """Shiva's recommended when 3+ physical carries on enemy team."""
+        pa_id = engine._hero_id("Phantom Assassin")
+        sven_id = engine._hero_id("Sven")
+        jug_id = engine._hero_id("Juggernaut")
+        if not all([pa_id, sven_id, jug_id]):
+            pytest.skip("Heroes not in cache")
+        req = _make_request(
+            role=3, playstyle="Frontline",
+            lane_opponents=[pa_id],
+            all_opponents=[pa_id, sven_id, jug_id],
+        )
+        results = engine.evaluate(req)
+        shivas = [r for r in results if r.item_name == "Shiva's Guard"
+                  and "team comp" in (r.counter_target or "")]
+        assert len(shivas) >= 1
+        assert shivas[0].priority == "core"
+
+    async def test_pipe_team_vs_3_magic(self, engine: RulesEngine):
+        """Pipe recommended when 3+ magic damage heroes on enemy team."""
+        zeus_id = engine._hero_id("Zeus")
+        lina_id = engine._hero_id("Lina")
+        wd_id = engine._hero_id("Witch Doctor")
+        if not all([zeus_id, lina_id, wd_id]):
+            pytest.skip("Heroes not in cache")
+        req = _make_request(
+            role=3, playstyle="Frontline",
+            lane_opponents=[zeus_id],
+            all_opponents=[zeus_id, lina_id, wd_id],
+        )
+        results = engine.evaluate(req)
+        pipe_team = [r for r in results if r.item_name == "Pipe of Insight"
+                     and "team comp" in (r.counter_target or "")]
+        assert len(pipe_team) >= 1
+        assert pipe_team[0].priority == "core"
+
+    async def test_wraith_pact_vs_3_physical(self, engine: RulesEngine):
+        """Wraith Pact recommended when 3+ physical carries on enemy team."""
+        pa_id = engine._hero_id("Phantom Assassin")
+        sven_id = engine._hero_id("Sven")
+        jug_id = engine._hero_id("Juggernaut")
+        if not all([pa_id, sven_id, jug_id]):
+            pytest.skip("Heroes not in cache")
+        req = _make_request(
+            role=3, playstyle="Frontline",
+            lane_opponents=[pa_id],
+            all_opponents=[pa_id, sven_id, jug_id],
+        )
+        results = engine.evaluate(req)
+        wp = [r for r in results if r.item_name == "Wraith Pact"]
+        assert len(wp) >= 1
+
+
+class TestCrimsonGuardRule:
+    async def test_crimson_vs_illusion_hero(self, engine: RulesEngine):
+        """Crimson Guard recommended against Phantom Lancer."""
+        pl_id = engine._hero_id("Phantom Lancer")
+        if pl_id is None:
+            pytest.skip("PL not in cache")
+        req = _make_request(role=3, playstyle="Frontline", lane_opponents=[pl_id])
+        results = engine.evaluate(req)
+        crimson = [r for r in results if "Crimson" in r.item_name]
+        assert len(crimson) >= 1
+
+    async def test_crimson_not_for_carries(self, engine: RulesEngine):
+        """Crimson Guard NOT recommended for carries (role 1-2)."""
+        pl_id = engine._hero_id("Phantom Lancer")
+        if pl_id is None:
+            pytest.skip("PL not in cache")
+        req = _make_request(role=1, lane_opponents=[pl_id])
+        results = engine.evaluate(req)
+        crimson = [r for r in results if "Crimson" in r.item_name]
+        assert len(crimson) == 0
+
+
+class TestGlimmerCapeRule:
+    async def test_glimmer_vs_magic_burst(self, engine: RulesEngine):
+        """Glimmer Cape recommended for supports vs magic damage."""
+        zeus_id = engine._hero_id("Zeus")
+        if zeus_id is None:
+            pytest.skip("Zeus not in cache")
+        req = _make_request(role=5, lane_opponents=[zeus_id])
+        results = engine.evaluate(req)
+        glimmer = [r for r in results if "Glimmer" in r.item_name]
+        assert len(glimmer) >= 1
+
+    async def test_glimmer_not_for_cores(self, engine: RulesEngine):
+        """Glimmer Cape NOT recommended for cores (role 1-3)."""
+        zeus_id = engine._hero_id("Zeus")
+        if zeus_id is None:
+            pytest.skip("Zeus not in cache")
+        req = _make_request(role=2, lane_opponents=[zeus_id])
+        results = engine.evaluate(req)
+        glimmer = [r for r in results if "Glimmer" in r.item_name]
+        assert len(glimmer) == 0
+
+
+class TestBladMailRule:
+    async def test_blade_mail_vs_pa(self, engine: RulesEngine):
+        """Blade Mail recommended for offlaners against PA burst."""
+        pa_id = engine._hero_id("Phantom Assassin")
+        if pa_id is None:
+            pytest.skip("PA not in cache")
+        req = _make_request(role=3, playstyle="Frontline", lane_opponents=[pa_id])
+        results = engine.evaluate(req)
+        bm = [r for r in results if "Blade Mail" in r.item_name]
+        assert len(bm) >= 1
+
+
+class TestDiffusalRule:
+    async def test_diffusal_vs_wraith_king(self, engine: RulesEngine):
+        """Diffusal Blade recommended against Wraith King (mana-dependent)."""
+        wk_id = engine._hero_id("Wraith King")
+        if wk_id is None:
+            pytest.skip("WK not in cache")
+        req = _make_request(role=1, lane_opponents=[wk_id])
+        results = engine.evaluate(req)
+        diff = [r for r in results if "Diffusal" in r.item_name]
+        assert len(diff) >= 1
+
+
+class TestSelfHeroRules:
+    async def test_blink_initiator(self, engine: RulesEngine):
+        """Blink Dagger recommended for Initiator offlaners."""
+        req = _make_request(role=3, playstyle="Initiator")
+        results = engine.evaluate(req)
+        blink = [r for r in results if "Blink Dagger" in r.item_name]
+        assert len(blink) >= 1
+        assert blink[0].priority == "core"
+
+    async def test_aghs_scepter_for_rubick(self, engine: RulesEngine):
+        """Aghanim's Scepter recommended for Rubick."""
+        rubick_id = engine._hero_id("Rubick")
+        if rubick_id is None:
+            pytest.skip("Rubick not in cache")
+        req = _make_request(hero_id=rubick_id, role=4)
+        results = engine.evaluate(req)
+        aghs = [r for r in results if "Aghanim's Scepter" in r.item_name]
+        assert len(aghs) >= 1
+
+    async def test_aghs_shard_for_jugg(self, engine: RulesEngine):
+        """Aghanim's Shard recommended for Juggernaut."""
+        jug_id = engine._hero_id("Juggernaut")
+        if jug_id is None:
+            pytest.skip("Juggernaut not in cache")
+        req = _make_request(hero_id=jug_id, role=1)
+        results = engine.evaluate(req)
+        shard = [r for r in results if "Aghanim's Shard" in r.item_name]
+        assert len(shard) >= 1
+
+    async def test_guardian_greaves_aura_carrier(self, engine: RulesEngine):
+        """Guardian Greaves recommended for Aura-carrier offlaners."""
+        req = _make_request(role=3, playstyle="Aura-carrier")
+        results = engine.evaluate(req)
+        gg = [r for r in results if "Guardian Greaves" in r.item_name]
+        assert len(gg) >= 1
+        assert gg[0].priority == "core"
+
+    async def test_urn_for_roamer(self, engine: RulesEngine):
+        """Urn of Shadows recommended for roaming supports."""
+        req = _make_request(role=4, playstyle="Roamer")
+        results = engine.evaluate(req)
+        urn = [r for r in results if "Urn" in r.item_name]
+        assert len(urn) >= 1
+        assert urn[0].priority == "core"
+
+    async def test_radiance_for_naga(self, engine: RulesEngine):
+        """Radiance recommended for Naga Siren (illusion carry)."""
+        naga_id = engine._hero_id("Naga Siren")
+        if naga_id is None:
+            pytest.skip("Naga not in cache")
+        req = _make_request(hero_id=naga_id, role=1)
+        results = engine.evaluate(req)
+        radiance = [r for r in results if "Radiance" in r.item_name]
+        assert len(radiance) >= 1
+
+    async def test_heart_for_frontline(self, engine: RulesEngine):
+        """Heart of Tarrasque recommended for Frontline offlaners."""
+        req = _make_request(role=3, playstyle="Frontline")
+        results = engine.evaluate(req)
+        heart = [r for r in results if "Heart" in r.item_name]
+        assert len(heart) >= 1
+
+
+class TestMageSlayerRule:
+    async def test_mage_slayer_vs_zeus(self, engine: RulesEngine):
+        """Mage Slayer recommended against Zeus."""
+        zeus_id = engine._hero_id("Zeus")
+        if zeus_id is None:
+            pytest.skip("Zeus not in cache")
+        req = _make_request(role=2, lane_opponents=[zeus_id])
+        results = engine.evaluate(req)
+        ms = [r for r in results if "Mage Slayer" in r.item_name]
+        assert len(ms) >= 1
+
+    async def test_mage_slayer_vs_leshrac(self, engine: RulesEngine):
+        """Mage Slayer recommended against Leshrac."""
+        lesh_id = engine._hero_id("Leshrac")
+        if lesh_id is None:
+            pytest.skip("Leshrac not in cache")
+        req = _make_request(role=1, lane_opponents=[lesh_id])
+        results = engine.evaluate(req)
+        ms = [r for r in results if "Mage Slayer" in r.item_name]
+        assert len(ms) >= 1
+
+
+class TestHoodRule:
+    async def test_hood_for_melee_offlaner_vs_magic(self, engine: RulesEngine):
+        """Hood of Defiance recommended for melee offlaner vs magic lane opponent."""
+        zeus_id = engine._hero_id("Zeus")
+        axe_id = engine._hero_id("Axe")
+        if not all([zeus_id, axe_id]):
+            pytest.skip("Heroes not in cache")
+        req = _make_request(hero_id=axe_id, role=3, lane_opponents=[zeus_id])
+        results = engine.evaluate(req)
+        hood = [r for r in results if "Hood" in r.item_name]
+        assert len(hood) >= 1
+        assert hood[0].phase == "laning"
+
+
+class TestMetaAwareRulesUseAllOpponents:
+    async def test_shivas_team_uses_all_opponents(self, engine: RulesEngine):
+        """Shiva's team armor rule reads req.all_opponents, not lane_opponents."""
+        pa_id = engine._hero_id("Phantom Assassin")
+        sven_id = engine._hero_id("Sven")
+        jug_id = engine._hero_id("Juggernaut")
+        if not all([pa_id, sven_id, jug_id]):
+            pytest.skip("Heroes not in cache")
+        # Only 1 lane opponent but 3 in all_opponents
+        req = _make_request(
+            role=3, playstyle="Frontline",
+            lane_opponents=[pa_id],
+            all_opponents=[pa_id, sven_id, jug_id],
+        )
+        results = engine.evaluate(req)
+        shivas_team = [r for r in results if r.item_name == "Shiva's Guard"
+                       and "team comp" in (r.counter_target or "")]
+        assert len(shivas_team) >= 1, (
+            "Shiva's team armor rule should fire when all_opponents has 3+ physical "
+            "even if lane_opponents has only 1"
+        )

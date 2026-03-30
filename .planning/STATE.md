@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
-status: planning
-stopped_at: Completed 35-02-PLAN.md (Response Validation Layer)
-last_updated: "2026-03-30T20:02:48.917Z"
+status: executing
+stopped_at: Completed 35-03 Rules Engine Expansion
+last_updated: "2026-03-30T20:04:09Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 3
+  total_plans: 0
   completed_plans: 2
   percent: 20
 ---
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 35 (Quality Foundation)
-Plan: Not started
-Status: Ready for planning
+Plan: 35-03 complete
+Status: Executing
 Last activity: 2026-03-30
 
 Progress: [██░░░░░░░░] 20%
@@ -43,6 +43,9 @@ Progress: [██░░░░░░░░] 20%
 
 ### Decisions
 
+- [Phase 35-03]: 30 new deterministic rules (52 total) covering item-vs-item counters, meta-aware team comp, self-hero optimization
+- [Phase 35-03]: Meta-aware rules iterate req.all_opponents for full team composition analysis
+- [Phase 35-03]: _hero_attack_type helper for melee/ranged gating on hood/vanguard/skadi rules
 - [Phase 34]: Two-pass recommendation (fast-mode rules first, Claude merges in) for zero-click auto-trigger
 - [Phase 34]: 3s draft polling (down from 10s) during hero selection
 - [Phase 34]: Auto-trigger fires from both useLiveDraft AND useGameIntelligence (GSI hero detection)
@@ -52,8 +55,6 @@ Progress: [██░░░░░░░░] 20%
 - [Phase 34]: Graceful fallback when win predictor models fail to load (non-fatal)
 - [v7.0]: Tauri Desktop App deferred to v8.0 — engine quality before distribution
 - [v7.0]: Design spec at docs/superpowers/specs/2026-03-30-engine-hardening-design.md
-- [Phase 35]: Counter-logic audit uses curated RELIABLE_STUN_HEROES set since ability data lacks stun tags
-- [Phase 35]: Validation retry always via Claude (not Ollama) for higher correction quality
 
 ### Pending Todos
 
@@ -65,6 +66,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:02:48.914Z
-Stopped at: Completed 35-02-PLAN.md (Response Validation Layer)
+Last session: 2026-03-30
+Stopped at: Completed 35-03 Rules Engine Expansion
 Resume file: None

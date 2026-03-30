@@ -163,6 +163,11 @@ class RulesEngine:
             adjusted.append(result)
         return adjusted
 
+    def _hero_attack_type(self, hero_id: int) -> str | None:
+        """Return hero attack_type ('Melee' or 'Ranged') from cache, or None."""
+        hero = self.cache.get_hero(hero_id)
+        return hero.attack_type if hero else None
+
     @property
     def _rules(self):
         """Ordered list of rule methods, highest priority first."""
@@ -190,6 +195,38 @@ class RulesEngine:
             self._lotus_linkens_rule,
             self._dispel_counter_rule,
             self._hex_root_escape_rule,
+            # Phase 35: Item-vs-item counter rules
+            self._nullifier_rule,
+            self._blade_mail_rule,
+            self._diffusal_rule,
+            self._butterfly_rule,
+            self._satanic_rule,
+            self._crimson_guard_rule,
+            self._aeon_disk_rule,
+            self._gleipnir_rule,
+            self._solar_crest_rule,
+            self._bloodthorn_rule,
+            self._shivas_team_armor_rule,
+            self._pipe_team_magic_rule,
+            self._hood_rule,
+            self._wraith_pact_rule,
+            self._glimmer_cape_rule,
+            # Phase 35: Extended matchup and self-hero rules
+            self._blink_dagger_initiator_rule,
+            self._aghanims_scepter_rule,
+            self._aghanims_shard_rule,
+            self._mage_slayer_rule,
+            self._lotus_orb_dispel_rule,
+            self._eye_of_skadi_rule,
+            self._radiance_rule,
+            self._vanguard_melee_rule,
+            self._meteor_hammer_rule,
+            self._witch_blade_rule,
+            self._desolator_rule,
+            self._guardian_greaves_rule,
+            self._heart_rule,
+            self._ethereal_blade_rule,
+            self._urn_rule,
         ]
 
     # ------------------------------------------------------------------
@@ -1031,3 +1068,773 @@ class RulesEngine:
                     counter_target=f"{hero_name}: {escape.dname} (escape)",
                 )]
         return []
+
+    # ------------------------------------------------------------------
+    # Phase 35: Item-vs-item counter rules
+    # ------------------------------------------------------------------
+
+    def _nullifier_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Nullifier vs Aeon Disk/Eul's/Ghost Scepter users. For cores (role 1-3)."""
+        nullifier_id = self._item_id("nullifier")
+        if nullifier_id is None or req.role > 3:
+            return []
+        target_heroes = self._hero_ids(
+            "Puck", "Storm Spirit", "Ember Spirit", "Weaver",
+            "Windranger", "Winter Wyvern", "Pugna", "Necrophos",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in target_heroes:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=nullifier_id,
+                    item_name="Nullifier",
+                    reasoning=(
+                        f"Nullifier mutes item actives, preventing {hero_name}'s "
+                        f"defensive item usage (Aeon Disk, Eul's, Ghost Scepter). "
+                        f"The continuous dispel ensures they can't save themselves."
+                    ),
+                    phase="late_game",
+                    priority="situational",
+                    counter_target=f"{hero_name}: item-active user",
+                )]
+        return []
+
+    def _blade_mail_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Blade Mail for tanky offlaners vs burst damage. For role 3 only."""
+        bm_id = self._item_id("blade_mail")
+        if bm_id is None or req.role != 3:
+            return []
+        burst_heroes = self._hero_ids(
+            "Phantom Assassin", "Sven", "Juggernaut", "Ursa",
+            "Templar Assassin", "Lina", "Lion",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in burst_heroes:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=bm_id,
+                    item_name="Blade Mail",
+                    reasoning=(
+                        f"Against {hero_name}'s burst damage, Blade Mail reflects "
+                        f"100% of damage back for 5.5 seconds. Forces them to stop "
+                        f"attacking or kill themselves."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: burst damage",
+                )]
+        return []
+
+    def _diffusal_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Diffusal Blade vs high-mana-dependency heroes. For cores (role 1-3)."""
+        diff_id = self._item_id("diffusal_blade")
+        if diff_id is None or req.role > 3:
+            return []
+        mana_dependent = self._hero_ids(
+            "Medusa", "Storm Spirit", "Wraith King",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in mana_dependent:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=diff_id,
+                    item_name="Diffusal Blade",
+                    reasoning=(
+                        f"Against {hero_name}'s mana dependency, Diffusal Blade "
+                        f"burns 40 mana per hit, crippling their ability to fight. "
+                        f"The slow active also prevents escape."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: mana-dependent",
+                )]
+        return []
+
+    def _butterfly_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Butterfly for agility carries vs physical lineups. For role 1-2 only."""
+        bfly_id = self._item_id("butterfly")
+        if bfly_id is None or req.role > 2:
+            return []
+        agi_carries = self._hero_ids(
+            "Anti-Mage", "Phantom Assassin", "Juggernaut",
+            "Phantom Lancer", "Faceless Void", "Naga Siren",
+            "Slark", "Troll Warlord", "Monkey King",
+        )
+        if req.hero_id not in agi_carries:
+            return []
+        physical_carries = self._hero_ids(
+            "Anti-Mage", "Sven", "Phantom Assassin", "Juggernaut",
+            "Phantom Lancer", "Faceless Void", "Chaos Knight",
+            "Naga Siren", "Wraith King", "Slark", "Troll Warlord",
+            "Ember Spirit", "Monkey King",
+        )
+        phys_count = sum(1 for op_id in req.all_opponents if op_id in physical_carries)
+        if phys_count >= 2:
+            return [RuleResult(
+                item_id=bfly_id,
+                item_name="Butterfly",
+                reasoning=(
+                    f"Enemy draft has {phys_count} physical damage cores -- "
+                    f"Butterfly's 35% evasion forces MKB purchases, delaying "
+                    f"their damage timing. Attack speed and armor complement "
+                    f"agility carry scaling."
+                ),
+                phase="late_game",
+                priority="situational",
+                counter_target=f"{phys_count} physical cores",
+            )]
+        return []
+
+    def _satanic_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Satanic for carries vs burst damage. For role 1-2 only."""
+        satanic_id = self._item_id("satanic")
+        if satanic_id is None or req.role > 2:
+            return []
+        burst_heroes = self._hero_ids(
+            "Lina", "Lion", "Zeus", "Skywrath Mage",
+            "Phantom Assassin", "Sven", "Templar Assassin",
+        )
+        burst_count = sum(1 for op_id in req.all_opponents if op_id in burst_heroes)
+        if burst_count >= 2:
+            return [RuleResult(
+                item_id=satanic_id,
+                item_name="Satanic",
+                reasoning=(
+                    f"Enemy has {burst_count} burst damage heroes -- "
+                    f"Satanic's Unholy Rage active heals for 200% lifesteal "
+                    f"for 6 seconds, allowing you to survive burst combos "
+                    f"and sustain through extended fights."
+                ),
+                phase="late_game",
+                priority="situational",
+                counter_target=f"{burst_count} burst damage heroes",
+            )]
+        return []
+
+    def _crimson_guard_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Crimson Guard for offlaners vs summon/illusion heroes. For role 3 only."""
+        cg_id = self._item_id("crimson_guard")
+        if cg_id is None or req.role != 3:
+            return []
+        summon_illusion_heroes = self._hero_ids(
+            "Phantom Lancer", "Naga Siren", "Chaos Knight",
+            "Nature's Prophet", "Broodmother", "Lycan",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in summon_illusion_heroes:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=cg_id,
+                    item_name="Crimson Guard",
+                    reasoning=(
+                        f"Against {hero_name}'s illusions/summons, Crimson Guard "
+                        f"blocks damage from each individual attack. The active "
+                        f"provides team-wide damage block for 12 seconds."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: summons/illusions",
+                )]
+        return []
+
+    def _aeon_disk_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Aeon Disk for supports vs burst initiation. For role 4-5 only."""
+        ad_id = self._item_id("aeon_disk")
+        if ad_id is None or req.role < 4:
+            return []
+        # Reuse single_target_ults set from _lotus_linkens_rule
+        single_target_ults = {
+            "doom_bringer_doom", "lion_finger_of_death",
+            "necrolyte_reapers_scythe", "lina_laguna_blade",
+            "bane_fiends_grip", "batrider_flaming_lasso",
+            "beast_master_primal_roar",
+        }
+        for op_id in req.lane_opponents:
+            abilities = self.cache.get_hero_abilities(op_id)
+            if not abilities:
+                continue
+            for ability in abilities:
+                if ability.key in single_target_ults:
+                    hero_name = self._hero_name(op_id)
+                    return [RuleResult(
+                        item_id=ad_id,
+                        item_name="Aeon Disk",
+                        reasoning=(
+                            f"Against {hero_name}'s {ability.dname} burst initiation, "
+                            f"Aeon Disk's Strong Dispel activates at 70% max HP, "
+                            f"applying 2.5s of damage immunity to survive the combo."
+                        ),
+                        phase="core",
+                        priority="situational",
+                        counter_target=f"{hero_name}: {ability.dname} (burst initiation)",
+                    )]
+        return []
+
+    def _gleipnir_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Gleipnir (Maelstrom upgrade) vs illusion heroes for cores. For role 1-3."""
+        # Gleipnir's internal name may be 'gungungir' or 'gleipnir' -- try both
+        gleipnir_id = self._item_id("gungungir") or self._item_id("gleipnir")
+        if gleipnir_id is None or req.role > 3:
+            return []
+        illusion_heroes = self._hero_ids(
+            "Phantom Lancer", "Naga Siren", "Chaos Knight",
+            "Meepo", "Terrorblade",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in illusion_heroes:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=gleipnir_id,
+                    item_name="Gleipnir",
+                    reasoning=(
+                        f"Against {hero_name}'s illusions, Gleipnir's chain lightning "
+                        f"clears illusion waves efficiently. The Eternal Chains active "
+                        f"roots in AoE, preventing escape."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: illusion hero",
+                )]
+        return []
+
+    def _solar_crest_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Solar Crest for supports to buff a carry or debuff enemy. For role 4-5."""
+        sc_id = self._item_id("solar_crest")
+        if sc_id is None or req.role < 4:
+            return []
+        if req.playstyle not in ("Save", "Lane-protector"):
+            return []
+        carry_heroes = self._hero_ids(
+            "Anti-Mage", "Sven", "Phantom Assassin", "Juggernaut",
+            "Phantom Lancer", "Faceless Void", "Chaos Knight",
+            "Naga Siren", "Wraith King", "Slark", "Troll Warlord",
+            "Monkey King",
+        )
+        for ally_id in req.allies:
+            if ally_id in carry_heroes:
+                ally_name = self._hero_name(ally_id)
+                return [RuleResult(
+                    item_id=sc_id,
+                    item_name="Solar Crest",
+                    reasoning=(
+                        f"Solar Crest buffs {ally_name} with armor and attack speed, "
+                        f"or debuffs an enemy to amplify your team's physical damage. "
+                        f"Strong synergy with a melee carry ally."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{ally_name}: carry ally buff",
+                )]
+        return []
+
+    def _bloodthorn_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Bloodthorn (Orchid upgrade) vs evasion + escape heroes. For role 1-3."""
+        bt_id = self._item_id("bloodthorn")
+        if bt_id is None or req.role > 3:
+            return []
+        # Heroes with both escape and evasion
+        evasion_escape = self._hero_ids(
+            "Phantom Assassin", "Windranger",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in evasion_escape:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=bt_id,
+                    item_name="Bloodthorn",
+                    reasoning=(
+                        f"Against {hero_name}'s evasion and escape, Bloodthorn "
+                        f"provides silence + true strike + critical damage. "
+                        f"Prevents both dodging and running."
+                    ),
+                    phase="late_game",
+                    priority="situational",
+                    counter_target=f"{hero_name}: evasion + escape",
+                )]
+        return []
+
+    def _shivas_team_armor_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Shiva's Guard for offlaners when enemy has 3+ right-click cores. META-AWARE."""
+        shivas_id = self._item_id("shivas_guard")
+        if shivas_id is None or req.role != 3:
+            return []
+        physical_carries = self._hero_ids(
+            "Anti-Mage", "Sven", "Phantom Assassin", "Juggernaut",
+            "Phantom Lancer", "Faceless Void", "Chaos Knight",
+            "Naga Siren", "Wraith King", "Slark", "Troll Warlord",
+            "Ember Spirit", "Monkey King",
+        )
+        phys_count = sum(1 for op_id in req.all_opponents if op_id in physical_carries)
+        if phys_count >= 3:
+            return [RuleResult(
+                item_id=shivas_id,
+                item_name="Shiva's Guard",
+                reasoning=(
+                    f"Enemy draft has {phys_count} physical damage cores -- "
+                    f"team needs Shiva's attack speed slow and armor. "
+                    f"The Arctic Blast active slows movement and attack speed in AoE."
+                ),
+                phase="core",
+                priority="core",
+                counter_target=f"{phys_count} physical cores (team comp)",
+            )]
+        return []
+
+    def _pipe_team_magic_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Pipe of Insight when enemy has 3+ magic damage heroes. META-AWARE."""
+        pipe_id = self._item_id("pipe")
+        if pipe_id is None or req.role not in (3, 4):
+            return []
+        magic_count = sum(
+            1 for op_id in req.all_opponents
+            if self._has_magical_ability(op_id)
+        )
+        if magic_count >= 3:
+            return [RuleResult(
+                item_id=pipe_id,
+                item_name="Pipe of Insight",
+                reasoning=(
+                    f"Enemy has {magic_count} magic damage cores -- "
+                    f"Pipe's 450 damage barrier protects entire team. "
+                    f"The 15% magic resistance aura stacks with base resistance."
+                ),
+                phase="core",
+                priority="core",
+                counter_target=f"{magic_count} magic damage heroes (team comp)",
+            )]
+        return []
+
+    def _hood_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Hood of Defiance for offlaners vs heavy magic lane opponent. For role 3."""
+        hood_id = self._item_id("hood_of_defiance")
+        if hood_id is None or req.role != 3:
+            return []
+        for op_id in req.lane_opponents:
+            magical = self._has_magical_ability(op_id)
+            if magical:
+                # Check if hero is melee
+                attack_type = self._hero_attack_type(req.hero_id)
+                if attack_type and attack_type.lower() == "melee":
+                    hero_name = self._hero_name(op_id)
+                    return [RuleResult(
+                        item_id=hood_id,
+                        item_name="Hood of Defiance",
+                        reasoning=(
+                            f"Against {hero_name}'s {magical.dname} in lane, "
+                            f"Hood provides magic damage barrier and resistance. "
+                            f"Essential sustain for melee offlaners facing magic harass."
+                        ),
+                        phase="laning",
+                        priority="situational",
+                        counter_target=f"{hero_name}: {magical.dname} (magic harass)",
+                    )]
+        return []
+
+    def _wraith_pact_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Wraith Pact for offlaners/supports vs heavy physical team. META-AWARE."""
+        wp_id = self._item_id("wraith_pact")
+        if wp_id is None or req.role not in (3, 4):
+            return []
+        physical_carries = self._hero_ids(
+            "Anti-Mage", "Sven", "Phantom Assassin", "Juggernaut",
+            "Phantom Lancer", "Faceless Void", "Chaos Knight",
+            "Naga Siren", "Wraith King", "Slark", "Troll Warlord",
+            "Ember Spirit", "Monkey King",
+        )
+        phys_count = sum(1 for op_id in req.all_opponents if op_id in physical_carries)
+        if phys_count >= 3:
+            return [RuleResult(
+                item_id=wp_id,
+                item_name="Wraith Pact",
+                reasoning=(
+                    f"Reduces enemy damage in area by 30%. "
+                    f"With {phys_count} physical cores on the enemy team, "
+                    f"Wraith Pact's damage reduction is especially valuable."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"{phys_count} physical cores (team comp)",
+            )]
+        return []
+
+    def _glimmer_cape_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Glimmer Cape for supports vs magic burst. For role 4-5."""
+        gc_id = self._item_id("glimmer_cape")
+        if gc_id is None or req.role < 4:
+            return []
+        for op_id in req.lane_opponents:
+            magical = self._has_magical_ability(op_id)
+            if magical:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=gc_id,
+                    item_name="Glimmer Cape",
+                    reasoning=(
+                        f"Provides magic resistance + invisibility to save allies "
+                        f"from {hero_name}'s {magical.dname} burst. "
+                        f"Low cooldown and instant cast make it a reliable save tool."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: {magical.dname} (magic burst)",
+                )]
+        return []
+
+    # ------------------------------------------------------------------
+    # Phase 35: Extended matchup and self-hero rules
+    # ------------------------------------------------------------------
+
+    def _blink_dagger_initiator_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Blink Dagger for initiator offlaners. For role 3, playstyle 'Initiator'."""
+        blink_id = self._item_id("blink")
+        if blink_id is None or req.role != 3 or req.playstyle != "Initiator":
+            return []
+        return [RuleResult(
+            item_id=blink_id,
+            item_name="Blink Dagger",
+            reasoning=(
+                "Essential mobility for initiating teamfights from fog. "
+                "Blink into BKB/spell combo is the standard offlaner initiation pattern."
+            ),
+            phase="core",
+            priority="core",
+            counter_target="self: initiator mobility",
+        )]
+
+    def _aghanims_scepter_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Aghanim's Scepter for heroes with strong scepter upgrades. Self-hero rule."""
+        aghs_id = self._item_id("ultimate_scepter")
+        if aghs_id is None:
+            return []
+        strong_aghs_heroes = self._hero_ids(
+            "Axe", "Invoker", "Rubick", "Lion", "Ogre Magi",
+            "Witch Doctor", "Shadow Shaman", "Tidehunter",
+            "Enigma", "Magnus", "Dark Seer",
+        )
+        if req.hero_id in strong_aghs_heroes:
+            hero_name = self._hero_name(req.hero_id)
+            return [RuleResult(
+                item_id=aghs_id,
+                item_name="Aghanim's Scepter",
+                reasoning=(
+                    f"Aghanim's Scepter provides a strong ultimate upgrade for "
+                    f"{hero_name}. The stat bonuses and ability enhancement "
+                    f"make it a high-value investment."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"self: {hero_name} Aghanim's upgrade",
+            )]
+        return []
+
+    def _aghanims_shard_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Aghanim's Shard for heroes with strong shard upgrades. Self-hero rule."""
+        shard_id = self._item_id("aghanims_shard")
+        if shard_id is None:
+            return []
+        strong_shard_heroes = self._hero_ids(
+            "Juggernaut", "Phantom Assassin", "Anti-Mage",
+            "Faceless Void", "Sven", "Dragon Knight",
+            "Puck", "Storm Spirit",
+        )
+        if req.hero_id in strong_shard_heroes:
+            hero_name = self._hero_name(req.hero_id)
+            return [RuleResult(
+                item_id=shard_id,
+                item_name="Aghanim's Shard",
+                reasoning=(
+                    f"20-minute shard power spike -- strong ability upgrade "
+                    f"for {hero_name}. Cost-efficient enhancement that doesn't "
+                    f"require an item slot."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"self: {hero_name} shard upgrade",
+            )]
+        return []
+
+    def _mage_slayer_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Mage Slayer vs spell-reliant cores. For role 1-3."""
+        ms_id = self._item_id("mage_slayer")
+        if ms_id is None or req.role > 3:
+            return []
+        spell_cores = self._hero_ids(
+            "Zeus", "Leshrac", "Storm Spirit", "Invoker", "Tinker",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in spell_cores:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=ms_id,
+                    item_name="Mage Slayer",
+                    reasoning=(
+                        f"Reduces {hero_name}'s spell damage output by 40% on hit. "
+                        f"The magic resistance and mana regen make it efficient "
+                        f"against spell-reliant cores."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: spell-reliant core",
+                )]
+        return []
+
+    def _lotus_orb_dispel_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Lotus Orb for offlaners/supports vs debuff-heavy enemies. For role 3-5."""
+        lotus_id = self._item_id("lotus_orb")
+        if lotus_id is None or req.role < 3:
+            return []
+        debuff_count = sum(
+            1 for op_id in req.lane_opponents
+            if self._has_undispellable_debuff(op_id)
+        )
+        if debuff_count >= 2:
+            return [RuleResult(
+                item_id=lotus_id,
+                item_name="Lotus Orb",
+                reasoning=(
+                    f"Against {debuff_count} enemies with strong debuffs, "
+                    f"Lotus Orb's Echo Shell reflects single-target spells "
+                    f"and provides a basic dispel on cast."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"{debuff_count} debuff-heavy enemies",
+            )]
+        return []
+
+    def _eye_of_skadi_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Eye of Skadi for ranged carries vs mobile heroes. For role 1-2."""
+        skadi_id = self._item_id("skadi")
+        if skadi_id is None or req.role > 2:
+            return []
+        attack_type = self._hero_attack_type(req.hero_id)
+        if not attack_type or attack_type.lower() != "ranged":
+            return []
+        for op_id in req.lane_opponents:
+            escape = self._has_escape_ability(op_id)
+            if escape:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=skadi_id,
+                    item_name="Eye of Skadi",
+                    reasoning=(
+                        f"Against {hero_name}'s {escape.dname} mobility, "
+                        f"Skadi's 50% move speed and 45% attack speed slow "
+                        f"makes it nearly impossible to escape. "
+                        f"The all-stats bonus scales well on ranged carries."
+                    ),
+                    phase="late_game",
+                    priority="situational",
+                    counter_target=f"{hero_name}: {escape.dname} (mobile hero)",
+                )]
+        return []
+
+    def _radiance_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Radiance for illusion-based carries. Self-hero rule. For role 1-2."""
+        radiance_id = self._item_id("radiance")
+        if radiance_id is None or req.role > 2:
+            return []
+        illusion_carries = self._hero_ids(
+            "Naga Siren", "Phantom Lancer", "Spectre", "Terrorblade",
+        )
+        if req.hero_id in illusion_carries:
+            hero_name = self._hero_name(req.hero_id)
+            return [RuleResult(
+                item_id=radiance_id,
+                item_name="Radiance",
+                reasoning=(
+                    f"Illusions carry the Burn aura -- each {hero_name} copy "
+                    f"deals 60 DPS in area. Combined with illusion-based farming, "
+                    f"Radiance accelerates farm speed and teamfight damage."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"self: {hero_name} illusion synergy",
+            )]
+        return []
+
+    def _vanguard_melee_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Vanguard for melee offlaners in tough lanes. For role 3."""
+        vg_id = self._item_id("vanguard")
+        if vg_id is None or req.role != 3:
+            return []
+        attack_type = self._hero_attack_type(req.hero_id)
+        if not attack_type or attack_type.lower() != "melee":
+            return []
+        ranged_harass = self._hero_ids(
+            "Viper", "Venomancer", "Silencer", "Death Prophet", "Windranger",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in ranged_harass:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=vg_id,
+                    item_name="Vanguard",
+                    reasoning=(
+                        f"Against {hero_name}'s ranged harass in lane, "
+                        f"Vanguard's damage block and HP regen keeps melee "
+                        f"offlaners alive to contest the lane."
+                    ),
+                    phase="laning",
+                    priority="situational",
+                    counter_target=f"{hero_name}: ranged harass",
+                )]
+        return []
+
+    def _meteor_hammer_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Meteor Hammer for heroes with long stuns/roots. Self-hero rule. For role 3-5."""
+        mh_id = self._item_id("meteor_hammer")
+        if mh_id is None or req.role < 3:
+            return []
+        meteor_heroes = self._hero_ids(
+            "Treant Protector", "Naga Siren", "Shadow Shaman", "Bane",
+        )
+        if req.hero_id in meteor_heroes:
+            hero_name = self._hero_name(req.hero_id)
+            return [RuleResult(
+                item_id=mh_id,
+                item_name="Meteor Hammer",
+                reasoning=(
+                    f"Meteor Hammer combos with {hero_name}'s long-duration "
+                    f"disable for guaranteed damage. Also provides tower push "
+                    f"and farming capability."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"self: {hero_name} disable combo",
+            )]
+        return []
+
+    def _witch_blade_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Witch Blade for intelligence mid heroes. Self-hero rule. For role 2."""
+        wb_id = self._item_id("witch_blade")
+        if wb_id is None or req.role != 2:
+            return []
+        int_mids = self._hero_ids(
+            "Puck", "Lina", "Zeus", "Outworld Destroyer", "Death Prophet",
+        )
+        if req.hero_id in int_mids:
+            hero_name = self._hero_name(req.hero_id)
+            return [RuleResult(
+                item_id=wb_id,
+                item_name="Witch Blade",
+                reasoning=(
+                    f"Witch Blade provides intelligence, attack speed, and armor "
+                    f"for {hero_name}. The poison attack adds harass damage in lane "
+                    f"and scales with intelligence."
+                ),
+                phase="laning",
+                priority="situational",
+                counter_target=f"self: {hero_name} int mid item",
+            )]
+        return []
+
+    def _desolator_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Desolator for physical damage mid heroes. For role 2."""
+        deso_id = self._item_id("desolator")
+        if deso_id is None or req.role != 2:
+            return []
+        phys_mids = self._hero_ids(
+            "Templar Assassin", "Shadow Fiend", "Pangolier", "Queen of Pain",
+        )
+        if req.hero_id in phys_mids:
+            hero_name = self._hero_name(req.hero_id)
+            return [RuleResult(
+                item_id=deso_id,
+                item_name="Desolator",
+                reasoning=(
+                    f"Desolator's -7 armor corruption amplifies {hero_name}'s "
+                    f"physical damage output. Strong Roshan and tower push timing."
+                ),
+                phase="core",
+                priority="situational",
+                counter_target=f"self: {hero_name} physical damage amplifier",
+            )]
+        return []
+
+    def _guardian_greaves_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Guardian Greaves for aura carriers. For role 3, playstyle 'Aura-carrier'."""
+        gg_id = self._item_id("guardian_greaves")
+        if gg_id is None or req.role != 3 or req.playstyle != "Aura-carrier":
+            return []
+        return [RuleResult(
+            item_id=gg_id,
+            item_name="Guardian Greaves",
+            reasoning=(
+                "Dispels debuffs on self, heals and restores mana to team. "
+                "Core on aura builders -- the low-HP bonus heal keeps you "
+                "alive as frontline."
+            ),
+            phase="core",
+            priority="core",
+            counter_target="self: aura-carrier greaves",
+        )]
+
+    def _heart_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Heart of Tarrasque for frontline heroes in long games. For role 3."""
+        heart_id = self._item_id("heart")
+        if heart_id is None or req.role != 3 or req.playstyle != "Frontline":
+            return []
+        return [RuleResult(
+            item_id=heart_id,
+            item_name="Heart of Tarrasque",
+            reasoning=(
+                "Heart provides massive HP pool and out-of-combat regen "
+                "for sustained frontline presence. Allows you to reset "
+                "between teamfight engagements."
+            ),
+            phase="late_game",
+            priority="situational",
+            counter_target="self: frontline sustain",
+        )]
+
+    def _ethereal_blade_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Ethereal Blade for intelligence cores vs physical carries. For role 1-2."""
+        eb_id = self._item_id("ethereal_blade")
+        if eb_id is None or req.role > 2:
+            return []
+        int_cores = self._hero_ids(
+            "Morphling", "Pugna", "Tinker", "Lina",
+        )
+        if req.hero_id not in int_cores:
+            return []
+        physical_carries = self._hero_ids(
+            "Anti-Mage", "Sven", "Phantom Assassin", "Juggernaut",
+            "Phantom Lancer", "Faceless Void", "Chaos Knight",
+            "Naga Siren", "Wraith King", "Slark", "Troll Warlord",
+            "Monkey King",
+        )
+        for op_id in req.lane_opponents:
+            if op_id in physical_carries:
+                hero_name = self._hero_name(op_id)
+                return [RuleResult(
+                    item_id=eb_id,
+                    item_name="Ethereal Blade",
+                    reasoning=(
+                        f"Against {hero_name}'s physical damage, Ethereal Blade "
+                        f"provides ethereal form (physical immunity) while amplifying "
+                        f"your magic damage burst. Strong offensive and defensive value."
+                    ),
+                    phase="core",
+                    priority="situational",
+                    counter_target=f"{hero_name}: physical carry",
+                )]
+        return []
+
+    def _urn_rule(self, req: RecommendRequest) -> list[RuleResult]:
+        """Urn of Shadows for roaming supports. For role 4, playstyle 'Roamer'."""
+        urn_id = self._item_id("urn_of_shadows")
+        if urn_id is None or req.role != 4 or req.playstyle != "Roamer":
+            return []
+        return [RuleResult(
+            item_id=urn_id,
+            item_name="Urn of Shadows",
+            reasoning=(
+                "Charges from ganks enable healing or damage. Essential on "
+                "aggressive roaming supports -- each successful gank provides "
+                "a charge for sustain or kill potential."
+            ),
+            phase="laning",
+            priority="core",
+            counter_target="self: roamer sustain",
+        )]

@@ -106,68 +106,70 @@
 
 ## Phase Details
 
+### v7.0 Engine Hardening (In Progress)
+
+**Milestone Goal:** Make Prismlab's recommendation engine monetization-ready by improving quality, latency, and coverage. Advice should feel like a genuine 8K+ MMR coach. Zero-click from hero pick to starting items. Post-match accuracy tracking to prove value.
+
+**Design Spec:** `docs/superpowers/specs/2026-03-30-engine-hardening-design.md`
+
 ### Phase 34: UX Speed & Instant Items
 **Goal:** Zero manual clicks from hero pick (with GSI) to seeing starting items in under 3 seconds
 **Depends on:** Phase 26 (engine modes), Phase 25 (live draft API)
-**Requirements:** UX-01, UX-02, UX-03, UX-04, UX-05
 **Success Criteria** (what must be TRUE):
   1. When GSI detects hero + role, recommendations fire automatically without clicking "Get Item Build"
   2. Rules-based starting items appear in <2s, full Claude recommendation merges in behind
   3. Draft polling detects hero picks within 3 seconds (not 10)
   4. No duplicate items appear across recommendation phases
   5. Enrichment pipeline runs in parallel (asyncio.gather)
-**Plans:** 7 plans
 **Status:** Complete (2026-03-30)
 
 ### Phase 35: Quality Foundation
 **Goal:** Recommendations are grounded in what top players actually build, validated for logical consistency, and cover 50+ deterministic matchup scenarios
 **Depends on:** Phase 34 (UX speed ensures fast feedback loop for testing quality changes)
-**Requirements:** QUAL-01, QUAL-02, QUAL-03, QUAL-04, QUAL-05
 **Success Criteria** (what must be TRUE):
   1. Context builder includes Divine/Immortal item win rates per hero per matchup from OpenDota
   2. Claude explains deviations from pro builds rather than inventing from scratch
   3. Response validator catches phase-cost violations, cross-phase duplicates, and missing counter items — retries once on failure
   4. Rules engine covers 50+ deterministic scenarios (currently ~20) including item-vs-item counters and meta-aware team composition rules
   5. Validation failure rates are logged for prompt tuning
-**Plans:** 1/3 plans executed
-Plans:
-- [ ] 35-01-PLAN.md — Pro/high-MMR build baselines data pipeline and context builder integration
-- [x] 35-02-PLAN.md — Response validation layer with retry-on-failure and metrics logging
-- [ ] 35-03-PLAN.md — Expanded rules engine (50+ rules: item-vs-item, meta-aware, self-hero)
 
 ### Phase 36: Prompt Intelligence
 **Goal:** Claude's reasoning consistently matches the quality of an expert coach through few-shot exemplars, game-clock awareness, and graceful handling of edge cases
 **Depends on:** Phase 35 (quality foundation provides the data and validation that exemplars build on)
-**Requirements:** PROM-01, PROM-02, PROM-03, PROM-04, PROM-05
 **Success Criteria** (what must be TRUE):
   1. 15-20 curated gold-standard recommendations are stored and the 1-2 closest are injected as few-shot examples per request
   2. Game clock is injected into context and rules hard-block timing-inappropriate items (no Midas after 20 min)
   3. Unusual roles are detected and flagged to Claude with adjusted context
   4. Partial drafts (<10 heroes) still produce useful recommendations with appropriate caveats
   5. Turbo mode flag halves all timing benchmarks
-**Plans:** TBD
 
 ### Phase 37: Latency & Caching
 **Goal:** P95 full recommendation latency under 5 seconds through hierarchical caching, pre-computation, and streaming
 **Depends on:** Phase 35 (pro baselines are the data cached at L1/L2)
-**Requirements:** LAT-01, LAT-02, LAT-03, LAT-04
 **Success Criteria** (what must be TRUE):
   1. Three-tier cache: hero+role+lane (1h TTL) → +opponents (5min) → full request (5min)
   2. Top 90 hero+role combos are pre-warmed on startup with rules-only recommendations
   3. SSE streaming endpoint delivers rules items immediately, Claude results progressively, enrichment data last
   4. Frontend progressively renders phases as they stream in
-**Plans:** TBD
 
 ### Phase 38: Adaptiveness & Accuracy
 **Goal:** Mid-game re-evaluations are faster and cheaper via diff-based context, and post-match tracking proves recommendation value
 **Depends on:** Phase 35 (validation ensures accuracy tracking data is clean)
-**Requirements:** ADAPT-01, ADAPT-02, ADAPT-03, ADAPT-04, ADAPT-05
 **Success Criteria** (what must be TRUE):
   1. Re-evaluations send only what changed since last eval (new enemy items, deaths, gold swings, phase transitions)
   2. Diff-based context reduces token usage by 40%+ for mid-game re-evals
   3. Post-match accuracy score computed: % of core recommendations purchased
   4. Match history dashboard shows "follow rate" and "follow win rate vs deviate win rate"
   5. Items frequently recommended but rarely purchased are flagged for prompt review
+
+### v8.0 Desktop Distribution (Planned)
+
+**Milestone Goal:** Package Prismlab as a one-click Windows installer that non-technical users can install and run locally, with automatic Dota 2 GSI configuration, API key setup, and system tray operation.
+
+### Phase 32: Tauri Desktop App
+**Goal:** Package Prismlab as a native Windows desktop application using Tauri v2
+**Depends on:** Phase 27 (game lifecycle), Phase 28 (current patch data), v7.0 Engine Hardening (quality must be proven before shipping to external users)
+**Requirements**: TBD
 **Plans:** TBD
 
 ## Progress
@@ -175,7 +177,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 34. UX Speed & Instant Items | 7/7 | Complete | 2026-03-30 |
-| 35. Quality Foundation | 1/3 | In Progress|  |
+| 35. Quality Foundation | 1/TBD | In progress | - |
 | 36. Prompt Intelligence | 0/TBD | Not started | - |
 | 37. Latency & Caching | 0/TBD | Not started | - |
 | 38. Adaptiveness & Accuracy | 0/TBD | Not started | - |
