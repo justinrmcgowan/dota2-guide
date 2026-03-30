@@ -128,6 +128,7 @@ class DataCache:
         self._item_name_to_id: dict[str, int] = {}
         self._hero_abilities: dict[int, list[AbilityCached]] = {}
         self._timing_benchmarks: dict[int, dict[str, list[TimingBucket]]] = {}
+        self._hero_item_baselines: dict[int, dict[str, list[tuple[int, str, int, float]]]] = {}
         self._initialized: bool = False
         # ML win predictor (loaded separately after DB cache)
         self._win_models: dict[int, object] = {}   # bracket_num -> xgb.Booster
@@ -349,6 +350,27 @@ class DataCache:
         to display names without a DB query.
         """
         return {item_id: item.name for item_id, item in self._items.items()}
+
+    def get_hero_item_baselines(
+        self, hero_id: int
+    ) -> dict[str, list[tuple[int, str, int, float]]] | None:
+        """Get cached Divine/Immortal item baselines for a hero.
+
+        Returns dict of {phase_label: [(item_id, item_name, count, win_rate), ...]}
+        or None if no baselines available for this hero.
+        """
+        return self._hero_item_baselines.get(hero_id)
+
+    def set_hero_item_baselines(
+        self,
+        baselines: dict[int, dict[str, list[tuple[int, str, int, float]]]],
+    ) -> None:
+        """Atomic swap of all hero item baselines.
+
+        Called by refresh pipeline after fetching baselines for all heroes.
+        Replaces entire dict at once for thread safety.
+        """
+        self._hero_item_baselines = baselines
 
     def get_item_validation_map(self) -> dict[int, tuple[int | None, str]]:
         """Return {item_id: (cost, internal_name)} for all items.

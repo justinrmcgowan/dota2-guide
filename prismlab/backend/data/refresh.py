@@ -1,5 +1,6 @@
 """Automated data refresh pipeline for keeping hero/item data current from OpenDota."""
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -154,6 +155,30 @@ async def refresh_all_data() -> DataRefreshLog:
                 logger.warning("Ability data refresh failed (non-fatal): %s", str(e))
                 # Non-fatal: ability data is supplementary. Heroes/items still refreshed.
 
+            # Refresh pro baselines (Divine+ item popularity per hero)
+            try:
+                from data.cache import data_cache
+
+                # Build item name lookup from just-fetched items data
+                item_name_lookup: dict[int, str] = {}
+                for _iname, iinfo in items_data.items():
+                    if "id" in iinfo:
+                        item_name_lookup[iinfo["id"]] = iinfo.get("dname", _iname)
+
+                baselines: dict[int, dict] = {}
+                for _hid_str, hinfo in heroes_data.items():
+                    hid = hinfo["id"]
+                    raw = await client.fetch_hero_item_popularity_by_bracket(hid)
+                    if raw:
+                        parsed = _parse_item_baselines(raw, item_name_lookup)
+                        if parsed:
+                            baselines[hid] = parsed
+                    await asyncio.sleep(0.1)  # Rate limit: 10 req/s for OpenDota
+                data_cache.set_hero_item_baselines(baselines)
+                logger.info("Refreshed pro baselines for %d heroes.", len(baselines))
+            except Exception as e:
+                logger.warning("Pro baselines refresh failed (non-fatal): %s", str(e))
+
             await session.commit()
 
             # Log success
@@ -208,6 +233,47 @@ async def refresh_all_data() -> DataRefreshLog:
                 err_session.add(log_entry)
                 await err_session.commit()
             raise
+
+
+_BASELINE_PHASE_MAP = {
+    "start_game_items": "starting",
+    "early_game_items": "laning",
+    "mid_game_items": "core",
+    "late_game_items": "late_game",
+}
+
+
+def _parse_item_baselines(
+    raw: dict, item_names: dict[int, str]
+) -> dict[str, list[tuple[int, str, int, float]]]:
+    """Parse raw OpenDota itemPopularity response into structured baselines.
+
+    Args:
+        raw: OpenDota response with start_game_items, early_game_items, etc.
+        item_names: {item_id: display_name} lookup from items data.
+
+    Returns:
+        {phase_label: [(item_id, item_name, count, win_rate), ...]}
+        where items are sorted by count descending, top 5 per phase.
+        win_rate is 0.0 (OpenDota itemPopularity only provides counts).
+    """
+    result: dict[str, list[tuple[int, str, int, float]]] = {}
+    for api_key, phase_label in _BASELINE_PHASE_MAP.items():
+        phase_data = raw.get(api_key, {})
+        if not phase_data:
+            continue
+
+        items: list[tuple[int, str, int, float]] = []
+        for item_id_str, count in phase_data.items():
+            item_id = int(item_id_str)
+            name = item_names.get(item_id, f"Item #{item_id}")
+            items.append((item_id, name, int(count), 0.0))
+
+        # Sort by count descending, take top 5
+        items.sort(key=lambda x: x[2], reverse=True)
+        result[phase_label] = items[:5]
+
+    return result
 
 
 async def get_last_refresh() -> DataRefreshLog | None:

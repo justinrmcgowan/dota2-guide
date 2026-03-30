@@ -70,6 +70,32 @@ class OpenDotaClient:
             response.raise_for_status()
             return response.json()
 
+    async def fetch_hero_item_popularity_by_bracket(
+        self, hero_id: int, min_mmr: int = 5420
+    ) -> dict:
+        """Fetch item popularity for Divine+ bracket.
+
+        Returns same shape as fetch_hero_item_popularity:
+        {"start_game_items": {item_id_str: count}, ...}
+        Falls back to empty dict on failure.
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.BASE_URL}/heroes/{hero_id}/itemPopularity",
+                    params={**self.params, "minMmr": str(min_mmr)},
+                    timeout=15.0,
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            logger.warning(
+                "Bracket item popularity fetch failed for hero %d: %s",
+                hero_id,
+                str(exc),
+            )
+            return {}
+
     async def fetch_abilities(self) -> dict:
         """Fetch all ability constants from OpenDota.
 
