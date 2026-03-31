@@ -37,13 +37,13 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 (Defined in REQUIREMENTS.md per milestone)
 
-## Current Milestone: v6.0 Draft Intelligence
+## Current State
 
-**Goal:** Add statistical ML-driven draft analysis — win probability prediction from hero compositions and intelligent hero suggestions filtered by role, lane, and team context.
+**Shipped:** v7.0 Engine Hardening (2026-03-31)
 
-**Target features:**
-- ML Win Predictor — XGBoost/logistic model on 200k+ recent matches, draft win probability, synergy/counter matrices by MMR bracket
-- Hero Selector — role/lane-filtered hero suggestions ranked by predicted win rate, ally synergy, and enemy counter-value
+v7.0 made recommendations monetization-ready: zero-click auto-trigger, 52 deterministic rules, few-shot exemplars, hierarchical 3-tier cache, SSE streaming for progressive rendering, diff-based re-evaluation for 40%+ token savings, and post-match accuracy tracking with follow/deviate win rate dashboard.
+
+**Next:** v8.0 Desktop Distribution — Tauri native Windows app
 
 ### Out of Scope
 
@@ -53,7 +53,7 @@ At any point in any game, the player knows exactly what to buy next and why — 
 
 ## Context
 
-- **Shipped:** v1.0 MVP (2026-03-21), v1.1 (2026-03-23), v2.0 (2026-03-26), v3.0 (2026-03-27), v4.0 (2026-03-28), v5.0 (2026-03-29)
+- **Shipped:** v1.0 MVP (2026-03-21), v1.1 (2026-03-23), v2.0 (2026-03-26), v3.0 (2026-03-27), v4.0 (2026-03-28), v5.0 (2026-03-29), v6.0 (2026-03-29), v7.0 (2026-03-31)
 - **Codebase:** React 19 + Vite 8 + Tailwind v4 frontend, Python 3.13 + FastAPI backend
 - **Test suite:** 160+ tests (backend pytest + frontend vitest), zero failures
 - **Player profile:** Aggressive playstyle — seeks fights, wants items enabling that tendency
@@ -105,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 — v6.0 Draft Intelligence milestone started*
+*Last updated: 2026-03-31 — v7.0 Engine Hardening milestone completed*

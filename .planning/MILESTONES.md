@@ -1,5 +1,15 @@
 # Milestones
 
+## v7.0 Engine Hardening (Shipped: 2026-03-31)
+
+**Phases completed:** 5 phases, 10 plans, 21 tasks
+
+**Key accomplishments:**
+
+- Status:
+
+---
+
 ## v6.0 Draft Intelligence (Shipped: 2026-03-29)
 
 **Phases completed:** 2 phases, 6 plans, 8 tasks
