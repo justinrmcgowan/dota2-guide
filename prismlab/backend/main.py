@@ -11,6 +11,7 @@ from data.database import engine, Base, async_session
 from data.seed import seed_if_empty
 from data.refresh import refresh_all_data
 from data.cache import data_cache
+from engine.cache_warmer import CacheWarmer
 from api.routes.heroes import router as heroes_router
 from api.routes.items import router as items_router
 from api.routes.recommend import router as recommend_router
@@ -48,6 +49,13 @@ async def lifespan(app: FastAPI):
         data_cache.load_win_predictor(models_dir="models")
     except Exception as e:
         logger.warning("Win predictor models failed to load (non-fatal): %s", e)
+
+    # Pre-warm L1 cache with rules-only recommendations for popular hero+role combos
+    from api.routes.recommend import _recommender, _response_cache
+    _cache_warmer = CacheWarmer(recommender=_recommender, cache=_response_cache)
+    async with async_session() as warm_session:
+        warmed = await _cache_warmer.warm(warm_session)
+    logger.info("Cache warming complete: %d combos pre-warmed", warmed)
 
     # Start data refresh scheduler — every 6h to catch patches same day
     scheduler = AsyncIOScheduler()

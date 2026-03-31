@@ -210,6 +210,14 @@ async def refresh_all_data() -> DataRefreshLog:
             _response_cache.clear()
             logger.info("HierarchicalCache cleared (all tiers) after data refresh.")
 
+            # Re-warm L1 cache with fresh data after clearing
+            from engine.cache_warmer import CacheWarmer
+            from api.routes.recommend import _recommender
+            _cache_warmer = CacheWarmer(recommender=_recommender, cache=_response_cache)
+            async with async_session() as warm_session:
+                warmed = await _cache_warmer.warm(warm_session)
+            logger.info("Cache re-warmed after data refresh: %d combos", warmed)
+
             logger.info(
                 "Data refresh completed: %d heroes, %d items, ability data refreshed.",
                 hero_count, item_count,
