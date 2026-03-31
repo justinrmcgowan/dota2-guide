@@ -98,7 +98,7 @@
 - [ ] **Phase 35: Quality Foundation** - Pro/high-MMR build baselines from OpenDota, response validation layer with retry, 30+ expanded deterministic rules (item-vs-item, meta-aware, timing-aware)
 - [ ] **Phase 36: Prompt Intelligence** - Exemplar few-shot prompting (15-20 gold-standard builds), time-aware reasoning with game clock injection, edge case handling (unusual roles, partial drafts, Turbo mode)
 - [x] **Phase 37: Latency & Caching** - Hierarchical 3-tier cache (hero+role → matchup → full request), cache warming for top 90 hero+role combos, SSE streaming endpoint for progressive item display (completed 2026-03-31)
-- [ ] **Phase 38: Adaptiveness & Accuracy** - Diff-based re-evaluation (send only what changed to Claude), post-match accuracy tracking (follow rate, follow win rate), accuracy dashboard on match history
+- [x] **Phase 38: Adaptiveness & Accuracy** - Diff-based re-evaluation (send only what changed to Claude), post-match accuracy tracking (follow rate, follow win rate), accuracy dashboard on match history (completed 2026-03-31)
 
 ### v8.0 Desktop Distribution (Planned)
 
@@ -162,7 +162,7 @@ Plans:
 **Goal:** Mid-game re-evaluations are faster and cheaper via diff-based context, and post-match tracking proves recommendation value
 **Depends on:** Phase 35 (validation ensures accuracy tracking data is clean)
 **Requirements:** [ADAPT-01, ADAPT-02, ADAPT-03, ADAPT-04, ADAPT-05]
-**Plans:** 2/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 38-01-PLAN.md — Diff-based re-evaluation context builder with eval snapshots
 - [x] 38-02-PLAN.md — Accuracy dashboard with follow/deviate win rates and flagged items
@@ -191,5 +191,5 @@ Plans:
 | 35. Quality Foundation | 1/TBD | In progress | - |
 | 36. Prompt Intelligence | 2/TBD | In progress | - |
 | 37. Latency & Caching | 2/3 | Complete    | 2026-03-31 |
-| 38. Adaptiveness & Accuracy | 1/2 | In Progress|  |
+| 38. Adaptiveness & Accuracy | 1/2 | Complete    | 2026-03-31 |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
