@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 36-02 Game Clock + Timing Gates
-last_updated: "2026-03-30T20:48:51Z"
+stopped_at: Completed 37-03 SSE Streaming
+last_updated: "2026-03-31T08:53:10.698Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 4
+  total_phases: 4
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 7
   percent: 40
 ---
 
@@ -59,6 +59,9 @@ Progress: [████░░░░░░] 40%
 - [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
 - [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
 - [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
+- [Phase 37]: SSE streaming replaces two-pass HTTP pattern for auto-trigger recommendations
+- [Phase 37]: Cache-hit SSE path returns phases+done events directly, skipping streaming pipeline
+- [Phase 37]: Existing POST /recommend endpoint preserved for backward compatibility
 
 ### Pending Todos
 
@@ -70,6 +73,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:48:51Z
-Stopped at: Completed 36-02 Game Clock + Timing Gates
+Last session: 2026-03-31T08:53:10.695Z
+Stopped at: Completed 37-03 SSE Streaming
 Resume file: None
