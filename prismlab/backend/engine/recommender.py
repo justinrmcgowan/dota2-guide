@@ -38,7 +38,7 @@ from engine.win_condition import classify_draft
 from engine.win_predictor import WinPredictor
 from engine.rules import RulesEngine
 from engine.llm import LLMEngine, FallbackReason
-from engine.context_builder import ContextBuilder
+from engine.context_builder import ContextBuilder, EvalSnapshot
 from engine.timing_zones import classify_timing_zones
 from data.cache import DataCache
 from data.matchup_service import get_or_fetch_hero_timings
@@ -214,6 +214,8 @@ class HybridRecommender:
         self.ollama = ollama
         self.cost_tracker = cost_tracker
         self.response_validator = ResponseValidator(cache) if cache else None
+        # Snapshot storage for diff-based re-evaluations (keyed by hero_id:role)
+        self._eval_snapshots: dict[str, EvalSnapshot] = {}
 
     # Reason-specific fallback messages for the overall_strategy field
     FALLBACK_STRATEGIES = {
@@ -224,6 +226,30 @@ class HybridRecommender:
         FallbackReason.ollama_error: "Local AI unavailable -- showing rules-based build.",
         FallbackReason.budget_exceeded: "Monthly API budget reached -- showing rules-based build.",
     }
+
+    # ------------------------------------------------------------------
+    # Diff-based re-evaluation helpers (Phase 38: ADAPT-01)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _snapshot_key(request: RecommendRequest) -> str:
+        """Session key for eval snapshots: hero_id:role (one active build per hero+role)."""
+        return f"{request.hero_id}:{request.role}"
+
+    @staticmethod
+    def _is_reevaluation(request: RecommendRequest) -> bool:
+        """True if request contains mid-game adaptation fields (not an initial draft eval)."""
+        return (
+            request.lane_result is not None
+            or request.damage_profile is not None
+            or len(request.enemy_items_spotted) > 0
+            or len(request.purchased_items) > 0
+            or (request.game_time_seconds is not None and request.game_time_seconds > 0)
+        )
+
+    def clear_snapshots(self) -> None:
+        """Clear all eval snapshots (e.g., after cache clear or game reset)."""
+        self._eval_snapshots.clear()
 
     # ------------------------------------------------------------------
     # Main entry point: route by mode
@@ -304,7 +330,22 @@ class HybridRecommender:
             return
 
         # Run full path (auto or deep) -- reuse existing logic but skip enrichment
-        user_message = await self.context_builder.build(request, rules_items, db)
+        # Diff-based context for re-evaluations (Phase 38: ADAPT-01)
+        snapshot_key = self._snapshot_key(request)
+        user_message = None
+
+        if self._is_reevaluation(request):
+            prior = self._eval_snapshots.get(snapshot_key)
+            if prior is not None:
+                diff_msg = await self.context_builder.build_diff(
+                    request, rules_items, db, prior
+                )
+                if diff_msg is not None:
+                    user_message = diff_msg
+                    logger.info("Stream path: using diff context (re-evaluation)")
+
+        if user_message is None:
+            user_message = await self.context_builder.build(request, rules_items, db)
 
         llm_result = None
         fallback_reason = None
@@ -326,6 +367,11 @@ class HybridRecommender:
                         self.llm.last_usage["output_tokens"],
                         db,
                     )
+
+        # Store snapshot after successful LLM call (Phase 38: ADAPT-01)
+        if llm_result:
+            snapshot = EvalSnapshot.from_request(request, user_message)
+            self._eval_snapshots[snapshot_key] = snapshot
 
         if llm_result:
             phases = self._merge(rules_items, llm_result)
@@ -351,6 +397,11 @@ class HybridRecommender:
                 overall_strategy = retry_strategy
                 neutral_items = retry_neutrals or []
 
+        # Attach input_tokens from LLM usage
+        stream_input_tokens = None
+        if self.llm.last_usage:
+            stream_input_tokens = self.llm.last_usage.get("input_tokens")
+
         elapsed_ms = int((time.monotonic() - start) * 1000)
         phases_response = RecommendResponse(
             phases=phases,
@@ -360,6 +411,7 @@ class HybridRecommender:
             fallback_reason=fallback_reason.value if fallback_reason else None,
             model=model_used,
             latency_ms=elapsed_ms,
+            input_tokens=stream_input_tokens,
             engine_mode=mode,
         )
         self._attach_budget_info(phases_response)
@@ -560,8 +612,23 @@ class HybridRecommender:
         rules_items = self.rules.evaluate(request)
         logger.info("Deep path: rules produced %d items", len(rules_items))
 
-        # Step 2: Build context + call Claude
-        user_message = await self.context_builder.build(request, rules_items, db)
+        # Step 2: Build context (diff-based if prior snapshot exists for re-evals)
+        snapshot_key = self._snapshot_key(request)
+        user_message = None
+
+        if self._is_reevaluation(request):
+            prior = self._eval_snapshots.get(snapshot_key)
+            if prior is not None:
+                diff_msg = await self.context_builder.build_diff(
+                    request, rules_items, db, prior
+                )
+                if diff_msg is not None:
+                    user_message = diff_msg
+                    logger.info("Deep path: using diff context (re-evaluation)")
+
+        if user_message is None:
+            user_message = await self.context_builder.build(request, rules_items, db)
+
         llm_result, fallback_reason = await self.llm.generate(user_message)
 
         # Step 3: Track cost if available
@@ -571,6 +638,11 @@ class HybridRecommender:
                 self.llm.last_usage["output_tokens"],
                 db,
             )
+
+        # Step 3b: Store snapshot after successful LLM call (not fallback)
+        if llm_result:
+            snapshot = EvalSnapshot.from_request(request, user_message)
+            self._eval_snapshots[snapshot_key] = snapshot
 
         # Step 4: Merge or fallback
         fallback = llm_result is None
@@ -608,6 +680,11 @@ class HybridRecommender:
         if win_condition:
             phases = self._adjust_priorities_for_win_condition(phases, win_condition)
 
+        # Attach input_tokens from LLM usage
+        input_tokens = None
+        if self.llm.last_usage:
+            input_tokens = self.llm.last_usage.get("input_tokens")
+
         elapsed_ms = int((time.monotonic() - start) * 1000)
         response = RecommendResponse(
             phases=phases,
@@ -621,6 +698,7 @@ class HybridRecommender:
             fallback_reason=fallback_reason.value if fallback_reason else None,
             model=LLMEngine.MODEL if not fallback else None,
             latency_ms=elapsed_ms,
+            input_tokens=input_tokens,
             engine_mode=engine_mode_label,
         )
         self._attach_budget_info(response)

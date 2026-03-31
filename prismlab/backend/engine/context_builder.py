@@ -7,7 +7,10 @@ All hero/item lookups come from DataCache -- zero DB queries for hero/item
 data on the hot path. Only matchup and popularity data still hit the DB.
 """
 
+import hashlib
+import json
 import logging
+from dataclasses import dataclass, field as dc_field
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +36,63 @@ _POPULARITY_PHASE_MAP = {
     "mid_game_items": "Mid",
     "late_game_items": "Late",
 }
+
+
+@dataclass(frozen=True)
+class EvalSnapshot:
+    """Snapshot of request fields for diff detection between evaluations.
+
+    Stores the previous request's key fields as immutable tuples for
+    cheap equality checks. The full_context field preserves the original
+    prompt string so we know exactly what was sent to Claude.
+    """
+
+    hero_id: int
+    role: int
+    playstyle: str
+    side: str
+    lane: str
+    lane_opponents: tuple[int, ...]
+    allies: tuple[int, ...]
+    all_opponents: tuple[int, ...]
+    lane_result: str | None
+    damage_profile: tuple[tuple[str, int], ...] | None  # sorted tuple of items
+    enemy_items_spotted: tuple[str, ...]
+    purchased_items: tuple[int, ...]
+    enemy_context_hash: str  # MD5 of sorted enemy_context for change detection
+    game_time_seconds: int | None
+    turbo: bool
+    full_context: str  # the full context string that was sent to Claude
+
+    @classmethod
+    def from_request(cls, req: "RecommendRequest", full_context: str) -> "EvalSnapshot":
+        """Create a snapshot from a RecommendRequest and the context string sent to Claude."""
+        ec_hash = hashlib.md5(
+            json.dumps(
+                [ec.model_dump() for ec in sorted(req.enemy_context, key=lambda e: e.hero_id)]
+            ).encode()
+        ).hexdigest() if req.enemy_context else ""
+
+        dp = tuple(sorted(req.damage_profile.items())) if req.damage_profile else None
+
+        return cls(
+            hero_id=req.hero_id,
+            role=req.role,
+            playstyle=req.playstyle,
+            side=req.side,
+            lane=req.lane,
+            lane_opponents=tuple(sorted(req.lane_opponents)),
+            allies=tuple(sorted(req.allies)),
+            all_opponents=tuple(sorted(req.all_opponents)),
+            lane_result=req.lane_result,
+            damage_profile=dp,
+            enemy_items_spotted=tuple(sorted(req.enemy_items_spotted)),
+            purchased_items=tuple(sorted(req.purchased_items)),
+            enemy_context_hash=ec_hash,
+            game_time_seconds=req.game_time_seconds,
+            turbo=req.turbo,
+            full_context=full_context,
+        )
 
 
 class ContextBuilder:
@@ -201,6 +261,147 @@ class ContextBuilder:
                 f"from minute 0 through six-slotted. {matchup_focus}\n"
                 f"Include timing and gold_budget for each phase."
             )
+
+        return "\n\n".join(sections)
+
+    async def build_diff(
+        self,
+        request: RecommendRequest,
+        rules_items: list[RuleResult],
+        db: AsyncSession,
+        prior: "EvalSnapshot",
+    ) -> str | None:
+        """Build a compact diff context for re-evaluations.
+
+        Compares the current request against a prior EvalSnapshot and produces
+        a prompt that includes only:
+        - A brief summary of unchanged state (hero, role, opponents)
+        - Sections for each field that actually changed
+        - Updated rules-engine items (always included since rules may differ)
+
+        Returns None if opponents or allies changed (triggers full rebuild
+        since matchup data needs re-fetching).
+
+        Token savings: omits item catalog (~400), popularity (~200),
+        pro reference (~200), timing benchmarks (~200), exemplars (~300),
+        neutral catalog (~150) = ~1450 tokens saved per re-eval.
+        """
+        # If opponents or allies changed, fall back to full build
+        current_lane_opps = tuple(sorted(request.lane_opponents))
+        current_all_opps = tuple(sorted(request.all_opponents))
+        current_allies = tuple(sorted(request.allies))
+
+        if current_lane_opps != prior.lane_opponents:
+            logger.info("build_diff: lane_opponents changed, falling back to full build")
+            return None
+        if current_all_opps != prior.all_opponents:
+            logger.info("build_diff: all_opponents changed, falling back to full build")
+            return None
+        if current_allies != prior.allies:
+            logger.info("build_diff: allies changed, falling back to full build")
+            return None
+
+        # Build the unchanged summary
+        hero = self._get_hero(request.hero_id)
+        hero_name = hero.localized_name if hero else f"Hero #{request.hero_id}"
+        role_label = f"Pos {request.role}"
+
+        # Resolve opponent names for the summary
+        opp_names: list[str] = []
+        for opp_id in request.lane_opponents:
+            opp_hero = self._get_hero(opp_id)
+            opp_names.append(opp_hero.localized_name if opp_hero else f"Hero #{opp_id}")
+
+        ally_names: list[str] = []
+        for ally_id in request.allies:
+            ally_hero = self._get_hero(ally_id)
+            ally_names.append(ally_hero.localized_name if ally_hero else f"Hero #{ally_id}")
+
+        unchanged_lines = [
+            f"Your hero: {hero_name} ({role_label}, {request.playstyle}), "
+            f"{request.side} {request.lane} lane",
+        ]
+        if opp_names:
+            unchanged_lines.append(f"Opponents: {', '.join(opp_names)}")
+        if ally_names:
+            unchanged_lines.append(f"Allies: {', '.join(ally_names)}")
+
+        # Detect what changed
+        changes: list[str] = []
+
+        if request.lane_result != prior.lane_result:
+            changes.append(f"- Lane Result: {request.lane_result}")
+
+        # New enemy items (set difference)
+        current_enemy_items = set(request.enemy_items_spotted)
+        prior_enemy_items = set(prior.enemy_items_spotted)
+        new_enemy_items = current_enemy_items - prior_enemy_items
+        if new_enemy_items:
+            display_names = [name.replace("_", " ").title() for name in sorted(new_enemy_items)]
+            changes.append(f"- New Enemy Items Spotted: {', '.join(display_names)}")
+
+        # New purchases (set difference)
+        current_purchases = set(request.purchased_items)
+        prior_purchases = set(prior.purchased_items)
+        new_purchases = current_purchases - prior_purchases
+        if new_purchases:
+            item_name_map = self.cache.get_item_name_map()
+            purchase_names = [item_name_map.get(iid, f"Item #{iid}") for iid in sorted(new_purchases)]
+            changes.append(f"- New Purchases: {', '.join(purchase_names)}")
+
+        # Damage profile changed
+        current_dp = tuple(sorted(request.damage_profile.items())) if request.damage_profile else None
+        if current_dp != prior.damage_profile and request.damage_profile:
+            parts = [f"{k.capitalize()} {v}%" for k, v in request.damage_profile.items()]
+            changes.append(f"- Damage Profile: {', '.join(parts)}")
+
+        # Game clock changed
+        if request.game_time_seconds != prior.game_time_seconds and request.game_time_seconds is not None:
+            minutes = request.game_time_seconds // 60
+            seconds = request.game_time_seconds % 60
+            clock_str = f"{minutes}:{seconds:02d}"
+            turbo_note = " (TURBO MODE)" if request.turbo else ""
+            changes.append(f"- Game Clock: {clock_str}{turbo_note}")
+
+        # Enemy context hash changed (screenshot data updated)
+        current_ec_hash = hashlib.md5(
+            json.dumps(
+                [ec.model_dump() for ec in sorted(request.enemy_context, key=lambda e: e.hero_id)]
+            ).encode()
+        ).hexdigest() if request.enemy_context else ""
+
+        if current_ec_hash != prior.enemy_context_hash:
+            enemy_status = self._build_enemy_context_section(request)
+            if enemy_status:
+                changes.append(f"- Enemy Team Status:\n{enemy_status}")
+
+        # If nothing actually changed, still produce the diff format
+        # (rules may have changed)
+        if not changes:
+            changes.append("- No game state fields changed (rules may have updated)")
+
+        # Build rules section (always include since rules may differ)
+        rules_lines = self._build_rules_lines(rules_items)
+
+        # Assemble the diff context
+        sections = [
+            "## Re-Evaluation Context (changes since last eval)",
+            "### Unchanged (retained from prior analysis)\n" + "\n".join(unchanged_lines),
+            "### What Changed\n" + "\n".join(changes),
+        ]
+
+        if rules_lines:
+            sections.append(
+                "### Already Recommended (from rules engine, do NOT duplicate)\n"
+                + rules_lines
+            )
+
+        sections.append(
+            "## Instructions\n"
+            "You previously recommended a build for this hero. The game state has evolved.\n"
+            "Re-evaluate ONLY phases affected by these changes. Keep unchanged phases stable.\n"
+            "Focus on explaining WHY the changes affect itemization. Cover ALL remaining phases."
+        )
 
         return "\n\n".join(sections)
 

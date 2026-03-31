@@ -232,6 +232,7 @@ class RecommendResponse(BaseModel):
     fallback_reason: str | None = None  # "timeout" | "parse_error" | "api_error" | "rate_limited"
     model: str | None = None
     latency_ms: int | None = None
+    input_tokens: int | None = None  # Token count from Claude API for diff effectiveness tracking
     engine_mode: str | None = None  # "fast" | "auto" | "deep"
     budget_used: float | None = None  # Current month's Claude API spend in USD
     budget_limit: float | None = None  # Monthly budget cap in USD

@@ -210,9 +210,13 @@ async def refresh_all_data() -> DataRefreshLog:
             _response_cache.clear()
             logger.info("HierarchicalCache cleared (all tiers) after data refresh.")
 
+            # Clear eval snapshots to prevent stale diff contexts (Phase 38: ADAPT-01)
+            from api.routes.recommend import _recommender
+            _recommender.clear_snapshots()
+            logger.info("Eval snapshots cleared after data refresh.")
+
             # Re-warm L1 cache with fresh data after clearing
             from engine.cache_warmer import CacheWarmer
-            from api.routes.recommend import _recommender
             _cache_warmer = CacheWarmer(recommender=_recommender, cache=_response_cache)
             async with async_session() as warm_session:
                 warmed = await _cache_warmer.warm(warm_session)
