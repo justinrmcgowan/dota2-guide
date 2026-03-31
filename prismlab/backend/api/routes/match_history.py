@@ -7,7 +7,7 @@ GET /match-stats: Aggregate metrics (win rate, follow rate by outcome).
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import case, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.database import get_db
@@ -94,6 +94,14 @@ class MatchHistoryResponse(BaseModel):
     offset: int
 
 
+class FlaggedItemResponse(BaseModel):
+    """Item recommended frequently but rarely purchased -- prompt tuning candidate."""
+    item_name: str
+    times_recommended: int
+    times_purchased: int
+    purchase_rate: float  # 0.0-1.0
+
+
 class MatchStatsResponse(BaseModel):
     total_games: int
     wins: int
@@ -102,6 +110,12 @@ class MatchStatsResponse(BaseModel):
     avg_follow_rate: float | None
     avg_follow_rate_wins: float | None
     avg_follow_rate_losses: float | None
+    # Accuracy metrics
+    follow_win_rate: float | None       # win rate for games where follow_rate >= 0.7
+    deviate_win_rate: float | None      # win rate for games where follow_rate < 0.4
+    follow_game_count: int              # number of games in follow bucket
+    deviate_game_count: int             # number of games in deviate bucket
+    flagged_items: list[FlaggedItemResponse]  # items recommended 5+ times with purchase_rate < 0.3
 
 
 # ---------------------------------------------------------------------------
@@ -334,6 +348,73 @@ async def get_match_stats(db: AsyncSession = Depends(get_db)):
     if avg_follow_rate_losses is not None:
         avg_follow_rate_losses = round(float(avg_follow_rate_losses), 4)
 
+    # ---- Follow win rate: games where follow_rate >= 0.7 ----
+    follow_count_q = await db.execute(
+        select(func.count(MatchLog.id)).where(
+            MatchLog.follow_rate >= 0.7,
+            MatchLog.follow_rate.isnot(None),
+        )
+    )
+    follow_game_count = follow_count_q.scalar() or 0
+
+    follow_wins_q = await db.execute(
+        select(func.count(MatchLog.id)).where(
+            MatchLog.follow_rate >= 0.7,
+            MatchLog.follow_rate.isnot(None),
+            MatchLog.win == True,  # noqa: E712
+        )
+    )
+    follow_wins = follow_wins_q.scalar() or 0
+    follow_win_rate = round(follow_wins / follow_game_count, 4) if follow_game_count > 0 else None
+
+    # ---- Deviate win rate: games where follow_rate < 0.4 ----
+    deviate_count_q = await db.execute(
+        select(func.count(MatchLog.id)).where(
+            MatchLog.follow_rate < 0.4,
+            MatchLog.follow_rate.isnot(None),
+        )
+    )
+    deviate_game_count = deviate_count_q.scalar() or 0
+
+    deviate_wins_q = await db.execute(
+        select(func.count(MatchLog.id)).where(
+            MatchLog.follow_rate < 0.4,
+            MatchLog.follow_rate.isnot(None),
+            MatchLog.win == True,  # noqa: E712
+        )
+    )
+    deviate_wins = deviate_wins_q.scalar() or 0
+    deviate_win_rate = round(deviate_wins / deviate_game_count, 4) if deviate_game_count > 0 else None
+
+    # ---- Flagged items: recommended 5+ times with purchase rate below 30% ----
+    flagged_q = await db.execute(
+        select(
+            MatchRecommendation.item_name,
+            func.count(MatchRecommendation.id).label("times_recommended"),
+            func.sum(
+                case((MatchRecommendation.was_purchased == True, 1), else_=0)  # noqa: E712
+            ).label("times_purchased"),
+        )
+        .where(MatchRecommendation.priority.in_(["core", "situational"]))  # exclude luxury -- optional items
+        .group_by(MatchRecommendation.item_name)
+        .having(func.count(MatchRecommendation.id) >= 5)
+    )
+    flagged_rows = flagged_q.all()
+
+    flagged_items: list[FlaggedItemResponse] = []
+    for row in flagged_rows:
+        purchase_rate = round(row.times_purchased / row.times_recommended, 4) if row.times_recommended > 0 else 0.0
+        if purchase_rate < 0.3:
+            flagged_items.append(FlaggedItemResponse(
+                item_name=row.item_name,
+                times_recommended=row.times_recommended,
+                times_purchased=row.times_purchased,
+                purchase_rate=purchase_rate,
+            ))
+
+    # Sort flagged items by purchase_rate ascending (worst offenders first)
+    flagged_items.sort(key=lambda x: x.purchase_rate)
+
     return MatchStatsResponse(
         total_games=total_games,
         wins=wins,
@@ -342,4 +423,9 @@ async def get_match_stats(db: AsyncSession = Depends(get_db)):
         avg_follow_rate=avg_follow_rate,
         avg_follow_rate_wins=avg_follow_rate_wins,
         avg_follow_rate_losses=avg_follow_rate_losses,
+        follow_win_rate=follow_win_rate,
+        deviate_win_rate=deviate_win_rate,
+        follow_game_count=follow_game_count,
+        deviate_game_count=deviate_game_count,
+        flagged_items=flagged_items,
     )
