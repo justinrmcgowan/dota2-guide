@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { RecommendResponse } from "../types/recommendation";
+import type { EnrichmentData, RecommendResponse } from "../types/recommendation";
 
 interface RecommendationStore {
   data: RecommendResponse | null;
@@ -21,6 +21,7 @@ interface RecommendationStore {
   dismissItem: (phaseItemKey: string) => void;
   getPurchasedItemIds: () => number[];
   getDismissedItemIds: () => number[];
+  mergeEnrichment: (enrichment: EnrichmentData) => void;
   clearResults: () => void; // Clears data/error/selection but KEEPS purchasedItems/dismissed
   clear: () => void; // Full reset including purchasedItems/dismissed
 }
@@ -100,6 +101,20 @@ export const useRecommendationStore = create<RecommendationStore>()(
         isLoading: false,
         isPartial: false,
         purchasedItems: newPurchased.size > 0 ? newPurchased : oldPurchased,
+      });
+    },
+
+    mergeEnrichment: (enrichment) => {
+      const current = get().data;
+      if (!current) return;
+      set({
+        data: {
+          ...current,
+          timing_data: enrichment.timing_data,
+          build_paths: enrichment.build_paths,
+          win_condition: enrichment.win_condition ?? current.win_condition,
+          win_probability: enrichment.win_probability ?? current.win_probability,
+        },
       });
     },
 
