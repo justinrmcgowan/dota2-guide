@@ -5,6 +5,7 @@ import type {
   MatchHistoryItem,
   MatchHistoryResponse,
   MatchStatsResponse,
+  FlaggedItem,
 } from "../types/matchLog";
 
 /* ------------------------------------------------------------------ */
@@ -451,6 +452,81 @@ export default function MatchHistory({ onBack }: MatchHistoryProps) {
             value={pctDisplay(stats.avg_follow_rate_losses)}
             colorClass={followRateColor(stats.avg_follow_rate_losses)}
           />
+        </div>
+      )}
+
+      {/* Accuracy Insights */}
+      {stats && (stats.follow_win_rate != null || stats.deviate_win_rate != null) && (
+        <div className="mb-5">
+          <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
+            Accuracy Insights
+          </h3>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <StatCard
+              label={`Follow Win Rate (${stats.follow_game_count} games)`}
+              value={pctDisplay(stats.follow_win_rate)}
+              colorClass={
+                stats.follow_win_rate != null && stats.follow_win_rate >= 0.5
+                  ? "text-radiant"
+                  : "text-dire"
+              }
+            />
+            <StatCard
+              label={`Deviate Win Rate (${stats.deviate_game_count} games)`}
+              value={pctDisplay(stats.deviate_win_rate)}
+              colorClass={
+                stats.deviate_win_rate != null && stats.deviate_win_rate >= 0.5
+                  ? "text-radiant"
+                  : "text-dire"
+              }
+            />
+            {/* Delta indicator -- show the advantage of following */}
+            {stats.follow_win_rate != null && stats.deviate_win_rate != null && (
+              <StatCard
+                label="Follow Advantage"
+                value={`${stats.follow_win_rate > stats.deviate_win_rate ? "+" : ""}${Math.round((stats.follow_win_rate - stats.deviate_win_rate) * 100)}%`}
+                colorClass={
+                  stats.follow_win_rate >= stats.deviate_win_rate
+                    ? "text-radiant"
+                    : "text-dire"
+                }
+              />
+            )}
+          </div>
+
+          {stats.flagged_items.length > 0 && (
+            <div className="bg-surface-container rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
+                Prompt Review -- Recommended but Rarely Purchased
+              </h4>
+              <div className="space-y-1">
+                {stats.flagged_items.map((item: FlaggedItem) => (
+                  <div
+                    key={item.item_name}
+                    className="flex items-center justify-between px-3 py-1.5 rounded bg-surface-container-lowest text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={itemImageUrl(item.item_name)}
+                        alt={item.item_name}
+                        className="w-7 h-5 rounded object-cover"
+                      />
+                      <span className="text-on-surface">
+                        {item.item_name.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-on-surface-variant">
+                      <span>Recommended: {item.times_recommended}x</span>
+                      <span>Purchased: {item.times_purchased}x</span>
+                      <span className="text-dire font-semibold">
+                        {Math.round(item.purchase_rate * 100)}% purchase rate
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

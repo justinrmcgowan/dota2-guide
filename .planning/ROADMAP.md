@@ -162,10 +162,10 @@ Plans:
 **Goal:** Mid-game re-evaluations are faster and cheaper via diff-based context, and post-match tracking proves recommendation value
 **Depends on:** Phase 35 (validation ensures accuracy tracking data is clean)
 **Requirements:** [ADAPT-01, ADAPT-02, ADAPT-03, ADAPT-04, ADAPT-05]
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 Plans:
 - [x] 38-01-PLAN.md — Diff-based re-evaluation context builder with eval snapshots
-- [ ] 38-02-PLAN.md — Accuracy dashboard with follow/deviate win rates and flagged items
+- [x] 38-02-PLAN.md — Accuracy dashboard with follow/deviate win rates and flagged items
 **Success Criteria** (what must be TRUE):
   1. Re-evaluations send only what changed since last eval (new enemy items, deaths, gold swings, phase transitions)
   2. Diff-based context reduces token usage by 40%+ for mid-game re-evals

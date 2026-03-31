@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
-status: executing
-stopped_at: Completed 36-02 Game Clock + Timing Gates
-last_updated: "2026-03-31T09:34:15.999Z"
-last_activity: 2026-03-31
+status: completed
+stopped_at: Completed 38-02-PLAN.md
+last_updated: "2026-03-31T09:56:12.028Z"
+last_activity: 2026-03-31 -- Phase 38 plan 02 complete
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 9
+  total_plans: 10
+  completed_plans: 10
   percent: 40
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 38 (Adaptiveness & Accuracy) — EXECUTING
-Plan: 1 of 2 complete
-Status: Executing Phase 38
-Last activity: 2026-03-31 -- Completed 38-01 Diff-Based Re-Evaluation Context
+Phase: 38 (Adaptiveness & Accuracy)
+Plan: 2 of 2 complete
+Status: All plans executed
+Last activity: 2026-03-31 -- Both 38-01 and 38-02 complete
 
 Progress: [████░░░░░░] 40%
 
@@ -63,6 +63,8 @@ Progress: [████░░░░░░] 40%
 - [Phase 38-01]: build_diff returns None when opponents/allies change to force full context rebuild
 - [Phase 38-01]: Snapshots keyed by hero_id:role -- one active build per hero+role per session
 - [Phase 38-01]: Eval snapshots cleared on data refresh alongside HierarchicalCache clear
+- [Phase 38-02]: Follow threshold >= 0.7, deviate threshold < 0.4 for clear behavioral bucket separation
+- [Phase 38-02]: Flagged items exclude luxury priority; 5+ recommendation minimum with < 30% purchase rate
 
 ### Pending Todos
 
@@ -75,5 +77,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-31T10:00:30Z
-Stopped at: Completed 38-01 Diff-Based Re-Evaluation Context
+Stopped at: Completed all Phase 38 plans (38-01, 38-02)
 Resume file: None
