@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** Phase 37 — Latency & Caching
+**Current focus:** Phase 38 — Adaptiveness & Accuracy
 
 ## Current Position
 
-Phase: 38
-Plan: Not started
-Status: Executing Phase 37
-Last activity: 2026-03-31
+Phase: 38 (Adaptiveness & Accuracy) — EXECUTING
+Plan: 1 of 2 complete
+Status: Executing Phase 38
+Last activity: 2026-03-31 -- Completed 38-01 Diff-Based Re-Evaluation Context
 
 Progress: [████░░░░░░] 40%
 
@@ -59,6 +59,10 @@ Progress: [████░░░░░░] 40%
 - [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
 - [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
 - [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
+- [Phase 38-01]: EvalSnapshot frozen dataclass with sorted tuples for deterministic diff detection
+- [Phase 38-01]: build_diff returns None when opponents/allies change to force full context rebuild
+- [Phase 38-01]: Snapshots keyed by hero_id:role -- one active build per hero+role per session
+- [Phase 38-01]: Eval snapshots cleared on data refresh alongside HierarchicalCache clear
 
 ### Pending Todos
 
@@ -70,6 +74,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:48:51Z
-Stopped at: Completed 36-02 Game Clock + Timing Gates
+Last session: 2026-03-31T10:00:30Z
+Stopped at: Completed 38-01 Diff-Based Re-Evaluation Context
 Resume file: None

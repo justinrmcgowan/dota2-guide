@@ -162,9 +162,9 @@ Plans:
 **Goal:** Mid-game re-evaluations are faster and cheaper via diff-based context, and post-match tracking proves recommendation value
 **Depends on:** Phase 35 (validation ensures accuracy tracking data is clean)
 **Requirements:** [ADAPT-01, ADAPT-02, ADAPT-03, ADAPT-04, ADAPT-05]
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 38-01-PLAN.md — Diff-based re-evaluation context builder with eval snapshots
+- [x] 38-01-PLAN.md — Diff-based re-evaluation context builder with eval snapshots
 - [ ] 38-02-PLAN.md — Accuracy dashboard with follow/deviate win rates and flagged items
 **Success Criteria** (what must be TRUE):
   1. Re-evaluations send only what changed since last eval (new enemy items, deaths, gold swings, phase transitions)
@@ -191,5 +191,5 @@ Plans:
 | 35. Quality Foundation | 1/TBD | In progress | - |
 | 36. Prompt Intelligence | 2/TBD | In progress | - |
 | 37. Latency & Caching | 2/3 | Complete    | 2026-03-31 |
-| 38. Adaptiveness & Accuracy | 0/2 | Not started | - |
+| 38. Adaptiveness & Accuracy | 1/2 | In Progress|  |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
