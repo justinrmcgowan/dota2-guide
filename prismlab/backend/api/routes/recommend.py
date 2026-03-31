@@ -10,6 +10,7 @@ Rate-limited per IP (10s cooldown). Responses cached for 5min (configurable).
 import logging
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.database import get_db
@@ -46,6 +47,42 @@ _recommender = HybridRecommender(
     response_cache=_response_cache, cache=data_cache,
     ollama=_ollama, cost_tracker=_cost_tracker,
 )
+
+
+@router.post("/recommend/stream")
+async def recommend_stream(
+    request: RecommendRequest,
+    db: AsyncSession = Depends(get_db),
+    _rate_limit: None = Depends(check_rate_limit),
+):
+    """SSE streaming recommendation endpoint.
+
+    Returns Server-Sent Events:
+    - event: rules -- immediate rules-only items
+    - event: phases -- full LLM recommendation
+    - event: enrichment -- timing, build paths, win condition
+    - event: done -- stream complete
+    """
+    logger.info("Stream recommend: hero=%d role=%d", request.hero_id, request.role)
+
+    # Check hierarchical cache first -- if hit, return full response as single event
+    if _response_cache:
+        cached = _response_cache.get(request)
+        if cached is not None:
+            async def cached_stream():
+                yield f"event: phases\ndata: {cached.model_dump_json()}\n\n"
+                yield f"event: done\ndata: {{}}\n\n"
+            return StreamingResponse(
+                cached_stream(),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
+
+    return StreamingResponse(
+        _recommender.recommend_stream(request, db),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("/recommend", response_model=RecommendResponse)

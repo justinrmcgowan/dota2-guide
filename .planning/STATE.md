@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 37-02 Cache Warming
-last_updated: "2026-03-31T08:51:07Z"
+stopped_at: Completed 37-03 SSE Streaming (all Wave 2 plans done)
+last_updated: "2026-03-31T08:53:10Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 6
-  percent: 55
+  total_plans: 3
+  completed_plans: 7
+  percent: 60
 ---
 
 # Project State
@@ -59,6 +59,9 @@ Progress: [█████░░░░░] 55%
 - [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
 - [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
 - [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
+- [Phase 37]: SSE streaming replaces two-pass HTTP pattern for auto-trigger recommendations
+- [Phase 37]: Cache-hit SSE path returns phases+done events directly, skipping streaming pipeline
+- [Phase 37]: Existing POST /recommend endpoint preserved for backward compatibility
 
 - [Phase 37-01]: HierarchicalCache L2 key normalizes opponents via sorted(set(lane+all)) for order-independent matching
 - [Phase 37-01]: set() writes all 3 cache tiers atomically; deleted old ResponseCache entirely
@@ -76,6 +79,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T08:51:07Z
-Stopped at: Completed 37-02 Cache Warming
+Last session: 2026-03-31T08:53:10Z
+Stopped at: Completed all Phase 37 plans (37-01, 37-02, 37-03)
 Resume file: None

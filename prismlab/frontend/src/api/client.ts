@@ -114,4 +114,73 @@ export const api = {
     );
   },
   getMatchStats: () => fetchJson<MatchStatsResponse>("/match-stats"),
+
+  /**
+   * SSE streaming recommendation.
+   * Returns an AbortController to cancel the stream.
+   * Calls onEvent for each SSE event: rules, phases, enrichment, done, error.
+   */
+  recommendStream: (
+    req: RecommendRequest,
+    onEvent: (type: string, data: unknown) => void,
+  ): AbortController => {
+    const mode = localStorage.getItem("prismlab_engine_mode") as
+      | "fast"
+      | "auto"
+      | "deep"
+      | null;
+    const enriched: RecommendRequest = {
+      ...req,
+      mode: req.mode ?? mode ?? undefined,
+    };
+    const controller = new AbortController();
+
+    fetch(`${API_BASE}/recommend/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(enriched),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          onEvent("error", { message: `API error: ${response.status}` });
+          return;
+        }
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse SSE events from buffer
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? ""; // keep incomplete line in buffer
+
+          let currentEvent = "";
+          for (const line of lines) {
+            if (line.startsWith("event: ")) {
+              currentEvent = line.slice(7).trim();
+            } else if (line.startsWith("data: ") && currentEvent) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                onEvent(currentEvent, data);
+              } catch {
+                /* ignore parse errors */
+              }
+              currentEvent = "";
+            }
+          }
+        }
+      })
+      .catch((err: Error) => {
+        if (err.name !== "AbortError") {
+          onEvent("error", { message: err.message ?? "Stream failed" });
+        }
+      });
+
+    return controller;
+  },
 };

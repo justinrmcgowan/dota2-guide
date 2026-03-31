@@ -2,7 +2,11 @@ import { useRecommendationStore } from "../stores/recommendationStore";
 import { useGameStore } from "../stores/gameStore";
 import { useGsiStore } from "../stores/gsiStore";
 import { api } from "../api/client";
-import type { RecommendRequest } from "../types/recommendation";
+import type {
+  EnrichmentData,
+  RecommendRequest,
+  RecommendResponse,
+} from "../types/recommendation";
 import { PLAYSTYLE_OPTIONS } from "../utils/constants";
 
 function buildRequest(): RecommendRequest | null {
@@ -78,9 +82,9 @@ export function useRecommendation() {
   };
 
   /**
-   * Two-pass recommendation for auto-trigger scenarios.
-   * 1. Fire fast-mode request -> show partial results immediately
-   * 2. Fire full auto/deep request -> merge over partial results
+   * Streaming recommendation for auto-trigger scenarios.
+   * Uses SSE to progressively deliver rules, phases, and enrichment data
+   * through a single HTTP connection instead of two separate requests.
    */
   const recommendTwoPass = async () => {
     const request = buildRequest();
@@ -93,32 +97,29 @@ export function useRecommendation() {
     store.clearResults();
     store.setLoading(true);
 
-    // Pass 1: Fast mode (rules-only, <1s)
-    const fastRequest = { ...request, mode: "fast" as const };
-    try {
-      const fastResponse = await api.recommend(fastRequest);
-      // Show partial results immediately
-      useRecommendationStore.getState().setPartialData(fastResponse);
-    } catch {
-      // Fast mode failed -- continue to full request anyway
-    }
-
-    // Pass 2: Full recommendation (auto mode, 2-15s)
-    try {
-      const fullResponse = await api.recommend(request);
-      useRecommendationStore.getState().mergeData(fullResponse);
-    } catch (err) {
-      // If we already have partial data, keep it and clear the partial flag
-      const current = useRecommendationStore.getState();
-      if (current.data && current.isPartial) {
-        // Keep partial data but clear the partial flag
-        useRecommendationStore.getState().mergeData(current.data);
-      } else {
-        useRecommendationStore.getState().setError(
-          err instanceof Error ? err.message : "Failed to get recommendations",
-        );
+    api.recommendStream(request, (eventType, data) => {
+      const s = useRecommendationStore.getState();
+      switch (eventType) {
+        case "rules":
+          s.setPartialData(data as RecommendResponse);
+          break;
+        case "phases":
+          s.mergeData(data as RecommendResponse);
+          break;
+        case "enrichment":
+          s.mergeEnrichment(data as EnrichmentData);
+          break;
+        case "done":
+          // Stream complete -- ensure loading is cleared
+          if (useRecommendationStore.getState().isLoading) {
+            useRecommendationStore.getState().setLoading(false);
+          }
+          break;
+        case "error":
+          s.setError((data as { message: string }).message);
+          break;
       }
-    }
+    });
   };
 
   return {

@@ -104,6 +104,17 @@ export interface EnemyContext {
   level?: number | null;
 }
 
+/** SSE event types from /api/recommend/stream */
+export type SSEEventType = "rules" | "phases" | "enrichment" | "done";
+
+/** Enrichment data from the enrichment SSE event */
+export interface EnrichmentData {
+  timing_data: ItemTimingData[];
+  build_paths: BuildPathResponse[];
+  win_condition: WinConditionResponse | null;
+  win_probability: number | null;
+}
+
 export interface RecommendRequest {
   hero_id: number;
   role: number;
