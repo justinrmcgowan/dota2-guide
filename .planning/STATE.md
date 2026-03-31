@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 37-03 SSE Streaming (all Wave 2 plans done)
-last_updated: "2026-03-31T08:53:10Z"
+stopped_at: Completed 36-02 Game Clock + Timing Gates
+last_updated: "2026-03-31T09:34:15.999Z"
 last_activity: 2026-03-31
 progress:
-  total_phases: 2
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 7
-  percent: 60
+  total_phases: 5
+  completed_phases: 3
+  total_plans: 8
+  completed_plans: 9
+  percent: 40
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** At any point in any game, the player knows exactly what to buy next and why -- they never feel lost on itemization.
-**Current focus:** v7.0 Engine Hardening — make recommendations monetization-ready
+**Current focus:** Phase 37 — Latency & Caching
 
 ## Current Position
 
-Phase: 37 (Latency & Caching)
-Plan: 37-02 complete
-Status: Executing
+Phase: 38
+Plan: Not started
+Status: Executing Phase 37
 Last activity: 2026-03-31
 
-Progress: [█████░░░░░] 55%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -59,15 +59,6 @@ Progress: [█████░░░░░] 55%
 - [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
 - [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
 - [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
-- [Phase 37]: SSE streaming replaces two-pass HTTP pattern for auto-trigger recommendations
-- [Phase 37]: Cache-hit SSE path returns phases+done events directly, skipping streaming pipeline
-- [Phase 37]: Existing POST /recommend endpoint preserved for backward compatibility
-
-- [Phase 37-01]: HierarchicalCache L2 key normalizes opponents via sorted(set(lane+all)) for order-independent matching
-- [Phase 37-01]: set() writes all 3 cache tiers atomically; deleted old ResponseCache entirely
-- [Phase 37-02]: CacheWarmer uses alphabetically first playstyle per role for deterministic, stable cache keys
-- [Phase 37-02]: Synchronous warming in startup path (~5-7s for ~130 combos) -- acceptable given 10-30s existing startup
-- [Phase 37-02]: Post-refresh re-warming: clear HierarchicalCache, then re-warm L1 with fresh data
 
 ### Pending Todos
 
@@ -79,6 +70,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T08:53:10Z
-Stopped at: Completed all Phase 37 plans (37-01, 37-02, 37-03)
+Last session: 2026-03-30T20:48:51Z
+Stopped at: Completed 36-02 Game Clock + Timing Gates
 Resume file: None
