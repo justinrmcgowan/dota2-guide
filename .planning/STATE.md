@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 36-02 Game Clock + Timing Gates
-last_updated: "2026-03-30T20:48:51Z"
-last_activity: 2026-03-30
+stopped_at: Completed 37-01 Hierarchical Cache
+last_updated: "2026-03-31T08:40:44Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 0
-  completed_plans: 4
-  percent: 40
+  completed_plans: 5
+  percent: 45
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 36 (Prompt Intelligence)
-Plan: 36-02 complete
+Phase: 37 (Latency & Caching)
+Plan: 37-01 complete
 Status: Executing
-Last activity: 2026-03-30
+Last activity: 2026-03-31
 
-Progress: [████░░░░░░] 40%
+Progress: [████░░░░░░] 45%
 
 ## Performance Metrics
 
@@ -60,6 +60,9 @@ Progress: [████░░░░░░] 40%
 - [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
 - [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
 
+- [Phase 37-01]: HierarchicalCache L2 key normalizes opponents via sorted(set(lane+all)) for order-independent matching
+- [Phase 37-01]: set() writes all 3 cache tiers atomically; deleted old ResponseCache entirely
+
 ### Pending Todos
 
 None yet.
@@ -70,6 +73,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:48:51Z
-Stopped at: Completed 36-02 Game Clock + Timing Gates
+Last session: 2026-03-31T08:40:44Z
+Stopped at: Completed 37-01 Hierarchical Cache
 Resume file: None
