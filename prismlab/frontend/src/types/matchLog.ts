@@ -76,6 +76,13 @@ export interface MatchHistoryResponse {
   offset: number;
 }
 
+export interface FlaggedItem {
+  item_name: string;
+  times_recommended: number;
+  times_purchased: number;
+  purchase_rate: number;
+}
+
 export interface MatchStatsResponse {
   total_games: number;
   wins: number;
@@ -84,4 +91,10 @@ export interface MatchStatsResponse {
   avg_follow_rate: number | null;
   avg_follow_rate_wins: number | null;
   avg_follow_rate_losses: number | null;
+  // Accuracy metrics
+  follow_win_rate: number | null;
+  deviate_win_rate: number | null;
+  follow_game_count: number;
+  deviate_game_count: number;
+  flagged_items: FlaggedItem[];
 }
