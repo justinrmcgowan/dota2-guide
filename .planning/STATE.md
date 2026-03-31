@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
-status: executing
-stopped_at: Completed 36-02 Game Clock + Timing Gates
-last_updated: "2026-03-31T09:34:15.999Z"
-last_activity: 2026-03-31
+status: completed
+stopped_at: Completed 38-02-PLAN.md
+last_updated: "2026-03-31T09:56:12.028Z"
+last_activity: 2026-03-31 -- Phase 38 plan 02 complete
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 9
+  total_plans: 10
+  completed_plans: 10
   percent: 40
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 38
-Plan: Not started
-Status: Executing Phase 37
-Last activity: 2026-03-31
+Phase: 38 (Adaptiveness & Accuracy) -- EXECUTING
+Plan: 2 of 2
+Status: Completed 38-02 Accuracy Insights
+Last activity: 2026-03-31 -- Phase 38 plan 02 complete
 
 Progress: [████░░░░░░] 40%
 
@@ -59,6 +59,8 @@ Progress: [████░░░░░░] 40%
 - [Phase 36-02]: BKB urgency escalation by "black king bar" name match (not "bkb" abbreviation)
 - [Phase 36-02]: Frontend game_time_seconds from GSI, turbo from gameStore -- both optional/compact
 - [Phase 36-02]: Unusual role detection reuses HERO_ROLE_VIABLE from hero_selector
+- [Phase 38]: Follow threshold >= 0.7, deviate threshold < 0.4 for clear behavioral bucket separation
+- [Phase 38]: Flagged items exclude luxury priority; 5+ recommendation minimum with < 30% purchase rate
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:48:51Z
-Stopped at: Completed 36-02 Game Clock + Timing Gates
+Last session: 2026-03-31T09:56:12.025Z
+Stopped at: Completed 38-02-PLAN.md
 Resume file: None
