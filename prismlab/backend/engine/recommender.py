@@ -53,42 +53,137 @@ if TYPE_CHECKING:
     from engine.cost_tracker import CostTracker
 
 
-class ResponseCache:
-    """In-memory response cache with TTL. Hash request -> cached response."""
+class HierarchicalCache:
+    """3-tier in-memory response cache with TTL.
 
-    def __init__(self, ttl_seconds: float = 300.0) -> None:
-        self.ttl = ttl_seconds
-        self._cache: dict[str, tuple[RecommendResponse, float]] = {}
+    Tiers:
+      L1 -- hero+role+lane (broad, 1h TTL) -- covers starting/laning builds
+      L2 -- hero+role+lane+sorted_opponents (matchup, 5min TTL)
+      L3 -- exact request hash (precise, 5min TTL)
 
-    def _hash_request(self, request: RecommendRequest) -> str:
+    get() falls through L3 -> L2 -> L1, returning the first hit.
+    set() writes to all three tiers atomically.
+    set_l1() writes directly to L1 for cache warming without a full request.
+    """
+
+    def __init__(
+        self,
+        l1_ttl: float = 3600.0,
+        l2_ttl: float = 300.0,
+        l3_ttl: float = 300.0,
+    ) -> None:
+        self.l1_ttl = l1_ttl
+        self.l2_ttl = l2_ttl
+        self.l3_ttl = l3_ttl
+        self._l1: dict[str, tuple[RecommendResponse, float]] = {}
+        self._l2: dict[str, tuple[RecommendResponse, float]] = {}
+        self._l3: dict[str, tuple[RecommendResponse, float]] = {}
+
+    # ------------------------------------------------------------------
+    # Key builders
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _l1_key(hero_id: int, role: int, lane: str) -> str:
+        raw = f"{hero_id}:{role}:{lane}"
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    @staticmethod
+    def _l2_key(hero_id: int, role: int, lane: str, lane_opponents: list[int], all_opponents: list[int]) -> str:
+        sorted_ids = sorted(set(lane_opponents + all_opponents))
+        ids_str = ",".join(str(i) for i in sorted_ids)
+        raw = f"{hero_id}:{role}:{lane}:{ids_str}"
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    @staticmethod
+    def _l3_key(request: RecommendRequest) -> str:
         payload = request.model_dump_json(exclude_none=True)
         return hashlib.sha256(payload.encode()).hexdigest()
 
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     def get(self, request: RecommendRequest) -> RecommendResponse | None:
-        key = self._hash_request(request)
-        entry = self._cache.get(key)
-        if entry is None:
-            return None
-        response, timestamp = entry
-        if time.monotonic() - timestamp > self.ttl:
-            del self._cache[key]
-            return None
-        return response
+        """Check L3 -> L2 -> L1. Return first valid (non-expired) hit or None."""
+        now = time.monotonic()
+
+        # L3: exact match
+        l3_key = self._l3_key(request)
+        entry = self._l3.get(l3_key)
+        if entry is not None:
+            response, ts = entry
+            if now - ts <= self.l3_ttl:
+                return response
+            del self._l3[l3_key]
+
+        # L2: matchup-level
+        l2_key = self._l2_key(
+            request.hero_id, request.role, request.lane,
+            request.lane_opponents, request.all_opponents,
+        )
+        entry = self._l2.get(l2_key)
+        if entry is not None:
+            response, ts = entry
+            if now - ts <= self.l2_ttl:
+                return response
+            del self._l2[l2_key]
+
+        # L1: hero+role+lane
+        l1_key = self._l1_key(request.hero_id, request.role, request.lane)
+        entry = self._l1.get(l1_key)
+        if entry is not None:
+            response, ts = entry
+            if now - ts <= self.l1_ttl:
+                return response
+            del self._l1[l1_key]
+
+        return None
 
     def set(self, request: RecommendRequest, response: RecommendResponse) -> None:
-        key = self._hash_request(request)
-        self._cache[key] = (response, time.monotonic())
+        """Write response to all three tiers."""
+        now = time.monotonic()
+
+        l3_key = self._l3_key(request)
+        self._l3[l3_key] = (response, now)
+
+        l2_key = self._l2_key(
+            request.hero_id, request.role, request.lane,
+            request.lane_opponents, request.all_opponents,
+        )
+        self._l2[l2_key] = (response, now)
+
+        l1_key = self._l1_key(request.hero_id, request.role, request.lane)
+        self._l1[l1_key] = (response, now)
+
+    def set_l1(
+        self,
+        hero_id: int,
+        role: int,
+        lane: str,
+        response: RecommendResponse,
+    ) -> None:
+        """Direct L1 write for cache warming (no full request needed)."""
+        l1_key = self._l1_key(hero_id, role, lane)
+        self._l1[l1_key] = (response, time.monotonic())
 
     def cleanup(self) -> None:
-        """Evict expired entries."""
+        """Evict expired entries from all three tiers."""
         now = time.monotonic()
-        expired = [k for k, (_, ts) in self._cache.items() if now - ts > self.ttl]
-        for k in expired:
-            del self._cache[k]
+        for store, ttl in [
+            (self._l1, self.l1_ttl),
+            (self._l2, self.l2_ttl),
+            (self._l3, self.l3_ttl),
+        ]:
+            expired = [k for k, (_, ts) in store.items() if now - ts > ttl]
+            for k in expired:
+                del store[k]
 
     def clear(self) -> None:
         """Clear all cached responses (e.g., after data pipeline refresh)."""
-        self._cache.clear()
+        self._l1.clear()
+        self._l2.clear()
+        self._l3.clear()
 
 
 class HybridRecommender:
@@ -105,7 +200,7 @@ class HybridRecommender:
         rules: RulesEngine,
         llm: LLMEngine,
         context_builder: ContextBuilder,
-        response_cache: ResponseCache | None = None,
+        response_cache: HierarchicalCache | None = None,
         cache: DataCache | None = None,
         ollama: OllamaEngine | None = None,
         cost_tracker: CostTracker | None = None,

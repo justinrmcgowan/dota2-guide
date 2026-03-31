@@ -22,7 +22,7 @@ from engine.ollama_engine import OllamaEngine
 from engine.cost_tracker import CostTracker
 from engine.context_builder import ContextBuilder
 from engine.exemplar_matcher import ExemplarMatcher
-from engine.recommender import HybridRecommender, ResponseCache
+from engine.recommender import HybridRecommender, HierarchicalCache
 from middleware.rate_limiter import check_rate_limit
 from config import settings
 
@@ -40,7 +40,7 @@ _context_builder = ContextBuilder(
     opendota_client=_opendota, cache=data_cache,
     exemplar_matcher=_exemplar_matcher,
 )
-_response_cache = ResponseCache(ttl_seconds=settings.response_cache_ttl_seconds)
+_response_cache = HierarchicalCache(l1_ttl=3600.0, l2_ttl=300.0, l3_ttl=300.0)
 _recommender = HybridRecommender(
     rules=_rules, llm=_llm, context_builder=_context_builder,
     response_cache=_response_cache, cache=data_cache,

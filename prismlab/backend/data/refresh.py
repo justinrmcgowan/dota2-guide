@@ -197,7 +197,7 @@ async def refresh_all_data() -> DataRefreshLog:
             # Coordinated three-layer cache invalidation:
             # 1. DataCache refreshes first (new data) -- uses fresh session (INT-05)
             # 2. RulesEngine sees new data automatically via DataCache reference
-            # 3. ResponseCache clears (stale responses built from old data) (INT-06)
+            # 3. HierarchicalCache clears all tiers (stale responses built from old data) (INT-06)
             from data.cache import data_cache
             async with async_session() as fresh_session:
                 await data_cache.refresh(fresh_session)
@@ -208,7 +208,7 @@ async def refresh_all_data() -> DataRefreshLog:
 
             from api.routes.recommend import _response_cache
             _response_cache.clear()
-            logger.info("ResponseCache cleared after data refresh.")
+            logger.info("HierarchicalCache cleared (all tiers) after data refresh.")
 
             logger.info(
                 "Data refresh completed: %d heroes, %d items, ability data refreshed.",
