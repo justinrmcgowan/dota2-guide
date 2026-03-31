@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json as json_mod
 import time
 import logging
 
@@ -167,6 +168,126 @@ class HybridRecommender:
             self.response_cache.set(request, response)
 
         return response
+
+    # ------------------------------------------------------------------
+    # Streaming entry point: progressive SSE delivery
+    # ------------------------------------------------------------------
+
+    async def recommend_stream(
+        self, request: RecommendRequest, db: AsyncSession
+    ):
+        """Yield SSE events: rules (immediate), phases (Claude), enrichment (final).
+
+        Each yield is a formatted SSE string: "event: {type}\\ndata: {json}\\n\\n"
+
+        Events:
+          1. rules   -- immediate rules-only items (<1s)
+          2. phases  -- full LLM recommendation (2-15s)
+          3. enrichment -- timing, build paths, win condition
+          4. done    -- stream complete signal
+        """
+        # Event 1: Rules-only fast path (immediate, <1s)
+        rules_items = self.rules.evaluate(request)
+        rules_phases = self._rules_only(rules_items)
+        rules_phases = self._validate_item_ids(rules_phases)
+        rules_phases = self._deduplicate_across_phases(rules_phases)
+        rules_response = RecommendResponse(
+            phases=rules_phases,
+            overall_strategy="Rules-based build (loading full analysis...)",
+            neutral_items=[],
+            fallback=False,
+            engine_mode="fast",
+        )
+        yield f"event: rules\ndata: {rules_response.model_dump_json()}\n\n"
+
+        # Event 2: Full LLM recommendation (2-15s depending on mode)
+        mode = request.mode or settings.recommendation_mode
+        start = time.monotonic()
+        if mode == "fast":
+            # Already served rules above; send done
+            yield f"event: done\ndata: {{}}\n\n"
+            return
+
+        # Run full path (auto or deep) -- reuse existing logic but skip enrichment
+        user_message = await self.context_builder.build(request, rules_items, db)
+
+        llm_result = None
+        fallback_reason = None
+        model_used = None
+
+        if mode == "auto" and self.ollama:
+            llm_result, fallback_reason = await self.ollama.generate(user_message)
+            if llm_result:
+                model_used = f"ollama:{self.ollama.model}"
+
+        budget_ok = self.cost_tracker is None or not self.cost_tracker.budget_exceeded()
+        if llm_result is None and budget_ok:
+            llm_result, fallback_reason = await self.llm.generate(user_message)
+            if llm_result:
+                model_used = LLMEngine.MODEL
+                if self.cost_tracker and self.llm.last_usage:
+                    await self.cost_tracker.record_usage(
+                        self.llm.last_usage["input_tokens"],
+                        self.llm.last_usage["output_tokens"],
+                        db,
+                    )
+
+        if llm_result:
+            phases = self._merge(rules_items, llm_result)
+            overall_strategy = llm_result.overall_strategy
+            neutral_items = llm_result.neutral_items
+        else:
+            phases = rules_phases  # reuse rules from Event 1
+            overall_strategy = self.FALLBACK_STRATEGIES.get(
+                fallback_reason, "AI unavailable -- showing rules-based build."
+            ) if fallback_reason else "Rules-based recommendations only."
+            neutral_items = []
+
+        phases = self._validate_item_ids(phases)
+        phases = self._deduplicate_across_phases(phases)
+
+        # Validation + retry (same as _deep_path)
+        if llm_result and self.response_validator:
+            retry_phases, retry_strategy, retry_neutrals = await self._validate_and_retry(
+                phases, request, rules_items, db, user_message
+            )
+            if retry_strategy is not None:
+                phases = retry_phases
+                overall_strategy = retry_strategy
+                neutral_items = retry_neutrals or []
+
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+        phases_response = RecommendResponse(
+            phases=phases,
+            overall_strategy=overall_strategy,
+            neutral_items=neutral_items,
+            fallback=llm_result is None,
+            fallback_reason=fallback_reason.value if fallback_reason else None,
+            model=model_used,
+            latency_ms=elapsed_ms,
+            engine_mode=mode,
+        )
+        self._attach_budget_info(phases_response)
+        yield f"event: phases\ndata: {phases_response.model_dump_json()}\n\n"
+
+        # Cache the phases response
+        if self.response_cache:
+            self.response_cache.set(request, phases_response)
+
+        # Event 3: Enrichment data (timing, build paths, win condition, win probability)
+        timing_data, build_paths, win_condition, win_probability = await self._enrich_all(
+            request, phases, db
+        )
+        enrichment = {
+            "timing_data": [t.model_dump() for t in timing_data],
+            "build_paths": [b.model_dump() for b in build_paths],
+            "win_condition": win_condition.model_dump() if win_condition else None,
+            "win_probability": win_probability,
+        }
+        yield f"event: enrichment\ndata: {json_mod.dumps(enrichment)}\n\n"
+
+        # Final event: signal stream complete
+        yield f"event: done\ndata: {{}}\n\n"
 
     # ------------------------------------------------------------------
     # Fast path: rules-only, no LLM call
