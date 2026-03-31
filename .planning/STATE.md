@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: Engine Hardening
 status: executing
-stopped_at: Completed 37-01 Hierarchical Cache
-last_updated: "2026-03-31T08:40:44Z"
+stopped_at: Completed 37-02 Cache Warming
+last_updated: "2026-03-31T08:51:07Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 0
-  completed_plans: 5
-  percent: 45
+  completed_plans: 6
+  percent: 55
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 37 (Latency & Caching)
-Plan: 37-01 complete
+Plan: 37-02 complete
 Status: Executing
 Last activity: 2026-03-31
 
-Progress: [████░░░░░░] 45%
+Progress: [█████░░░░░] 55%
 
 ## Performance Metrics
 
@@ -62,6 +62,9 @@ Progress: [████░░░░░░] 45%
 
 - [Phase 37-01]: HierarchicalCache L2 key normalizes opponents via sorted(set(lane+all)) for order-independent matching
 - [Phase 37-01]: set() writes all 3 cache tiers atomically; deleted old ResponseCache entirely
+- [Phase 37-02]: CacheWarmer uses alphabetically first playstyle per role for deterministic, stable cache keys
+- [Phase 37-02]: Synchronous warming in startup path (~5-7s for ~130 combos) -- acceptable given 10-30s existing startup
+- [Phase 37-02]: Post-refresh re-warming: clear HierarchicalCache, then re-warm L1 with fresh data
 
 ### Pending Todos
 
@@ -73,6 +76,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T08:40:44Z
-Stopped at: Completed 37-01 Hierarchical Cache
+Last session: 2026-03-31T08:51:07Z
+Stopped at: Completed 37-02 Cache Warming
 Resume file: None

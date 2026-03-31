@@ -147,10 +147,10 @@
 **Goal:** P95 full recommendation latency under 5 seconds through hierarchical caching, pre-computation, and streaming
 **Depends on:** Phase 35 (pro baselines are the data cached at L1/L2)
 **Requirements:** [LAT-01, LAT-02, LAT-03, LAT-04]
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 37-01-PLAN.md — Hierarchical 3-tier cache (L1/L2/L3 with tiered TTLs)
-- [ ] 37-02-PLAN.md — Cache warming for top hero+role combos on startup
+- [x] 37-02-PLAN.md — Cache warming for top hero+role combos on startup
 - [ ] 37-03-PLAN.md — SSE streaming endpoint with progressive frontend rendering
 **Success Criteria** (what must be TRUE):
   1. Three-tier cache: hero+role+lane (1h TTL) → +opponents (5min) → full request (5min)
@@ -185,6 +185,6 @@ Plans:
 | 34. UX Speed & Instant Items | 7/7 | Complete | 2026-03-30 |
 | 35. Quality Foundation | 1/TBD | In progress | - |
 | 36. Prompt Intelligence | 2/TBD | In progress | - |
-| 37. Latency & Caching | 1/3 | In Progress|  |
+| 37. Latency & Caching | 2/3 | In Progress|  |
 | 38. Adaptiveness & Accuracy | 0/TBD | Not started | - |
 | 32. Tauri Desktop App | 0/TBD | Not started | - |
